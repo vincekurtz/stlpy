@@ -96,14 +96,14 @@ class STLFormulaBase(ABC):
         # representing 'self' holding until t_prime, at which point 'other' holds.
         self_until_tprime = []
 
-        for t_prime in range(t1+1, t2):
-            time_interval = [t for t in range(t1, t_prime)]
-            subformula_list = [self for t in range(t1, t_prime-1)]
+        for t_prime in range(t1, t2+1):
+            time_interval = [t for t in range(t1, t_prime+1)]
+            subformula_list = [self for t in range(t1, t_prime)]
             subformula_list.append(other)
             self_until_tprime.append(STLFormula(subformula_list, "and", time_interval))
 
         # Then we take the disjuction over each of these formulas
-        return STLFormula(self_until_tprime, "or", [t1 for i in range(len(self_until_tprime))])
+        return STLFormula(self_until_tprime, "or", [0 for i in range(len(self_until_tprime))])
 
 
 class STLPredicate(STLFormulaBase):
@@ -186,9 +186,9 @@ if __name__=="__main__":
     pi0 = STLPredicate([[1,0]],[1])  # y[0] > 1
     pi1 = STLPredicate([[0,1]],[1])  # y[1] > 1
 
-    y = np.array([[0,0],[2,0],[2,0],[0,2]]).T
+    y = np.array([[0,0],[2,0],[0,2],[0,2]]).T
 
-    phi = pi0.eventually(2,2)
-    #phi = pi0.until(pi1,0,4)
+    #phi = pi0.eventually(0,3)
+    phi = pi0.until(pi1,1,3)
     print(phi.robustness(y,0))
 
