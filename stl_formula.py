@@ -37,7 +37,20 @@ class STLFormulaBase(ABC):
 
         @returns new    An STLFormula representing (self) and (other)
         """
-        pass
+        return STLFormula([self,other],"and")
+    
+    def disjunction(self, other):
+        """
+        Return a new STLFormula which is the disjuction (or) of this
+        formula and another one. 
+
+        @param self     This STLFormula or STLPredicate
+        @param other    The STLFormula or STLPredicate to combine
+                        with this one. 
+
+        @returns new    An STLFormula representing (self) and (other)
+        """
+        return STLFormula([self,other],"or")
 
 class STLPredicate(STLFormulaBase):
     """
@@ -114,13 +127,15 @@ if __name__=="__main__":
 
     y = np.array([[0,0],[2,0],[0,2],[2,2]]).T
 
-    phi = STLFormula([pi0,pi1],"or")
+    phi = pi0.disjunction(pi1)
+    phi1 = pi1.conjunction(pi0)
 
     for t in range(4):
         print(t)
         print(pi0.robustness(y,t))
         print(pi1.robustness(y,t))
         print(phi.robustness(y,t))
+        print(phi1.robustness(y,t))
         print("")
 
 
