@@ -23,8 +23,8 @@ def reach_avoid_specification(goal_bounds, obstacle_bounds, T):
     and that the output signal is given by y = [x;u].
     """
     # Define control bound constraints
-    u_min = -0.2
-    u_max = 0.2
+    u_min = -0.5
+    u_max = 0.5
 
     u1_above_min = STLPredicate([[0,0,0,0,1,0]],[u_min])
     u2_above_min = STLPredicate([[0,0,0,0,0,1]],[u_min])
