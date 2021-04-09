@@ -61,7 +61,7 @@ class STLFormulaBase(ABC):
 
         @returns new    An STLFormula representing G_[t1,t2](self)
         """
-        time_interval = [t for t in range(t1,t2)]
+        time_interval = [t for t in range(t1,t2+1)]
         subformula_list = [self for t in time_interval]
         return STLFormula(subformula_list,"and",time_interval)
 
@@ -75,9 +75,35 @@ class STLFormulaBase(ABC):
 
         @returns new    An STLFormula representing F_[t1,t2](self)
         """
-        time_interval = [t for t in range(t1,t2)]
+        time_interval = [t for t in range(t1,t2+1)]
         subformula_list = [self for t in time_interval]
         return STLFormula(subformula_list,"or",time_interval)
+
+    def until(self, other, t1, t2):
+        """
+        Return a new STLFormula which ensures that this formula holds
+        until some timestep between t1 and t2, at which point the
+        other STLFormula (or STLPredicate) holds. 
+
+        @param other    The second STLFormula or STLPredicate that 
+                        must hold after this one
+        @param t1   An integer representing the start of the interval
+        @param t2   An integer representing the end of the interval
+
+        @returns new    An STLFormula representing (self)U_[t1,t2](other)
+        """
+        # For every candidate swiching time (t_prime), construct a subformula 
+        # representing 'self' holding until t_prime, at which point 'other' holds.
+        self_until_tprime = []
+
+        for t_prime in range(t1+1, t2):
+            time_interval = [t for t in range(t1, t_prime)]
+            subformula_list = [self for t in range(t1, t_prime-1)]
+            subformula_list.append(other)
+            self_until_tprime.append(STLFormula(subformula_list, "and", time_interval))
+
+        # Then we take the disjuction over each of these formulas
+        return STLFormula(self_until_tprime, "or", [t1 for i in range(len(self_until_tprime))])
 
 
 class STLPredicate(STLFormulaBase):
@@ -157,11 +183,12 @@ class STLFormula(STLFormulaBase):
             return max( [formula.robustness(y,t+self.timesteps[i]) for i, formula in enumerate(self.subformula_list)] )
 
 if __name__=="__main__":
-    pi0 = STLPredicate([[0,1]],[1])  # y[0] > 1
-    pi1 = STLPredicate([[1,0]],[1])  # y[1] > 1
+    pi0 = STLPredicate([[1,0]],[1])  # y[0] > 1
+    pi1 = STLPredicate([[0,1]],[1])  # y[1] > 1
 
-    y = np.array([[0,0],[2,0],[0,0],[2,1]]).T
+    y = np.array([[0,0],[2,0],[2,0],[0,2]]).T
 
-    phi = pi0.eventually(0,3)
+    phi = pi0.eventually(2,2)
+    #phi = pi0.until(pi1,0,4)
     print(phi.robustness(y,0))
 
