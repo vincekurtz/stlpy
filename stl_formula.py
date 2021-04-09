@@ -37,20 +37,48 @@ class STLFormulaBase(ABC):
 
         @returns new    An STLFormula representing (self) and (other)
         """
-        return STLFormula([self,other],"and")
+        return STLFormula([self,other],"and",[0,0])
     
     def disjunction(self, other):
         """
         Return a new STLFormula which is the disjuction (or) of this
         formula and another one. 
 
-        @param self     This STLFormula or STLPredicate
         @param other    The STLFormula or STLPredicate to combine
                         with this one. 
 
         @returns new    An STLFormula representing (self) and (other)
         """
-        return STLFormula([self,other],"or")
+        return STLFormula([self,other],"or",[0,0])
+
+    def always(self, t1, t2):
+        """
+        Return a new STLFormula which ensures that this formula holds
+        for all of the timesteps between t1 and t2. 
+
+        @param t1   An integer representing the start of the interval
+        @param t2   An integer representing the end of the interval
+
+        @returns new    An STLFormula representing G_[t1,t2](self)
+        """
+        time_interval = [t for t in range(t1,t2)]
+        subformula_list = [self for t in time_interval]
+        return STLFormula(subformula_list,"and",time_interval)
+
+    def eventually(self, t1, t2):
+        """
+        Return a new STLFormula which ensures that this formula holds
+        for at least one timestep between t1 and t2. 
+
+        @param t1   An integer representing the start of the interval
+        @param t2   An integer representing the end of the interval
+
+        @returns new    An STLFormula representing F_[t1,t2](self)
+        """
+        time_interval = [t for t in range(t1,t2)]
+        subformula_list = [self for t in time_interval]
+        return STLFormula(subformula_list,"or",time_interval)
+
 
 class STLPredicate(STLFormulaBase):
     """
@@ -93,7 +121,7 @@ class STLFormula(STLFormulaBase):
         - until
 
     """
-    def __init__(self, subformula_list, combination_type):
+    def __init__(self, subformula_list, combination_type, timesteps):
         """
         An STL formula is defined by a list of other STLFormulaBase objects
         which are combined together using either conjuction (and) or 
@@ -103,39 +131,37 @@ class STLFormula(STLFormulaBase):
                                     predicates) that we'll use to construct this formula. 
         @param combination_type     A string representing the type of operation we'll use 
                                     to combine these objects. Must be either "and" or "or".
+        @param timesteps            A list of timesteps that the subformulas must hold at.
+                                    This is needed to define the temporal operators.
         """
         # Run some type check on the inputs
         assert (combination_type == "and") or (combination_type == "or"), "Invalid combination type"
         assert isinstance(subformula_list, list), "subformula_list must be a list of STLFormula or STLPredicate objects"
+        assert isinstance(timesteps, list), "timesteps must be a list of integers"
+        assert len(timesteps) == len(subformula_list), "a timestep must be provided for each subformula"
         for formula in subformula_list:
             assert isinstance(formula, STLFormulaBase), "subformula_list must be a list of STLFormula or STLPredicate objects"
+        for t in timesteps:
+            assert isinstance(t, int), "each timestep must be an integer"
 
-        # Simply save the subformula list and combination type. That will let
-        # us parse these recursively later on
+        # Simply save the input arguments. We will parse these recursively later on to
+        # determine, for example, the formula robustness.
         self.subformula_list = subformula_list
         self.combination_type = combination_type
+        self.timesteps = timesteps
 
     def robustness(self, y, t):
         if self.combination_type == "and":
-            return min( [formula.robustness(y,t) for formula in self.subformula_list] )
+            return min( [formula.robustness(y,t+self.timesteps[i]) for i, formula in enumerate(self.subformula_list)] )
         else: # combination_type == "or"
-            return max( [formula.robustness(y,t) for formula in self.subformula_list] )
+            return max( [formula.robustness(y,t+self.timesteps[i]) for i, formula in enumerate(self.subformula_list)] )
 
 if __name__=="__main__":
     pi0 = STLPredicate([[0,1]],[1])  # y[0] > 1
     pi1 = STLPredicate([[1,0]],[1])  # y[1] > 1
 
-    y = np.array([[0,0],[2,0],[0,2],[2,2]]).T
+    y = np.array([[0,0],[2,0],[0,0],[2,1]]).T
 
-    phi = pi0.disjunction(pi1)
-    phi1 = pi1.conjunction(pi0)
-
-    for t in range(4):
-        print(t)
-        print(pi0.robustness(y,t))
-        print(pi1.robustness(y,t))
-        print(phi.robustness(y,t))
-        print(phi1.robustness(y,t))
-        print("")
-
+    phi = pi0.eventually(0,3)
+    print(phi.robustness(y,0))
 
