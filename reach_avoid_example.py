@@ -26,9 +26,9 @@ u_max = 0.2
 u1_above_min = STLPredicate([[0,0,0,0,1,0]],[u_min])
 u2_above_min = STLPredicate([[0,0,0,0,0,1]],[u_min])
 u1_below_max = STLPredicate([[0,0,0,0,-1,0]],[-u_max])
-u2_below_max = STLPredicate([[0,0,0,0,-1]],[-u_max])
+u2_below_max = STLPredicate([[0,0,0,0,0,-1]],[-u_max])
 
-control_bounded = u1_above_min.conjunction(u2_above_min).conjunction(u1_below_max).conjunction(u2_below_max)
+control_bounded = u1_above_min & u2_above_min & u1_below_max & u2_below_max
 
 # Define the goal reaching specification
 

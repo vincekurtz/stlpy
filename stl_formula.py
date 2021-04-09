@@ -37,6 +37,12 @@ class STLFormulaBase(ABC):
         @returns new    An STLFormula representing (self) and (other)
         """
         return STLFormula([self,other],"and",[0,0])
+
+    def __and__(self, other):
+        """
+        Syntatic sugar so we can write `one_and_two = one & two`
+        """
+        return self.conjunction(other)
     
     def disjunction(self, other):
         """
@@ -49,6 +55,12 @@ class STLFormulaBase(ABC):
         @returns new    An STLFormula representing (self) and (other)
         """
         return STLFormula([self,other],"or",[0,0])
+
+    def __or__(self, other):
+        """
+        Syntatic sugar so we can write `one_or_two = one | two`
+        """
+        return self.disjunction(other)
 
     def always(self, t1, t2):
         """
