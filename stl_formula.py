@@ -8,7 +8,6 @@ class STLFormulaBase(ABC):
     over predicates) or an STL predicate (i.e. the 
     simplest possible formula).
     """
-
     @abstractmethod
     def robustness(self, y, t):
         """
@@ -160,6 +159,9 @@ class STLFormula(STLFormulaBase):
         @param timesteps            A list of timesteps that the subformulas must hold at.
                                     This is needed to define the temporal operators.
         """
+        # Record the dimension of the signal this formula is defined over
+        self.d = subformula_list[0].d
+
         # Run some type check on the inputs
         assert (combination_type == "and") or (combination_type == "or"), "Invalid combination type"
         assert isinstance(subformula_list, list), "subformula_list must be a list of STLFormula or STLPredicate objects"
@@ -167,6 +169,7 @@ class STLFormula(STLFormulaBase):
         assert len(timesteps) == len(subformula_list), "a timestep must be provided for each subformula"
         for formula in subformula_list:
             assert isinstance(formula, STLFormulaBase), "subformula_list must be a list of STLFormula or STLPredicate objects"
+            assert formula.d == self.d, "all subformulas must be defined over same dimension of signal"
         for t in timesteps:
             assert isinstance(t, int), "each timestep must be an integer"
 
@@ -176,19 +179,9 @@ class STLFormula(STLFormulaBase):
         self.combination_type = combination_type
         self.timesteps = timesteps
 
+
     def robustness(self, y, t):
         if self.combination_type == "and":
             return min( [formula.robustness(y,t+self.timesteps[i]) for i, formula in enumerate(self.subformula_list)] )
         else: # combination_type == "or"
             return max( [formula.robustness(y,t+self.timesteps[i]) for i, formula in enumerate(self.subformula_list)] )
-
-if __name__=="__main__":
-    pi0 = STLPredicate([[1,0]],[1])  # y[0] > 1
-    pi1 = STLPredicate([[0,1]],[1])  # y[1] > 1
-
-    y = np.array([[0,0],[2,0],[0,2],[0,2]]).T
-
-    #phi = pi0.eventually(0,3)
-    phi = pi0.until(pi1,1,3)
-    print(phi.robustness(y,0))
-
