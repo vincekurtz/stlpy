@@ -26,7 +26,6 @@ class STLFormulaBase(ABC):
         """
         pass
 
-    @abstractmethod
     def conjunction(self, other):
         """
         Return a new STLFormula which is the conjunction (and) of this
@@ -40,7 +39,7 @@ class STLFormulaBase(ABC):
         """
         pass
 
-class STLPredicate:
+class STLPredicate(STLFormulaBase):
     """
     A (linear) stl predicate defined by
 
@@ -69,16 +68,59 @@ class STLPredicate:
 
         return self.A@y[:,t] - self.b
 
+class STLFormula(STLFormulaBase):
+    """
+    An STL formula (in positive normal form) defined by 
+    the following operations on STLPredicates and other STLFormulas:
+
+        - conjunction (and)
+        - disjuction (or)
+        - always (globally)
+        - eventually (finally)
+        - until
+
+    """
+    def __init__(self, subformula_list, combination_type):
+        """
+        An STL formula is defined by a list of other STLFormulaBase objects
+        which are combined together using either conjuction (and) or 
+        disjunction (or). 
+
+        @param subformula_list      A list of STLFormulaBase objects (formulas or
+                                    predicates) that we'll use to construct this formula. 
+        @param combination_type     A string representing the type of operation we'll use 
+                                    to combine these objects. Must be either "and" or "or".
+        """
+        # Run some type check on the inputs
+        assert (combination_type == "and") or (combination_type == "or"), "Invalid combination type"
+        assert isinstance(subformula_list, list), "subformula_list must be a list of STLFormula or STLPredicate objects"
+        for formula in subformula_list:
+            assert isinstance(formula, STLFormulaBase), "subformula_list must be a list of STLFormula or STLPredicate objects"
+
+        # Simply save the subformula list and combination type. That will let
+        # us parse these recursively later on
+        self.subformula_list = subformula_list
+        self.combination_type = combination_type
+
+    def robustness(self, y, t):
+        if self.combination_type == "and":
+            return min( [formula.robustness(y,t) for formula in self.subformula_list] )
+        else: # combination_type == "or"
+            return max( [formula.robustness(y,t) for formula in self.subformula_list] )
+
 if __name__=="__main__":
     pi0 = STLPredicate([[0,1]],[1])  # y[0] > 1
     pi1 = STLPredicate([[1,0]],[1])  # y[1] > 1
 
     y = np.array([[0,0],[2,0],[0,2],[2,2]]).T
 
+    phi = STLFormula([pi0,pi1],"or")
+
     for t in range(4):
         print(t)
         print(pi0.robustness(y,t))
         print(pi1.robustness(y,t))
+        print(phi.robustness(y,t))
         print("")
 
 
