@@ -162,6 +162,7 @@ class MICPSolver(STLSolver):
         if the subformulas are combined with disjuction (at least one
         subformula must hold). 
         """
+        # We're at the bottom of the tree, so add the big-M constraints
         if isinstance(formula, STLPredicate):
             # A[x;u] - b + (1-z)*M >= 0
             A = np.hstack([formula.A,-np.array([[self.M]])])
@@ -169,7 +170,9 @@ class MICPSolver(STLSolver):
             ub = np.array([np.inf])
             vars = np.hstack([self.x[:,t],self.u[:,t],z])
             self.mp.AddLinearConstraint(A=A, lb=lb, ub=ub, vars=vars)
-
+        
+        # We haven't reached the bottom of the tree, so keep adding
+        # boolean constraints recursively
         else:
             if formula.combination_type == "and":
                 for i, subformula in enumerate(formula.subformula_list):
@@ -193,21 +196,3 @@ class MICPSolver(STLSolver):
                 ub = np.array([0])
                 vars = np.vstack([z,z_subs])
                 self.mp.AddLinearConstraint(A=A, lb=lb, ub=ub, vars=vars)
-
-    def traverse_tree(self, formula):
-
-        print(formula)
-
-        if isinstance(formula, STLPredicate) :
-            return 0
-        else:
-            for subformula in formula.subformula_list:
-                self.traverse_tree(subformula)
-
-        
-
-
-
-
-
-
