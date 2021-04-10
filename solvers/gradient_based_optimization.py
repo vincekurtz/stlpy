@@ -7,8 +7,9 @@
 import numpy as np
 import time
 from scipy.optimize import minimize
+from solvers.solver_base import STLSolver
 
-class GradientSolver:
+class GradientSolver(STLSolver):
     """
     Given an STLFormula, desired trajectory length T, and
     a system of the form 
