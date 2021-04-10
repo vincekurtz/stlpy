@@ -1,4 +1,5 @@
 from solvers.solver_base import STLSolver
+from STL import STLPredicate
 import numpy as np
 from pydrake.all import MathematicalProgram, GurobiSolver, MosekSolver, eq
 
@@ -46,6 +47,7 @@ class MICPSolver(STLSolver):
         """
         assert M > 0, "M should be a (large) positive scalar"
         super().__init__(spec, A, B, Q, R, x0, T)
+        self.M = M
 
         # Create the drake MathematicalProgram instance that will allow
         # us to interface with a MIP solver like Gurobi or Mosek
@@ -79,6 +81,7 @@ class MICPSolver(STLSolver):
             rho = self.spec.robustness(y,0)
             print("Optimal robustness: ", rho[0])
         else:
+            print("No solution found")
             x = None
             u = None
 
@@ -122,7 +125,89 @@ class MICPSolver(STLSolver):
         to the optimization problem, via the recursive introduction
         of binary variables for all subformulas in the specification.
         """
-        pass
+        # Add a binary variable which takes a value of 1 only 
+        # if the overall specification is satisfied.
+        z_spec = self.mp.NewBinaryVariables(1)
+        self.mp.AddConstraint(eq( z_spec, 1 ))
+
+        # Recursively traverse the tree defined by the specification
+        # subformulas and add similar binary constraints. 
+        self.AddSubformulaConstraints(self.spec, z_spec, 0)
+
+    def AddSubformulaConstraints(self, formula, z, t):
+        """
+        Given an STLFormula (formula) and a binary variable (z),
+        add constraints to the optimization problem such that z
+        takes value 1 only if the formula is satisfied (at time t). 
+
+        If the formula is a predicate, this constraint uses the "big-M" 
+        formulation
+
+            A[x(t);u(t)] - b + (1-z)M >= 0,
+
+        which enforces A[x;u] - b >= 0 if z=1, where (A,b) are the 
+        linear constraints associated with this predicate. 
+
+        If the formula is not a predicate, we recursively traverse the
+        subformulas associated with this formula, adding new binary 
+        variables z_i for each subformula and constraining
+
+            z <= z_i  for all i
+
+        if the subformulas are combined with conjunction (i.e. all 
+        subformulas must hold), or otherwise constraining
+
+            z <= sum(z_i)
+
+        if the subformulas are combined with disjuction (at least one
+        subformula must hold). 
+        """
+        if isinstance(formula, STLPredicate):
+            # A[x;u] - b + (1-z)*M >= 0
+            A = np.hstack([formula.A,-np.array([[self.M]])])
+            lb = formula.b - self.M
+            ub = np.array([np.inf])
+            vars = np.hstack([self.x[:,t],self.u[:,t],z])
+            self.mp.AddLinearConstraint(A=A, lb=lb, ub=ub, vars=vars)
+
+        else:
+            if formula.combination_type == "and":
+                for i, subformula in enumerate(formula.subformula_list):
+                    z_sub = self.mp.NewBinaryVariables(1)
+                    t_sub = formula.timesteps[i]   # the timestep at which this formula 
+                                                   # should hold
+                    self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
+                    self.mp.AddConstraint( z[0] <= z_sub[0] )
+
+            else:  # combination_type == "or":
+                z_subs = []
+                for i, subformula in enumerate(formula.subformula_list):
+                    z_sub = self.mp.NewBinaryVariables(1)
+                    t_sub = formula.timesteps[i]
+                    z_subs.append(z_sub)
+                    self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
+
+                # z <= sum(z_subs)
+                A = np.hstack([1,-np.ones(len(z_subs))])[np.newaxis]
+                lb = -np.array([np.inf])
+                ub = np.array([0])
+                vars = np.vstack([z,z_subs])
+                self.mp.AddLinearConstraint(A=A, lb=lb, ub=ub, vars=vars)
+
+    def traverse_tree(self, formula):
+
+        print(formula)
+
+        if isinstance(formula, STLPredicate) :
+            return 0
+        else:
+            for subformula in formula.subformula_list:
+                self.traverse_tree(subformula)
+
+        
+
+
+
 
 
 

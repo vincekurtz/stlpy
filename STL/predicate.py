@@ -10,7 +10,7 @@ class STLPredicate(STLFormulaBase):
     where y_t is the value of the signal 
     at a given timestep t.
     """
-    def __init__(self, A, b):
+    def __init__(self, A, b, name=None):
         # Convert provided constraints to numpy arrays
         self.A = np.asarray(A)
         self.b = np.atleast_1d(b)
@@ -22,6 +22,9 @@ class STLPredicate(STLFormulaBase):
         # Store the dimensionality of y_t
         self.d = self.A.shape[1]
 
+        # A unique string describing this predicate
+        self.name = name
+
     def robustness(self, y, t):
         assert isinstance(y, np.ndarray), "y must be a numpy array"
         assert isinstance(t, int), "timestep t must be an integer"
@@ -29,5 +32,11 @@ class STLPredicate(STLFormulaBase):
         assert y.shape[1] > t, "requested timestep %s, but y only has %s timesteps" % (t, y.shape[1])
 
         return self.A@y[:,t] - self.b
+
+    def __str__(self):
+        if self.name is None:
+            return "{ Predicate %s*y >= %s }" % (self.A, self.b)
+        else:
+            return "{ " + self.name + " }"
 
 # TODO: create a NonlinearPredicate class based on lambda functions

@@ -26,7 +26,7 @@ def reach_avoid_specification(goal_bounds, obstacle_bounds, T):
     u_min = -0.5
     u_max = 0.5
 
-    u1_above_min = STLPredicate([[0,0,0,0,1,0]],[u_min])
+    u1_above_min = STLPredicate([[0,0,0,0,1,0]],[u_min], name="u1_above_min")
     u2_above_min = STLPredicate([[0,0,0,0,0,1]],[u_min])
     u1_below_max = STLPredicate([[0,0,0,0,-1,0]],[-u_max])
     u2_below_max = STLPredicate([[0,0,0,0,0,-1]],[-u_max])
