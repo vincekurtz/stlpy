@@ -116,36 +116,6 @@ class STLFormulaBase(ABC):
         # Then we take the disjuction over each of these formulas
         return STLFormula(self_until_tprime, "or", [0 for i in range(len(self_until_tprime))])
 
-
-class STLPredicate(STLFormulaBase):
-    """
-    A (linear) stl predicate defined by
-
-        A*y_t - b >= 0
-
-    where y_t is the value of the signal 
-    at a given timestep t.
-    """
-    def __init__(self, A, b):
-        # Convert provided constraints to numpy arrays
-        self.A = np.asarray(A)
-        self.b = np.atleast_1d(b)
-        
-        # Some dimension-related sanity checks
-        assert (self.A.shape[0] == 1), "A must be of shape (1,d)"
-        assert (self.b.shape == (1,)), "b must be of shape (1,)"
-        
-        # Store the dimensionality of y_t
-        self.d = self.A.shape[1]
-
-    def robustness(self, y, t):
-        assert isinstance(y, np.ndarray), "y must be a numpy array"
-        assert isinstance(t, int), "timestep t must be an integer"
-        assert y.shape[0] == self.d, "y must be of shape (d,T)"
-        assert y.shape[1] > t, "requested timestep %s, but y only has %s timesteps" % (t, y.shape[1])
-
-        return self.A@y[:,t] - self.b
-
 class STLFormula(STLFormulaBase):
     """
     An STL formula (in positive normal form) defined by 
@@ -190,7 +160,6 @@ class STLFormula(STLFormulaBase):
         self.subformula_list = subformula_list
         self.combination_type = combination_type
         self.timesteps = timesteps
-
 
     def robustness(self, y, t):
         if self.combination_type == "and":

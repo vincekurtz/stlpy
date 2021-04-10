@@ -9,8 +9,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from reach_avoid_scenario import reach_avoid_specification, plot_reach_avoid_scenario
-from gradient_based_optimization import GradientSolver
+from scenarios.reach_avoid import reach_avoid_specification, plot_reach_avoid_scenario
+from solvers.gradient_based_optimization import GradientSolver
 
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)

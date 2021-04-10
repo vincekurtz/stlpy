@@ -1,4 +1,4 @@
-from stl_formula import STLFormula, STLPredicate
+from STL import STLFormula, STLPredicate
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
