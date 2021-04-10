@@ -1,9 +1,3 @@
-##
-#
-# Tools for gradient-based STL synthesis.
-#
-##
-
 import numpy as np
 import time
 from scipy.optimize import minimize
@@ -39,28 +33,7 @@ class GradientSolver(STLSolver):
         @param x0       The initial state of the system.
         @param T        An integer specifiying the number of timesteps.
         """
-        self.n = A.shape[1]
-        self.m = B.shape[1]
-        self.d = self.n + self.m
-        self.x0 = np.atleast_1d(x0)
-
-        # Some sanity checks
-        assert A.shape == (self.n, self.n), "A must be a square matrix"
-        assert B.shape == (self.n, self.m), "B must have dimesions (n,m)"
-        assert Q.shape == (self.n, self.n), "Q must have dimensions (n,n)"
-        assert R.shape == (self.m, self.m), "R must have dimensions (m,m)"
-        assert self.d == spec.d, "Specification size must match size of [x;u]"
-        assert self.x0.shape == (self.n,), "x0 must be a 1d numpy array of size n"
-        assert isinstance(T,int) and T > 0, "T must be a positive integer"
-
-        # Store the relevant data
-        self.A = A
-        self.B = B
-        self.Q = Q
-        self.R = R
-        self.spec = spec
-        self.x0 = x0
-        self.T = T+1  # needed to be consistent with how we've defined STLFormula
+        super().__init__(spec, A, B, Q, R, x0, T)
 
     def Solve(self):
         """
