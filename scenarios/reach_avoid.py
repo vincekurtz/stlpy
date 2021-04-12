@@ -1,5 +1,4 @@
-from scenarios.common import inside_rectangle_formula, outside_rectangle_formula
-import numpy as np
+from scenarios.common import *
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
@@ -45,30 +44,18 @@ def reach_avoid_specification(goal_bounds, obstacle_bounds, T):
 
     # Put all of the constraints together in one specification
     specification = control_bounded.always(0,T) & \
-                    not_at_obstacle.always(0,T) & \
                     velocity_bounded.always(0,T) & \
                     in_workspace.always(0,T) & \
-                    at_goal.eventually(0,T)
+                    not_at_obstacle.until(at_goal, 0, T)
 
     return specification
 
 def plot_reach_avoid_scenario(goal_bounds, obstacle_bounds):
-    # Get locations, heights, and widths
-    obs_x = obstacle_bounds[0]
-    obs_y = obstacle_bounds[2]
-    obs_w = obstacle_bounds[1]-obs_x
-    obs_h = obstacle_bounds[3]-obs_y
-    
-    goal_x = goal_bounds[0]
-    goal_y = goal_bounds[2]
-    goal_w = goal_bounds[1]-goal_x
-    goal_h = goal_bounds[3]-goal_y
-
-    # Make rectangular patches
-    obstacle = Rectangle((obs_x,obs_y),obs_w,obs_h, color='red', alpha=0.5)
-    goal = Rectangle((goal_x,goal_y),goal_w,goal_h, color='green', alpha=0.5)
-
     ax = plt.gca()
+
+    # Make and add rectangular patches
+    obstacle = make_rectangle_patch(*obstacle_bounds, color='red', alpha=0.5)
+    goal = make_rectangle_patch(*goal_bounds, color='green', alpha=0.5)
     ax.add_patch(obstacle)
     ax.add_patch(goal)
 
@@ -76,16 +63,3 @@ def plot_reach_avoid_scenario(goal_bounds, obstacle_bounds):
     ax.set_xlim((0,12))
     ax.set_ylim((0,12))
     ax.set_aspect('equal')
-
-if __name__=="__main__":
-
-    # Define the regions of interest
-    goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
-    obstacle_bounds = (3,5,4,6)
-    
-    # Test creation of a specification
-    spec = reach_avoid_specification(goal_bounds, obstacle_bounds, T=10)
-
-    # Plot the scenario at hand
-    plot_reach_avoid_scenario(goal_bounds, obstacle_bounds)
-    plt.show()

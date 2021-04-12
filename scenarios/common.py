@@ -6,6 +6,7 @@
 
 import numpy as np
 from STL import STLFormula, STLPredicate
+from matplotlib.patches import Rectangle
 
 def inside_rectangle_formula(bounds, y1_index, y2_index, d):
     """
@@ -65,3 +66,15 @@ def outside_rectangle_formula(bounds, y1_index, y2_index, d):
     outside_rectangle = right | left | top | bottom
     return outside_rectangle
 
+def make_rectangle_patch(xmin, xmax, ymin, ymax, **kwargs):
+    """
+    Convienience function for making a Rectangle patch in matplotlib
+    based on the given bounds. Keyword arguments (like color,
+    transparency, etc) are passed through directly. 
+    """
+    x = xmin
+    y = ymin
+    width = xmax-x
+    height = ymax-y
+
+    return Rectangle((x,y), width, height, **kwargs)
