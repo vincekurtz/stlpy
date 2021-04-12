@@ -1,4 +1,4 @@
-from STL import STLFormula, STLPredicate
+from scenarios.common import inside_rectangle_formula, outside_rectangle_formula
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
@@ -22,36 +22,32 @@ def reach_avoid_specification(goal_bounds, obstacle_bounds, T):
     
     and that the output signal is given by y = [x;u].
     """
-    # Define control bound constraints
+    # Control bounds
     u_min = -0.5
     u_max = 0.5
+    control_bounded = inside_rectangle_formula((u_min,u_max,u_min,u_max), 4, 5, 6)
 
-    u1_above_min = STLPredicate([[0,0,0,0,1,0]],[u_min], name="u1_above_min")
-    u2_above_min = STLPredicate([[0,0,0,0,0,1]],[u_min])
-    u1_below_max = STLPredicate([[0,0,0,0,-1,0]],[-u_max])
-    u2_below_max = STLPredicate([[0,0,0,0,0,-1]],[-u_max])
+    # Goal Reaching
+    at_goal = inside_rectangle_formula(goal_bounds, 0, 1, 6)
 
-    control_bounded = u1_above_min & u2_above_min & u1_below_max & u2_below_max
+    # Obstacle Avoidance
+    not_at_obstacle = outside_rectangle_formula(obstacle_bounds, 0, 1, 6)
 
-    # Define the goal reaching constraints
-    right_of_goal_left = STLPredicate([[ 1,0,0,0,0,0]], goal_bounds[0])
-    left_of_goal_right = STLPredicate([[-1,0,0,0,0,0]], -goal_bounds[1])
-    above_goal_bottom  = STLPredicate([[ 0,1,0,0,0,0]], goal_bounds[2])
-    below_goal_top     = STLPredicate([[0,-1,0,0,0,0]], -goal_bounds[3])
+    # Velocity bounded
+    v_min = -1.0
+    v_max = 1.0
+    velocity_bounded = inside_rectangle_formula((v_min, v_max, v_min, v_max), 2, 3, 6)
 
-    at_goal = above_goal_bottom & below_goal_top & right_of_goal_left & left_of_goal_right 
-
-    # Define the obstacle avoidance constraints
-    right_of_obstacle = STLPredicate([[ 1,0,0,0,0,0]], obstacle_bounds[1])
-    left_of_obstacle  = STLPredicate([[-1,0,0,0,0,0]], -obstacle_bounds[0])
-    above_obstacle    = STLPredicate([[ 0,1,0,0,0,0]], obstacle_bounds[3])
-    below_obstacle    = STLPredicate([[0,-1,0,0,0,0]], -obstacle_bounds[2])
-
-    not_at_obstacle = right_of_obstacle | left_of_obstacle | above_obstacle | below_obstacle
+    # Workspace boundaries
+    x_min = 0; x_max = 10;
+    y_min = 0; y_max = 10;
+    in_workspace = inside_rectangle_formula((x_min, x_max, y_min, y_max), 0, 1, 6)
 
     # Put all of the constraints together in one specification
     specification = control_bounded.always(0,T) & \
                     not_at_obstacle.always(0,T) & \
+                    velocity_bounded.always(0,T) & \
+                    in_workspace.always(0,T) & \
                     at_goal.eventually(0,T)
 
     return specification

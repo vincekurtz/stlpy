@@ -15,7 +15,7 @@ from solvers import MICPSolver
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
-T = 50
+T = 20
 
 # The "big-M" constant used for mixed-integer encoding
 M = 1000
