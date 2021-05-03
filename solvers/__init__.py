@@ -1,2 +1,3 @@
 from solvers.gradient_based_optimization import GradientSolver
 from solvers.standard_micp import MICPSolver
+from solvers.spp_micp import SPPMICPSolver

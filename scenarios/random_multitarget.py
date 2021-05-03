@@ -98,9 +98,9 @@ def plot_random_multitarget_scenario(obstacles, targets):
     for obstacle in obstacles:
         ax.add_patch(make_rectangle_patch(*obstacle, facecolor='red', alpha=0.8, edgecolor='k', zorder=-1))
 
-    # Use the "tab20" color cycle to choose the colors of each target group
-    # (note that this won't work for more than 20 target groups)
-    colors = plt.cm.tab20.colors
+    # Use the color cycle to choose the colors of each target group
+    # (note that this won't work for more than 10 target groups)
+    colors = plt.cm.tab10.colors
     for i, target_group in enumerate(targets):
         color = colors[i]
         for target in target_group:

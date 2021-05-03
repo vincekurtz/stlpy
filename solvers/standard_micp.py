@@ -1,7 +1,10 @@
 from solvers.solver_base import STLSolver
 from STL import STLPredicate
 import numpy as np
-from pydrake.all import MathematicalProgram, GurobiSolver, MosekSolver, eq
+from pydrake.all import (MathematicalProgram, 
+                         GurobiSolver, 
+                         MosekSolver, 
+                         eq)
 
 class MICPSolver(STLSolver):
     """
