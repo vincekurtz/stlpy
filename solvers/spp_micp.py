@@ -40,7 +40,13 @@ class SPPMICPSolver(STLSolver):
         self.mp = MathematicalProgram()
 
         # Construct polytopic partitions
-        partition_list  = self.ConstructPartitions()
+        partition_list = self.ConstructPartitions()
+
+        # DEBUG
+        bounding_predicates = self.GetBoundingStateFormulas(self.spec)
+        print("")
+        for predicate in bounding_predicates:
+            print(predicate)
         
     def ConstructPartitions(self):
         """
@@ -54,7 +60,6 @@ class SPPMICPSolver(STLSolver):
             # Make polyopes for this predicate and its negation
             P = Polytope(pred.d, ineq_matrices=(-pred.A,-pred.b))
             not_P = Polytope(pred.d, ineq_matrices=(pred.A,pred.b))
-
 
         #print(len(pred_lst))
         #print(2**20)
@@ -75,14 +80,13 @@ class SPPMICPSolver(STLSolver):
             return lst
         else:
             for subformula in spec.subformula_list:
-                print(subformula)
                 predicates = self.GetPredicates(subformula)
                 for predicate in predicates:
                     if predicate not in lst:
                         lst.append(predicate)
             return lst
 
-    def GetBoundingStateFormulas(self, spec):
+    def GetBoundingStateFormulas(self, spec, got_always=False):
         """
         Given a specification, return the constraints that describe the convex set
         in which the the solution y must remain. These constraints have the following
@@ -98,5 +102,35 @@ class SPPMICPSolver(STLSolver):
 
         the bounding constraints are (0 < y < 2).
         """
-        pass
+        lst = []
 
+        if isinstance(spec, STLPredicate):
+            if got_always:
+                lst.append(spec)
+            return lst
+        else:
+            # Several conditions need to be met for us to continue recursively
+            # parsing a subformula: 
+            #
+            # - the combination type needs to be "and"
+            # - the timesteps must be a single timestep or [0,T]
+            # - at some point we must have a conjuction over [0,T] (i.e. "always" is applied)
+            if (spec.combination_type == "and"):
+                if all(t==spec.timesteps[0] for t in spec.timesteps):
+                    for subformula in spec.subformula_list:
+                        predicates = self.GetBoundingStateFormulas(subformula, got_always=got_always)
+                        for predicate in predicates:
+                            if predicate not in lst:
+                                lst.append(predicate)
+                    return lst
+                elif spec.timesteps == [i for i in range(self.T)]:
+                    for subformula in spec.subformula_list:
+                        predicates = self.GetBoundingStateFormulas(subformula, got_always=True)
+                        for predicate in predicates:
+                            if predicate not in lst:
+                                lst.append(predicate)
+                    return lst
+                else:
+                    return []
+            else:
+                return []
