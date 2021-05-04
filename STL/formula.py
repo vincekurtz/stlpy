@@ -74,7 +74,10 @@ class STLFormulaBase(ABC):
         """
         time_interval = [t for t in range(t1,t2+1)]
         subformula_list = [self for t in time_interval]
-        return STLFormula(subformula_list,"and",time_interval)
+        formula = STLFormula(subformula_list, "and", time_interval) 
+        if self.name is not None:
+            formula.name = "always [%s,%s] %s" % (t1,t2,self.name)
+        return formula
 
     def eventually(self, t1, t2):
         """
@@ -88,7 +91,10 @@ class STLFormulaBase(ABC):
         """
         time_interval = [t for t in range(t1,t2+1)]
         subformula_list = [self for t in time_interval]
-        return STLFormula(subformula_list,"or",time_interval)
+        formula = STLFormula(subformula_list, "or", time_interval) 
+        if self.name is not None:
+            formula.name = "eventually [%s,%s] %s" % (t1,t2,self.name)
+        return formula
 
     def until(self, other, t1, t2):
         """
@@ -128,7 +134,7 @@ class STLFormula(STLFormulaBase):
         - until
 
     """
-    def __init__(self, subformula_list, combination_type, timesteps):
+    def __init__(self, subformula_list, combination_type, timesteps, name=None):
         """
         An STL formula is defined by a list of other STLFormulaBase objects
         which are combined together using either conjuction (and) or 
@@ -161,8 +167,17 @@ class STLFormula(STLFormulaBase):
         self.combination_type = combination_type
         self.timesteps = timesteps
 
+        # Save the given name for pretty printing
+        self.name=name
+
     def robustness(self, y, t):
         if self.combination_type == "and":
             return min( [formula.robustness(y,t+self.timesteps[i]) for i, formula in enumerate(self.subformula_list)] )
         else: # combination_type == "or"
             return max( [formula.robustness(y,t+self.timesteps[i]) for i, formula in enumerate(self.subformula_list)] )
+
+    def __str__(self):
+        if self.name is None:
+            return "{ Formula of %s-type, %s subformulas }" % (self.combination_type, len(self.subformula_list))
+        else:
+            return "{ Formula " + self.name + " }"

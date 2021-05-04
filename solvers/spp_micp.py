@@ -1,6 +1,9 @@
 from solvers.solver_base import STLSolver
 from STL import STLPredicate
+from utils import Polytope
+
 import numpy as np
+import itertools
 from pydrake.all import (MathematicalProgram, 
                          GurobiSolver, 
                          MosekSolver, 
@@ -18,7 +21,7 @@ class SPPMICPSolver(STLSolver):
     convex sets to find a satisfying trajectory. 
     """
 
-    def __init__(self, spec, A, B, Q, R, x0, T, X, U):
+    def __init__(self, spec, A, B, Q, R, x0, T):
         """
         Initialize the solver.
 
@@ -29,27 +32,34 @@ class SPPMICPSolver(STLSolver):
         @param R        A (m,m) matrix specifing a running control cost
         @param x0       The initial state of the system.
         @param T        An integer specifiying the number of timesteps.
-        @param X        A tuple (xmin, xmax) establishing bounds on x_t
-        @param U        A tuple (umin, umax) establishing bounds on u_t
         """
-        assert len(X) == 2, "X must be a tuple (xmin, xmax)"
-        assert len(U) == 2, "X must be a tuple (xmin, xmax)"
-        self.xmin = X[0]
-        self.xmax = X[1]
-        self.umin = U[0]
-        self.umax = U[1]
-        assert self.xmin < self.xmax, "xmin must be less than xmax"
-        assert self.umin < self.umax, "umin must be less than umax"
         super().__init__(spec, A, B, Q, R, x0, T)
 
         # Create the drake MathematicalProgram instance that will allow
         # us to interface with a MIP solver like Gurobi or Mosek
         self.mp = MathematicalProgram()
 
-        pred_lst = self.GetPredicates(self.spec)
+        # Construct polytopic partitions
+        partition_list  = self.ConstructPartitions()
+        
+    def ConstructPartitions(self):
+        """
+        Define a set of Polytope partitions P_l such that the same predicates hold
+        for all values within each partition. 
 
+        @returns lst    A list of Polytopes representing each partition.
+        """
+        pred_lst = self.GetPredicates(self.spec)
         for pred in pred_lst:
-            print(pred)
+            # Make polyopes for this predicate and its negation
+            P = Polytope(pred.d, ineq_matrices=(-pred.A,-pred.b))
+            not_P = Polytope(pred.d, ineq_matrices=(pred.A,pred.b))
+
+
+        #print(len(pred_lst))
+        #print(2**20)
+        #lst = [list(i) for i in itertools.product([0,1],repeat=20)]
+        #print(len(lst))
 
     def GetPredicates(self, spec):
         """
@@ -65,9 +75,28 @@ class SPPMICPSolver(STLSolver):
             return lst
         else:
             for subformula in spec.subformula_list:
+                print(subformula)
                 predicates = self.GetPredicates(subformula)
                 for predicate in predicates:
                     if predicate not in lst:
                         lst.append(predicate)
             return lst
+
+    def GetBoundingStateFormulas(self, spec):
+        """
+        Given a specification, return the constraints that describe the convex set
+        in which the the solution y must remain. These constraints have the following
+        properties:
+
+            - They are added to the top-level specification via "and" operators
+            - The temporal operator is "always" across the whole time horizon
+            - The "always" operator acts on a state-formula with conjuction only.
+
+        For example, if the specification is
+
+            G_[0,T] ((0 < y) and (y < 2)) and F_[0,T] (y > 1),
+
+        the bounding constraints are (0 < y < 2).
+        """
+        pass
 

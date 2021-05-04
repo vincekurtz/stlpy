@@ -8,7 +8,7 @@ import numpy as np
 from STL import STLFormula, STLPredicate
 from matplotlib.patches import Rectangle
 
-def inside_rectangle_formula(bounds, y1_index, y2_index, d):
+def inside_rectangle_formula(bounds, y1_index, y2_index, d, name=None):
     """
     Create an STL formula representing being inside the
     rectangle given by the bounds
@@ -35,9 +35,18 @@ def inside_rectangle_formula(bounds, y1_index, y2_index, d):
 
     # Take the conjuction across all the sides
     inside_rectangle = right & left & top & bottom
+
+    # set the names
+    if name is not None:
+        right.name = "right of " + name
+        left.name = "left of " + name
+        top.name = "top of " + name
+        bottom.name = "bottom of " + name
+        inside_rectangle.name = name
+    
     return inside_rectangle
 
-def outside_rectangle_formula(bounds, y1_index, y2_index, d):
+def outside_rectangle_formula(bounds, y1_index, y2_index, d, name=None):
     """
     Create an STL formula representing being outside the
     rectangle given by the bounds
@@ -64,6 +73,15 @@ def outside_rectangle_formula(bounds, y1_index, y2_index, d):
 
     # Take the disjuction across all the sides
     outside_rectangle = right | left | top | bottom
+    
+    # set the names
+    if name is not None:
+        right.name = "right of " + name
+        left.name = "left of " + name
+        top.name = "top of " + name
+        bottom.name = "bottom of " + name
+        outside_rectangle.name = name
+    
     return outside_rectangle
 
 def make_rectangle_patch(xmin, xmax, ymin, ymax, **kwargs):

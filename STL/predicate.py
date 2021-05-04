@@ -37,6 +37,6 @@ class STLPredicate(STLFormulaBase):
         if self.name is None:
             return "{ Predicate %s*y >= %s }" % (self.A, self.b)
         else:
-            return "{ " + self.name + " }"
+            return "{ Predicate " + self.name + " }"
 
 # TODO: create a NonlinearPredicate class based on lambda functions
