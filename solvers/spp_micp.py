@@ -41,12 +41,6 @@ class SPPMICPSolver(STLSolver):
 
         # Construct polytopic partitions
         partition_list = self.ConstructPartitions()
-
-        # DEBUG
-        bounding_predicates = self.GetBoundingStateFormulas(self.spec)
-        print("")
-        for predicate in bounding_predicates:
-            print(predicate)
         
     def ConstructPartitions(self):
         """
@@ -55,11 +49,37 @@ class SPPMICPSolver(STLSolver):
 
         @returns lst    A list of Polytopes representing each partition.
         """
-        pred_lst = self.GetPredicates(self.spec)
-        for pred in pred_lst:
-            # Make polyopes for this predicate and its negation
-            P = Polytope(pred.d, ineq_matrices=(-pred.A,-pred.b))
-            not_P = Polytope(pred.d, ineq_matrices=(pred.A,pred.b))
+        # Generate separate lists of predicates related to the specification and predicates
+        # that simply establish bounds
+        all_predicates = self.GetPredicates(self.spec)
+        bounding_predicates = self.GetBoundingPredicates(self.spec)
+        nonbounding_predicates = [pred for pred in all_predicates if pred not in bounding_predicates ]
+
+        # Create a polytope describing all of the bounds on y
+        C = np.full((len(bounding_predicates),self.d), np.nan)
+        d = np.full((len(bounding_predicates),), np.nan)
+        for i, pred in enumerate(bounding_predicates):
+            C[i,:] = -pred.A  # polytopes defined as C*y <= d, but
+            d[i] = -pred.b    # predicates defined as A*y >= b
+        bounding_polytope = Polytope(self.d, ineq_matrices=(C,d)) 
+
+        # Check that the bounding poltyope is non-empty.
+        assert not bounding_polytope.is_empty(), "Bounding polytope is empty: infeasible specification"
+        
+        # Check that the bounding polytope is compact (this is needed for the perspective
+        # function-based encodings)
+        assert bounding_polytope.is_bounded(), "Unbounded specification. Consider adding constraints like G_[0,T] state_bounded"
+
+        # Create partitions
+
+
+
+        #for pred in pred_lst:
+        #    # Make polyopes for this predicate and its negation
+        #    #P = Polytope(pred.d, ineq_matrices=(-pred.A,-pred.b))
+        #    #not_P = Polytope(pred.d, ineq_matrices=(pred.A,pred.b))
+
+        #    print(pred)
 
         #print(len(pred_lst))
         #print(2**20)
@@ -86,7 +106,7 @@ class SPPMICPSolver(STLSolver):
                         lst.append(predicate)
             return lst
 
-    def GetBoundingStateFormulas(self, spec, got_always=False):
+    def GetBoundingPredicates(self, spec, got_always=False):
         """
         Given a specification, return the constraints that describe the convex set
         in which the the solution y must remain. These constraints have the following
@@ -101,6 +121,13 @@ class SPPMICPSolver(STLSolver):
             G_[0,T] ((0 < y) and (y < 2)) and F_[0,T] (y > 1),
 
         the bounding constraints are (0 < y < 2).
+
+        @param spec         The specification to consider
+        @param got_always   A flag for recursion to tell us whether G_[0,T] has been
+                            encountered yet
+
+        @returns pred_lst   A list of STLPredicates that all hold across the whole
+                            time horizon. 
         """
         lst = []
 
@@ -118,14 +145,14 @@ class SPPMICPSolver(STLSolver):
             if (spec.combination_type == "and"):
                 if all(t==spec.timesteps[0] for t in spec.timesteps):
                     for subformula in spec.subformula_list:
-                        predicates = self.GetBoundingStateFormulas(subformula, got_always=got_always)
+                        predicates = self.GetBoundingPredicates(subformula, got_always=got_always)
                         for predicate in predicates:
                             if predicate not in lst:
                                 lst.append(predicate)
                     return lst
                 elif spec.timesteps == [i for i in range(self.T)]:
                     for subformula in spec.subformula_list:
-                        predicates = self.GetBoundingStateFormulas(subformula, got_always=True)
+                        predicates = self.GetBoundingPredicates(subformula, got_always=True)
                         for predicate in predicates:
                             if predicate not in lst:
                                 lst.append(predicate)

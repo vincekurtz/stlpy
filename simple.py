@@ -42,18 +42,13 @@ x_min = 0; x_max = 10;
 y_min = 0; y_max = 10;
 in_workspace = inside_rectangle_formula((x_min, x_max, y_min, y_max), 0, 1, 6, name="in_workspace")
 
-# DEBUG
-rando = STLPredicate(np.zeros((1,6)), 3, name="rando")
-rando2 = STLPredicate(np.ones((1,6)), 3, name="rando2")
-
 # Put all of the constraints together in one specification
 spec = control_bounded.always(0,T) & \
        velocity_bounded.always(0,T) & \
        in_workspace.always(0,T) & \
-       rando & \
-       rando2.always(3,3) & \
        not_at_obstacle.always(0,T)# & \
 #       at_goal.eventually(0, T)
+#       not_at_obstacle.until(at_goal, 0, T)
 
 
 # System parameters
