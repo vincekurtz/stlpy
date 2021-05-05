@@ -33,6 +33,9 @@ class STLPredicate(STLFormulaBase):
 
         return self.A@y[:,t] - self.b
 
+    def is_state_formula(self):
+        return True
+
     def __str__(self):
         if self.name is None:
             return "{ Predicate %s*y >= %s }" % (self.A, self.b)

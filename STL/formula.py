@@ -25,6 +25,17 @@ class STLFormulaBase(ABC):
         """
         pass
 
+    @abstractmethod
+    def is_state_formula(self):
+        """
+        Indicate whether this formula is a state formula, e.g.,
+        a predicate or the result of boolean operations over 
+        predicates. 
+
+        @returns status     A boolean, True only if self is a state formula.
+        """
+        pass
+
     def conjunction(self, other):
         """
         Return a new STLFormula which is the conjunction (and) of this
@@ -175,6 +186,15 @@ class STLFormula(STLFormulaBase):
             return min( [formula.robustness(y,t+self.timesteps[i]) for i, formula in enumerate(self.subformula_list)] )
         else: # combination_type == "or"
             return max( [formula.robustness(y,t+self.timesteps[i]) for i, formula in enumerate(self.subformula_list)] )
+
+    def is_state_formula(self):
+        boolean_operation = all([self.timesteps[i] == self.timesteps[0] for i in range(len(self.timesteps))])
+        children_are_state_formulas = all([subformula.is_state_formula() for subformula in self.subformula_list])
+
+        if boolean_operation and children_are_state_formulas:
+            return True
+
+        return False
 
     def __str__(self):
         if self.name is None:

@@ -1,6 +1,6 @@
 from solvers.solver_base import STLSolver
 from STL import STLPredicate
-from utils import Polytope
+from utils import Polytope, Partition
 
 import numpy as np
 import itertools
@@ -49,11 +49,8 @@ class SPPMICPSolver(STLSolver):
 
         @returns lst    A list of Polytopes representing each partition.
         """
-        # Generate separate lists of predicates related to the specification and predicates
-        # that simply establish bounds
-        all_predicates = self.GetPredicates(self.spec)
+        # Generate list of predicates that establish bounds on state and control input
         bounding_predicates = self.GetBoundingPredicates(self.spec)
-        nonbounding_predicates = [pred for pred in all_predicates if pred not in bounding_predicates ]
 
         # Create a polytope describing all of the bounds on y
         C = np.full((len(bounding_predicates),self.d), np.nan)
@@ -70,21 +67,12 @@ class SPPMICPSolver(STLSolver):
         # function-based encodings)
         assert bounding_polytope.is_bounded(), "Unbounded specification. Consider adding constraints like G_[0,T] state_bounded"
 
+        # Generate list of state-formulas that are not part of the bounds
+        state_formulas = self.GetNonBoundingStateFormulas(self.spec, bounding_predicates)
+
         # Create partitions
-
-
-
-        #for pred in pred_lst:
-        #    # Make polyopes for this predicate and its negation
-        #    #P = Polytope(pred.d, ineq_matrices=(-pred.A,-pred.b))
-        #    #not_P = Polytope(pred.d, ineq_matrices=(pred.A,pred.b))
-
-        #    print(pred)
-
-        #print(len(pred_lst))
-        #print(2**20)
-        #lst = [list(i) for i in itertools.product([0,1],repeat=20)]
-        #print(len(lst))
+        for formula in state_formulas:
+            print(formula)
 
     def GetPredicates(self, spec):
         """
@@ -104,6 +92,25 @@ class SPPMICPSolver(STLSolver):
                 for predicate in predicates:
                     if predicate not in lst:
                         lst.append(predicate)
+            return lst
+
+    def GetNonBoundingStateFormulas(self, spec, bounding_predicates):
+        """
+        Return a list of state formulas, not including those that simply
+        establish bounds on the signal y.
+        """
+        lst = []
+        if spec.is_state_formula():
+            predicates = self.GetPredicates(spec)
+            if not all([p in bounding_predicates for p in predicates]):
+                lst.append(spec)
+            return lst
+        else:
+            for subformula in spec.subformula_list:
+                state_formulas = self.GetNonBoundingStateFormulas(subformula, bounding_predicates)
+                for formula in state_formulas:
+                    if formula not in lst:
+                        lst.append(formula)
             return lst
 
     def GetBoundingPredicates(self, spec, got_always=False):

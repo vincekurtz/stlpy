@@ -44,11 +44,11 @@ R = 1e-1*np.eye(2)
 x0 = np.array([1.0,2.0,0,0])
 
 # Solve for the system trajectory
-solver = SPPMICPSolver(spec, A, B, Q, R, x0, T)
-x = None
-#solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
+#solver = SPPMICPSolver(spec, A, B, Q, R, x0, T)
+#x = None
+solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
-#x, u = solver.Solve()
+x, u = solver.Solve()
 
 if x is not None:
     # Plot the solution

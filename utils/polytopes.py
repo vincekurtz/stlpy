@@ -122,13 +122,6 @@ class Polytope():
         # If there is a feasible solution then the polytope is bounded
         return res.is_success()
 
-
-
-
-
-
-        
-
     def add_perspective_constraint(self, prog, phi, x):
         # Should probably double check compactness first
         pass
