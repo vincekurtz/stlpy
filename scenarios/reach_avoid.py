@@ -60,6 +60,6 @@ def plot_reach_avoid_scenario(goal_bounds, obstacle_bounds):
     ax.add_patch(goal)
 
     # set the field of view
-    ax.set_xlim((0,12))
-    ax.set_ylim((0,12))
+    ax.set_xlim((0,10))
+    ax.set_ylim((0,10))
     ax.set_aspect('equal')
