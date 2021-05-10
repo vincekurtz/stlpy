@@ -47,6 +47,13 @@ obstacles = [np.array([[3,3],[4,6]]),
              np.array([[4,8],[5,5]]),
              np.array([[4,8],[9,9]])]
 
+prob = irispy.IRISProblem(2)  # 2d
+prob.setBounds(bounds)
+for obs in obstacles:
+    prob.addObstacle(obs)
+options = irispy.IRISOptions()
+options.require_containment = True
+
 existing_partitions = []
 
 for i in range(13):
@@ -59,7 +66,9 @@ for i in range(13):
         start = np.random.uniform(low=0, high=10, size=2)
 
     # Find the largest convex region around this starting point
-    region = irispy.inflate_region(obstacles, start, bounds=bounds, require_containment=True)
+    prob.setSeedPoint(start)
+    region = irispy.iris_wrapper.inflate_region(prob, options)
+    #region = irispy.inflate_region(obstacles, start, bounds=bounds, require_containment=True)
     poly = region.getPolyhedron()
 
     # Show this convex region
@@ -67,6 +76,7 @@ for i in range(13):
 
     # Add this region to the list of obstacles
     obstacles.append(np.asarray(poly.generatorPoints()).T)
+    prob.addObstacle(np.asarray(poly.generatorPoints()).T)
     existing_partitions.append(poly)
 
 plot_solution(region, obstacles, start)
