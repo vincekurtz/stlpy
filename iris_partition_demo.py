@@ -10,29 +10,63 @@ import irispy
 import numpy as np
 import matplotlib.pyplot as plt
 
+np.random.seed(3)
+
+def plot_solution(region, obstacles, start):
+    """
+    Convienience fuction for making a nice plot of
+    the scenario (obstacles), start point, and convex partition (region).
+    """
+    ax = plt.gca()
+
+    for obs in obstacles:
+        if obs.shape[1] <= 2:
+            plt.plot(*obs, color='k')
+        else:
+            irispy.drawing.draw_convhull(obs.T, ax, edgecolor='k', facecolor='k', alpha=0.5)
+
+    region.getPolyhedron().draw(ax, facecolor='b', edgecolor='b', alpha=0.5)
+
+    plt.plot(*start,'go')
+
+    plt.xlim((xmin, xmax))
+    plt.ylim((ymin, ymax))
+
+    plt.show()
+
 # Problem setup. We'll define the boundaries of several state formulas as lines between adjacent vertices. 
 xmin = 0; xmax = 10
 ymin = 0; ymax = 10
 bounds = irispy.Polyhedron.from_bounds([xmin,ymin],[xmax,ymax])
-obstacles = [np.array([[3,3],[3,5]]),
-             np.array([[3,5],[8,5]])]
+obstacles = [np.array([[3,3],[4,6]]),
+             np.array([[3,5],[4,4]]),
+             np.array([[3,5],[6,6]]),
+             np.array([[5,5],[4,6]]),
+             np.array([[4,4],[5,9]]),
+             np.array([[8,8],[5,9]]),
+             np.array([[4,8],[5,5]]),
+             np.array([[4,8],[9,9]])]
 
-# Choose a starting point to define an initial partition
-start = np.array([4,4])
+existing_partitions = []
 
-# Find the largest convex region around this starting point
-region, debug = irispy.inflate_region(obstacles, start, bounds=bounds, return_debug_data=True)
+for i in range(13):
+    print(i)
+    # Choose a starting point to define an initial partition
+    start = np.random.uniform(low=0, high=10, size=2)
 
-# Plot the solution
-ax = plt.gca()
+    # Make sure this starting point is in free spacy
+    while any([p.contains(start,0) for p in existing_partitions]):
+        start = np.random.uniform(low=0, high=10, size=2)
 
-for obs in obstacles:
-    plt.plot(*obs, color='k')
-region.getPolyhedron().draw(ax, facecolor='b', edgecolor='b', alpha=0.5)
+    # Find the largest convex region around this starting point
+    region = irispy.inflate_region(obstacles, start, bounds=bounds, require_containment=True)
+    poly = region.getPolyhedron()
 
-plt.plot(*start,'go')
+    # Show this convex region
+    plot_solution(region, obstacles, start)
 
-plt.xlim((xmin, xmax))
-plt.ylim((ymin, ymax))
+    # Add this region to the list of obstacles
+    obstacles.append(np.asarray(poly.generatorPoints()).T)
+    existing_partitions.append(poly)
 
-plt.show()
+plot_solution(region, obstacles, start)
