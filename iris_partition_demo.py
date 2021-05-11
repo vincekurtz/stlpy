@@ -8,10 +8,11 @@
 
 import cdd
 import irispy
+import scipy
 import numpy as np
 import matplotlib.pyplot as plt
 
-np.random.seed(3)
+np.random.seed(1)
 
 def plot_solution(poly, obstacles, start):
     """
@@ -33,7 +34,7 @@ def plot_solution(poly, obstacles, start):
     plt.xlim((xmin-0.1, xmax+0.1))
     plt.ylim((ymin-0.1, ymax+0.1))
 
-    plt.show()
+    #plt.show()
 
 # Problem setup. We'll define the boundaries of several state formulas as lines between adjacent vertices. 
 xmin = 0; xmax = 10
@@ -100,17 +101,36 @@ def generate_partition(state_formulas, existing_partitions, bounds):
     for p in existing_partitions:
         obstacles.append(np.asarray(p.generatorPoints()).T)
 
-    # Run IRIS to find a large region of free space
-    region = irispy.inflate_region(obstacles, start, bounds=bounds, require_containment=True)
+    try:
+        # Run IRIS to find a large region of free space
+        region = irispy.inflate_region(obstacles, start, bounds=bounds, 
+                require_containment=True,
+                error_on_infeasible_start=True,
+                return_debug_data=False)
+        vertices = region.polyhedron.generatorPoints()
+    except RuntimeError as e:
+        print("Hit RuntimeError '%s', retrying" % e)
+        return generate_partition(state_formulas, existing_partitions, bounds)
+
+    # Require a partition to be at least 2d
+    if len(vertices) <= 2:  # TODO: use dimension of problem
+        print("Got non-full-dimensional polytope, retrying")
+        return generate_partition(state_formulas, existing_partitions, bounds)
 
     return region.getPolyhedron(), start
 
 
-for i in range(50):
+for i in range(20):
+    print(i)
     bounds = irispy.Polyhedron.from_bounds([xmin,ymin],[xmax,ymax])
     new_partition, start = generate_partition(state_formulas, partitions, bounds)
 
-    obstacles = state_formulas
+    obstacles = state_formulas + [np.array(p.generatorPoints()).T for p in partitions]
+   
+    plt.cla()
     plot_solution(new_partition, obstacles, start)
-    
+    plt.pause(0.1)
+    #plt.show()
+
     partitions.append(new_partition)
+plt.show()
