@@ -1,18 +1,23 @@
 from utils import Polytope
 
-class Partition(Polytope):
+class Partition:
     """
-    A Partition is a special kind of Polytope which 
-    is associated with a list of STLFormulas (really
-    state formulas in particular), which hold 
-    everywhere within this partition. 
+    A Partition consists of a (bounded) polytope and a list
+    of STLPredicate that hold everywhere in this polytope
     """
-    def __init__(self, polytope, state_formulas):
+    def __init__(self, polytope, predicates):
+        self.polytope = polytope
+        self.predicates = predicates
 
-        # Copy all attributes of polytope to self
-        self.__dict__.update(polytope.__dict__)
+    def plot(self, **kwargs):
+        """
+        Make a (2d) plot of this partition.
+        """
+        self.polytope.plot_2d(**kwargs)
 
-        # save the state formulas
-        self.formulas = state_formulas
-
+    def __str__(self):
+        string = "%s-d Partition with: " % self.polytope.n
+        for pred in self.predicates:
+            string += "\n    %s" % pred
+        return string
 

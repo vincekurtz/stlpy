@@ -46,7 +46,7 @@ class SPPMICPSolver(STLSolver):
        
         # DEBUG: make a plot of the partitions
         for p in partition_list:
-            p.plot_2d(edgecolor='k')
+            p.plot(edgecolor='k')
         plt.show()
         
     def ConstructPartitions(self):
@@ -59,36 +59,43 @@ class SPPMICPSolver(STLSolver):
         # Generate list of predicates that establish bounds on state and control input
         bounding_predicates = self.GetBoundingPredicates(self.spec)
 
-        # Create a polytope describing all of the bounds on y
+        # Create a partition describing all of the bounds on y
         C = np.full((len(bounding_predicates),self.d), np.nan)
         d = np.full((len(bounding_predicates),), np.nan)
         for i, pred in enumerate(bounding_predicates):
             C[i,:] = -pred.A  # polytopes defined as C*y <= d, but
             d[i] = -pred.b    # predicates defined as A*y >= b
         bounding_polytope = Polytope(self.d, ineq_matrices=(C,d)) 
+        bounds = Partition(bounding_polytope, [])
 
         # Check that the bounding poltyope is non-empty.
-        assert not bounding_polytope.is_empty(), "Bounding polytope is empty: infeasible specification"
+        assert not bounds.polytope.is_empty(), "Bounding polytope is empty: infeasible specification"
         
         # Check that the bounding polytope is compact (this is needed for the perspective
         # function-based encodings)
-        assert bounding_polytope.is_bounded(), "Unbounded specification. Consider adding constraints like G_[0,T] state_bounded"
+        assert bounds.polytope.is_bounded(), "Unbounded specification. Consider adding constraints like G_[0,T] state_bounded"
 
-        # Generate list of state-formulas that are not part of the bounds
-        state_formulas = self.GetNonBoundingStateFormulas(self.spec, bounding_predicates)
-
-        # Generate list of all non-predicates
+        # Generate list of all non-bounding predicates
         predicates = [p for p in self.GetPredicates(self.spec) if not p in bounding_predicates]
 
         # Create partitions
-        partition_list = [bounding_polytope]
+        partition_list = [bounds]
         for p in predicates:
             partition_list = self.SplitAllPartitions(partition_list, p)
 
         return partition_list
 
     def SplitAllPartitions(self, partition_list, pred):
-        #TODO: finish documenting
+        """
+        Given a list of Partitions and a predicate, generate a list of new
+        partitions such that the value of the predicate is the same across 
+        each new partition. 
+
+        @param partition_list   A list of Partitions
+        @param pred             The STLPredicate to split on 
+
+        @returns new_partition_list A new list of Partitions
+        """
         new_partition_list = []
         for partition in partition_list:
             new_partition_list += self.SplitPartition(partition, pred)
@@ -96,28 +103,31 @@ class SPPMICPSolver(STLSolver):
 
     def SplitPartition(self, partition, pred):
         """
-        Given a (compact) partition and a (linear) predicate, generate
+        Given a (bounded) partition and a (linear) predicate, generate
         new partitions such that the value of the predicate is the same
         accross new partitions. 
 
-        TODO: add labels on partitions and finish documenting
+        @param partition    The Partition that we'll split
+        @param pred         The STLPredicate that we'll use to do the splitting
 
+        @returns partition_list     A list of new Partitions
         """
+        assert isinstance(partition, Partition)
+        assert isinstance(pred, STLPredicate)
+
         # Check if this predicate intersects the given partition. If it 
         # doesn't, we can simply return the original partition.
-        redundant = partition.check_ineq_redundancy(-pred.A, -pred.b)
+        redundant = partition.polytope.check_ineq_redundancy(-pred.A, -pred.b)
         if redundant: return [partition]
 
         # Create two new partitions based on spliting with the predicate
         pred_poly = Polytope(self.d, ineq_matrices=(-pred.A, -pred.b))
         not_pred_poly = Polytope(self.d, ineq_matrices=(pred.A, pred.b))
 
-        P1 = partition.intersection(pred_poly)
-        P2 = partition.intersection(not_pred_poly)
+        P1 = Partition(partition.polytope.intersection(pred_poly), partition.predicates + [pred])
+        P2 = Partition(partition.polytope.intersection(not_pred_poly), partition.predicates)
 
         return [P1, P2]
-
-        pass
 
     def GetPredicates(self, spec):
         """
