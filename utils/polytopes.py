@@ -48,17 +48,110 @@ class Polytope():
             self.C = np.zeros((0,self.n))
             self.d = np.zeros(0)
 
-    def evaluate(self, x):
-        pass
-
     def contains(self, x):
-        pass
+        """
+        Determine whether this polytope contains the given point. 
+
+        @param x    The vector that we would like to test
+
+        @returns    A boolean indicating whether x is in this polytope. 
+        """
+        assert x.shape == (self.n,), "Vector length doesn't match polytope dimension"
+
+        return np.all(self.A@x == self.b) and np.all(self.C@x <= self.d)
 
     def intersection(self, other):
-        pass
+        """
+        Return a new polytope which represents the intersection of this polytope and
+        the another. 
 
-    def simplify(self):
-        pass
+        @param other    The other polytope that we'll intersect this one with. 
+
+        @returns new    A new polytope which is the intersection of this one and other. 
+        """
+        assert self.n == other.n, "Polytopes must have the same underlying dimension."
+
+        newA = np.vstack([self.A, other.A])
+        newb = np.hstack([self.b, other.b])
+
+        newC = np.vstack([self.C, other.C])
+        newd = np.hstack([self.d, other.d])
+
+        return Polytope(self.n, eq_matrices=(newA,newb), ineq_matrices=(newC,newd))
+
+    def add_eq_constraint(self, A, b):
+        """
+        Add the equality constraint A*x = b to this polytope. 
+
+        @param A    A matrix of size (m,n)
+        @param b    A vector of size (m,)
+        """
+        m = A.shape[0]
+        n = A.shape[1]
+        assert n == self.n, "A must be of size (m,n)"
+        assert b.shape == (m,), "b must be of size (m,)"
+
+        self.A = np.vstack([self.A,A])
+        self.b = np.hstack([self.b,b])
+
+    def add_ineq_constraint(self, C, d):
+        """
+        Add the inequality constraint C*x <= d to this polytope. 
+
+        @param C    A matrix of size (m,n)
+        @param d    A vector of size (m,)
+        """
+        m = C.shape[0]
+        n = C.shape[1]
+        assert n == self.n, "C must be of size (m,n)"
+        assert d.shape == (m,), "d must be of size (m,)"
+
+        self.C = np.vstack([self.C,C])
+        self.d = np.hstack([self.d,d])
+
+    def check_ineq_redundancy(self, c_prime, d_prime):
+        """
+        Check whether the inequality constraint 
+            c_prime*x <= d_prime 
+        is redundant with this polytope. 
+        
+        @param c_prime    A vector of size (1,n)
+        @param d_prime    A vector of size (1,)
+
+        @returns redundnat  A boolean which is True only if the constraint is already enforced. 
+        """
+        assert c_prime.shape == (1,self.n), "c_prime must be of size (1,n)"
+        assert d_prime.shape == (1,), "d_prime must be of size (1,)"
+
+        # We'll check redundancy by solving up a linear program
+        #
+        #   max  c_prime*x
+        #   s.t. C*x <= d
+        #        A*x = b
+        #        c_prime*x <= d_prime + 1
+        #
+        # If c_prime*x <= d_prime at optimality, then the constraint is redundant. 
+        print("Checking constraint redundancy")
+
+        prog = MathematicalProgram()
+        x = prog.NewContinuousVariables(self.n, 'x')
+
+        prog.AddLinearCost(a=-c_prime.T,b=0,vars=x)
+
+        if self.eq_matrices is not None:
+            prog.AddConstraint( eq(self.A@x, self.b) )
+        if self.ineq_matrices is not None:
+            prog.AddConstraint( le(self.C@x, self.d) )
+
+        prog.AddConstraint( le(c_prime@x, d_prime+1) )
+
+        solver = GurobiSolver()
+        res = solver.Solve(prog)
+        assert res.is_success(), "Infeasible LP in redundancy check"
+
+        if -res.get_optimal_cost() <= d_prime:
+            return True
+        return False
 
     def is_empty(self):
         """

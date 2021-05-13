@@ -70,9 +70,37 @@ class SPPMICPSolver(STLSolver):
         # Generate list of state-formulas that are not part of the bounds
         state_formulas = self.GetNonBoundingStateFormulas(self.spec, bounding_predicates)
 
+        # Generate list of all non-predicates
+        predicates = [p for p in self.GetPredicates(self.spec) if not p in bounding_predicates]
+
         # Create partitions
-        for formula in state_formulas:
-            print(formula)
+        for p in predicates:
+            print(p)
+
+        # DEBUG
+        C = np.array([[0,1]])
+        d = np.array([1])
+
+        poly = Polytope(2, ineq_matrices=(C,d))
+
+        c_prime = np.array([[0,1]])
+        d_prime = np.array([0.9999])
+
+        print(poly.check_ineq_redundancy(c_prime, d_prime))
+
+    def SplitPartition(self, partition, predicate):
+        """
+        Given a (compact) partition and a (linear) predicate, generate
+        new partitions such that the value of the predicate is the same
+        accross new partitions. 
+        """
+        # Check if this predicate intersects the given partition
+
+        # Create two new partitions based on spliting with the predicate
+
+        # Remove redundant constraints in the new partitions
+
+        pass
 
     def GetPredicates(self, spec):
         """
