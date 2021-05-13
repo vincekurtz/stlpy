@@ -53,10 +53,15 @@ class Polytope():
             self.C = np.zeros((0,self.n))
             self.d = np.zeros(0)
 
+        # Allow for easier checks of what sort of constraints we have
         if self.A.size == 0:
             self.eq_matrices = None
         if self.C.size == 0:
             self.ineq_matrices = None
+       
+        # Create a single solver instance to avoid printing the
+        # 'Academic license' banner every time we solve an LP.
+        self.solver = GurobiSolver()
 
     def contains(self, x):
         """
@@ -144,7 +149,6 @@ class Polytope():
         #        c_prime*x <= d_prime + 1
         #
         # If c_prime*x <= d_prime at optimality, then the constraint is redundant. 
-        print("Checking constraint redundancy")
 
         prog = MathematicalProgram()
         x = prog.NewContinuousVariables(self.n, 'x')
@@ -158,8 +162,7 @@ class Polytope():
 
         prog.AddConstraint( le(c_prime@x, d_prime+1) )
 
-        solver = GurobiSolver()
-        res = solver.Solve(prog)
+        res = self.solver.Solve(prog)
         
         if not res.is_success():
             return True
@@ -178,15 +181,13 @@ class Polytope():
 
         @returns empty  a boolean indicating whether or not this poltyope is empty
         """
-        print("Checking polytope emptiness")
         prog = MathematicalProgram()
         x = prog.NewContinuousVariables(self.n, 'x')
         if self.eq_matrices is not None:
             prog.AddConstraint( eq(self.A@x, self.b) )
         if self.ineq_matrices is not None:
             prog.AddConstraint( le(self.C@x, self.d) )
-        solver = GurobiSolver()
-        res = solver.Solve(prog)
+        res = self.solver.Solve(prog)
 
         # If there is a feasible solution then the polytope is non-empty
         return not res.is_success()
@@ -205,7 +206,6 @@ class Polytope():
         @note   So far we just consider polytopes with inequality constraints only.
         """
         # TODO: set up some sort of flag to avoid redundant runs of this LP every time
-        print("Checking polytope boundedness")
         if self.eq_matrices is not None:
             raise NotImplementedError
         if self.ineq_matrices is None:
@@ -225,8 +225,7 @@ class Polytope():
         y = prog.NewContinuousVariables(self.C.shape[0], 'y')
         prog.AddConstraint( ge(y, 1) )
         prog.AddConstraint( eq(self.C.T@y, 0) )
-        solver = GurobiSolver()
-        res = solver.Solve(prog)
+        res = self.solver.Solve(prog)
 
         # If there is a feasible solution then the polytope is bounded
         return res.is_success()
