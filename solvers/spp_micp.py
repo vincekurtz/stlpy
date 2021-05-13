@@ -3,13 +3,12 @@ from STL import STLPredicate
 from utils import Polytope, Partition
 
 import numpy as np
-import itertools
+import time
+import matplotlib.pyplot as plt
 from pydrake.all import (MathematicalProgram, 
                          GurobiSolver, 
                          MosekSolver, 
                          eq)
-
-import matplotlib.pyplot as plt #DEBUG
 
 class SPPMICPSolver(STLSolver):
     """
@@ -42,12 +41,7 @@ class SPPMICPSolver(STLSolver):
         self.mp = MathematicalProgram()
 
         # Construct polytopic partitions
-        partition_list = self.ConstructPartitions()
-       
-        # DEBUG: make a plot of the partitions
-        for p in partition_list:
-            p.plot(edgecolor='k')
-        plt.show()
+        self.partition_list = self.ConstructPartitions()
         
     def ConstructPartitions(self):
         """
@@ -56,6 +50,7 @@ class SPPMICPSolver(STLSolver):
 
         @returns lst    A list of Polytopes representing each partition.
         """
+        start_time = time.time()
         # Generate list of predicates that establish bounds on state and control input
         bounding_predicates = self.GetBoundingPredicates(self.spec)
 
@@ -82,6 +77,8 @@ class SPPMICPSolver(STLSolver):
         partition_list = [bounds]
         for p in predicates:
             partition_list = self.SplitAllPartitions(partition_list, p)
+
+        print("Created %s partitions in %0.4fs" % (len(partition_list), time.time()-start_time))
 
         return partition_list
 
@@ -117,7 +114,9 @@ class SPPMICPSolver(STLSolver):
 
         # Check if this predicate intersects the given partition. If it 
         # doesn't, we can simply return the original partition.
-        redundant = partition.polytope.check_ineq_redundancy(-pred.A, -pred.b)
+        pred_redundant = partition.polytope.check_ineq_redundancy(-pred.A, -pred.b)
+        negation_redundant = partition.polytope.check_ineq_redundancy(pred.A, pred.b)
+        redundant = pred_redundant or negation_redundant
         if redundant: return [partition]
 
         # Create two new partitions based on spliting with the predicate
@@ -223,3 +222,13 @@ class SPPMICPSolver(STLSolver):
                     return []
             else:
                 return []
+
+    def plot_partitions(self, show=True):
+        """
+        Make plot of the projection of all partitions to 2d. 
+        """
+        for partition in self.partition_list:
+            partition.plot(edgecolor='k')
+
+        if show: 
+            plt.show()

@@ -163,7 +163,7 @@ class Polytope():
         prog.AddConstraint( le(c_prime@x, d_prime+1) )
 
         res = self.solver.Solve(prog)
-        
+
         if not res.is_success():
             return True
 

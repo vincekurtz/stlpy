@@ -10,7 +10,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.common import *
-from scenarios.reach_avoid import reach_avoid_specification, plot_reach_avoid_scenario
+from scenarios.reach_avoid import *
+from scenarios.random_multitarget import *
 from solvers import SPPMICPSolver, MICPSolver, GradientSolver
 
 # Specification Parameters
@@ -50,6 +51,10 @@ spec = control_bounded.always(0,T) & \
        at_goal.eventually(0, T)
 #       not_at_obstacle.until(at_goal, 0, T)
 
+# DEBUG: more complicated specification
+spec, obstacles, targets = random_multitarget_specification(2, 2, 2, 20, seed=0)
+plot_random_multitarget_scenario(obstacles,targets)
+plt.show()
 
 # System parameters
 A = np.block([[1,0,1,0],
@@ -70,6 +75,7 @@ x0 = np.array([1.0,2.0,0,0])
 
 # Solve for the system trajectory
 solver = SPPMICPSolver(spec, A, B, Q, R, x0, T)
+solver.plot_partitions()
 x = None
 #solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
