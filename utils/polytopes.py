@@ -53,6 +53,11 @@ class Polytope():
             self.C = np.zeros((0,self.n))
             self.d = np.zeros(0)
 
+        if self.A.size == 0:
+            self.eq_matrices = None
+        if self.C.size == 0:
+            self.ineq_matrices = None
+
     def contains(self, x):
         """
         Determine whether this polytope contains the given point. 
@@ -124,6 +129,9 @@ class Polytope():
         @param d_prime    A vector of size (1,)
 
         @returns redundnat  A boolean which is True only if the constraint is already enforced. 
+
+        @note If the added inequality constraint results in an empty polytope, we treat
+              this as being redundant. 
         """
         assert c_prime.shape == (1,self.n), "c_prime must be of size (1,n)"
         assert d_prime.shape == (1,), "d_prime must be of size (1,)"
@@ -152,7 +160,9 @@ class Polytope():
 
         solver = GurobiSolver()
         res = solver.Solve(prog)
-        assert res.is_success(), "Infeasible LP in redundancy check"
+        
+        if not res.is_success():
+            return True
 
         if -res.get_optimal_cost() <= d_prime:
             return True
@@ -196,7 +206,7 @@ class Polytope():
         """
         # TODO: set up some sort of flag to avoid redundant runs of this LP every time
         print("Checking polytope boundedness")
-        if (self.eq_matrices is not None) and self.A.size > 0:
+        if self.eq_matrices is not None:
             raise NotImplementedError
         if self.ineq_matrices is None:
             return False
@@ -231,7 +241,7 @@ class Polytope():
         @note   Considers polytopes with inequality constraints only
         @note   Only considers bounded polytopes, so vertices are points (not rays)
         """
-        assert (self.eq_matrices is None) or (self.A.size == 0), "Equality constraints not yet supported"
+        assert self.eq_matrices is None, "Equality constraints not yet supported"
         assert self.is_bounded(), "Ray representations for unbounded polytopes not yet supported"
 
         Hrep = np.hstack([self.d[np.newaxis].T,-self.C])

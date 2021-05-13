@@ -43,6 +43,11 @@ class SPPMICPSolver(STLSolver):
 
         # Construct polytopic partitions
         partition_list = self.ConstructPartitions()
+       
+        # DEBUG: make a plot of the partitions
+        for p in partition_list:
+            p.plot_2d(edgecolor='k')
+        plt.show()
         
     def ConstructPartitions(self):
         """
@@ -77,19 +82,10 @@ class SPPMICPSolver(STLSolver):
 
         # Create partitions
         partition_list = [bounding_polytope]
+        for p in predicates:
+            partition_list = self.SplitAllPartitions(partition_list, p)
 
-        # DEBUG
-        #bounding_polytope.plot_2d(edgecolor='k',alpha=0.5,show=True)
-        print(predicates[0])
-        partition_list = self.SplitAllPartitions(partition_list, predicates[0])
-        #print(predicates[1])
-        #self.SplitPartition(partition_list[0], predicates[0])
-        #partition_list = self.SplitAllPartitions(partition_list, predicates[1])
-
-        for p in partition_list:
-            p.plot_2d()
-
-        plt.show()
+        return partition_list
 
     def SplitAllPartitions(self, partition_list, pred):
         #TODO: finish documenting
