@@ -196,7 +196,7 @@ class Polytope():
         """
         # TODO: set up some sort of flag to avoid redundant runs of this LP every time
         print("Checking polytope boundedness")
-        if self.eq_matrices is not None:
+        if (self.eq_matrices is not None) and self.A.size > 0:
             raise NotImplementedError
         if self.ineq_matrices is None:
             return False
@@ -231,7 +231,7 @@ class Polytope():
         @note   Considers polytopes with inequality constraints only
         @note   Only considers bounded polytopes, so vertices are points (not rays)
         """
-        assert self.eq_matrices is None, "Equality constraints not yet supported"
+        assert (self.eq_matrices is None) or (self.A.size == 0), "Equality constraints not yet supported"
         assert self.is_bounded(), "Ray representations for unbounded polytopes not yet supported"
 
         Hrep = np.hstack([self.d[np.newaxis].T,-self.C])
@@ -244,6 +244,12 @@ class Polytope():
         return V
 
     def from_vertices(self, V):
+        # Use cdd to generate a polytope from a list of vertices
+        pass
+
+    def simplify(self):
+        # Convert to vertex rep, take the convex hull, and convert back. 
+        # An easy (but a bit expensive) way to remove redundant constraints. 
         pass
 
     def add_perspective_constraint(self, prog, phi, x):

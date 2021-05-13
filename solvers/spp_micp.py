@@ -9,6 +9,8 @@ from pydrake.all import (MathematicalProgram,
                          MosekSolver, 
                          eq)
 
+import matplotlib.pyplot as plt #DEBUG
+
 class SPPMICPSolver(STLSolver):
     """
     Given an STLFormula (spec), a system of the form 
@@ -74,25 +76,50 @@ class SPPMICPSolver(STLSolver):
         predicates = [p for p in self.GetPredicates(self.spec) if not p in bounding_predicates]
 
         # Create partitions
-        for p in predicates:
-            print(p)
+        partition_list = [bounding_polytope]
 
         # DEBUG
-        bounding_polytope.plot_2d(edgecolor='k',alpha=0.5,show=True)
-        p = predicates[0]
-        print(p)
+        #bounding_polytope.plot_2d(edgecolor='k',alpha=0.5,show=True)
+        print(predicates[0])
+        partition_list = self.SplitAllPartitions(partition_list, predicates[0])
+        #print(predicates[1])
+        #self.SplitPartition(partition_list[0], predicates[0])
+        #partition_list = self.SplitAllPartitions(partition_list, predicates[1])
 
-    def SplitPartition(self, partition, predicate):
+        for p in partition_list:
+            p.plot_2d()
+
+        plt.show()
+
+    def SplitAllPartitions(self, partition_list, pred):
+        #TODO: finish documenting
+        new_partition_list = []
+        for partition in partition_list:
+            new_partition_list += self.SplitPartition(partition, pred)
+        return new_partition_list
+
+    def SplitPartition(self, partition, pred):
         """
         Given a (compact) partition and a (linear) predicate, generate
         new partitions such that the value of the predicate is the same
         accross new partitions. 
+
+        TODO: add labels on partitions and finish documenting
+
         """
-        # Check if this predicate intersects the given partition
+        # Check if this predicate intersects the given partition. If it 
+        # doesn't, we can simply return the original partition.
+        redundant = partition.check_ineq_redundancy(-pred.A, -pred.b)
+        if redundant: return [partition]
 
         # Create two new partitions based on spliting with the predicate
+        pred_poly = Polytope(self.d, ineq_matrices=(-pred.A, -pred.b))
+        not_pred_poly = Polytope(self.d, ineq_matrices=(pred.A, pred.b))
 
-        # Remove redundant constraints in the new partitions
+        P1 = partition.intersection(pred_poly)
+        P2 = partition.intersection(not_pred_poly)
+
+        return [P1, P2]
 
         pass
 
