@@ -78,15 +78,9 @@ class SPPMICPSolver(STLSolver):
             print(p)
 
         # DEBUG
-        C = np.array([[0,1]])
-        d = np.array([1])
-
-        poly = Polytope(2, ineq_matrices=(C,d))
-
-        c_prime = np.array([[0,1]])
-        d_prime = np.array([0.9999])
-
-        print(poly.check_ineq_redundancy(c_prime, d_prime))
+        bounding_polytope.plot_2d(edgecolor='k',alpha=0.5,show=True)
+        p = predicates[0]
+        print(p)
 
     def SplitPartition(self, partition, predicate):
         """

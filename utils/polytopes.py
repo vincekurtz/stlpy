@@ -1,6 +1,11 @@
+import cdd
 import numpy as np
+
 from scipy.linalg import null_space
 from pydrake.all import MathematicalProgram, GurobiSolver, ge, le, eq
+from scipy.spatial import ConvexHull
+
+import matplotlib.pyplot as plt
 
 class Polytope():
     """
@@ -189,6 +194,7 @@ class Polytope():
         
         @note   So far we just consider polytopes with inequality constraints only.
         """
+        # TODO: set up some sort of flag to avoid redundant runs of this LP every time
         print("Checking polytope boundedness")
         if self.eq_matrices is not None:
             raise NotImplementedError
@@ -215,9 +221,58 @@ class Polytope():
         # If there is a feasible solution then the polytope is bounded
         return res.is_success()
 
+    def get_vertices(self):
+        """
+        Use cone double description to obtain the vertices of this polytope. 
+
+        @returns V  A numpy array of size (:,n), where each row represents the coordinates
+                    of a vertex. 
+
+        @note   Considers polytopes with inequality constraints only
+        @note   Only considers bounded polytopes, so vertices are points (not rays)
+        """
+        assert self.eq_matrices is None, "Equality constraints not yet supported"
+        assert self.is_bounded(), "Ray representations for unbounded polytopes not yet supported"
+
+        Hrep = np.hstack([self.d[np.newaxis].T,-self.C])
+        Hrep = cdd.Matrix(Hrep, number_type='float')  # 'fraction' is more precise, but
+        Hrep.rep_type = cdd.RepType.INEQUALITY        # more of a pain to convert to numpy
+        poly = cdd.Polyhedron(Hrep)
+        Vrep = np.asarray(poly.get_generators())
+        V = Vrep[:,1:]
+
+        return V
+
+    def from_vertices(self, V):
+        pass
+
     def add_perspective_constraint(self, prog, phi, x):
         # Should probably double check compactness first
         pass
 
-    def plot(self, **kwargs):
-        pass
+    def plot_2d(self, ax=None, show=False, **kwargs):
+        """
+        Make a plot of this polytope, projected to the first two dimensions. 
+
+        @param ax       (optional) the matplotlib axis to plot this polytope on. 
+        @param show     (optional) whether to display the plot immediately.
+        @param kwargs   (optional) additional keyword arguments to pass to matplotlib.
+
+        @note   Considers bounded polytopes with inequality constraints only. 
+        """
+        if ax is None:
+            ax = plt.gca()
+
+        # Get vertices and project to the first two dimensions
+        V = self.get_vertices()   # checks for boundedness and eq constraints happen here
+        V = np.unique(V[:,:2],axis=0)
+
+        # Order the vertices counterclockwise
+        hull = ConvexHull(V)
+        V = V[hull.vertices]
+
+        # Make the plot
+        ax.fill(*V.T, **kwargs)
+        
+        if show: plt.show()
+
