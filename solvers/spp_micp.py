@@ -56,15 +56,27 @@ class SPPMICPSolver(STLSolver):
         #############
         # DEBUG: set up a spp problem that gives us a minimum-cost path
         # to a target partition
-        target = self.partition_list[-1].polytope
+        target = self.partition_list[-2].polytope
         start = self.partition_list[4].polytope  # contains x0
         y0 = np.hstack([x0,np.zeros(self.m)])
 
-        # Get the vertex corresponding to the initial node in the graph
+        # Plot start and target regions
+        ax = plt.gca()
+        ax.set_xlim((0,10))
+        ax.set_ylim((0,10))
+        start.plot_2d(ax=ax)
+        target.plot_2d(ax=ax)
+        plt.show()
+
+        # Get the vertices corresponding to the initial and final nodes
+        # in the graph
         v0 = None
+        vF = None
         for i, (t,s) in enumerate(V):
             if P[i] == start and t == 0:
                 v0 = i
+            if P[i] == target and t == self.T-1:
+                vF = i
 
         # Add binary variables a_ij such that a_ij = 1 only if the edge
         # (i,j) is traversed in the optimal path
@@ -148,6 +160,43 @@ class SPPMICPSolver(STLSolver):
                 self.mp.AddLinearConstraint( b[i] == a_O )
             else:
                 self.mp.AddLinearConstraint( b[i] == a_I )
+
+        # Add additional relaxation-tightening constraints
+        for i, (t,s) in enumerate(V):
+            
+            Oi = [k for k, e in enumerate(E) if e[0] == i]
+            Ii = [k for k, e in enumerate(E) if e[1] == i]
+
+            a_O = sum(a[k] for k in Oi)
+            a_I = sum(a[k] for k in Ii)
+
+            delta_si = 1 if t == 0 and P[s] == start else 0
+            delta_ti = 1 if t == self.T-1 and P[s] == target else 0
+
+            # degree constraints (20)
+            if len(Oi) > 0:
+                self.mp.AddLinearConstraint( a_O <= 1 - delta_ti )
+            if len(Ii) > 0:
+                self.mp.AddLinearConstraint( a_I <= 1 - delta_si )
+
+            # spatial conservation-of-flow constraints (19)
+            y_start_O = sum(Y_start[k,:] for k in Oi)
+            y_end_I = sum(Y_end[k,:] for k in Ii)
+            
+            ys = np.hstack([X[v0,:], U[v0,:]])
+            yt = np.hstack([X[vF,:], U[vF,:]])
+
+            self.mp.AddLinearConstraint(eq( y_start_O - y_end_I, delta_si*ys - delta_ti*yt ))
+
+            # spatial degree constraints
+            if len(Oi) > 0:
+                y_i = np.hstack([X[i,:],U[i,:]])
+                argument = y_i - delta_ti*yt - y_start_O
+                scaling = 1 - delta_ti - a_O
+
+                add_perspective_constraint(self.mp, P[i], argument, scaling)
+
+            # TODO: add output spatial degree constrains
 
         # Initial condition constraints
         self.mp.AddLinearConstraint(eq( X[v0,:], x0 ))
@@ -375,6 +424,9 @@ class SPPMICPSolver(STLSolver):
         solver = GurobiSolver()
         res = solver.Solve(self.mp)
 
+        solve_time = res.get_solver_details().optimizer_time
+        print("Solve time: ", solve_time)
+
         if res.is_success():
             # Extract the solution
             a = res.GetSolution(self.a)
@@ -387,10 +439,13 @@ class SPPMICPSolver(STLSolver):
             u = np.full((self.m, self.T), np.nan)
 
             for i, (t,s) in enumerate(self.V):
-                if b[i] == 1:
+                if b[i] == 1.0:  # TODO: fix some numerical issues with this check
                     # This node is on the optimal path
                     x[:,t] = X[i,:]
                     u[:,t] = U[i,:]
+
+            print(x)
+            print(u)
 
             return x, u
         else:
