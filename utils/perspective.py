@@ -7,7 +7,32 @@
 #
 ##
 
-from pydrake.all import eq
+from utils import Polytope
+from pydrake.all import eq, le
+
+def add_perspective_constraint(prog, P, x, lmbda):
+    """
+    Given a polytope P, add the constraint
+
+        x \in lmbda*P
+
+    to the given Drake MathematicalProgram. 
+
+    @param prog     A Drake MathematicalProgram instance
+    @param P        The Polytope
+    @param x        An n-dimensional vector of Drake variables or expressions
+    @param lmbda    The scaling factor, a Drake variable or expression 
+    """
+    assert isinstance(P, Polytope), "P must be a polytope"
+    assert len(x) == P.n, "Variable size doesn't match polytope dimension"
+
+    if P.has_eq_constraints():
+        residual = P.A@x - P.b * lmbda
+        prog.AddLinearConstraint(eq( residual, 0 ))
+
+    if P.has_ineq_constraints():
+        residual = P.C@x - P.d * lmbda
+        prog.AddLinearConstraint(le( residual, 0 ))
 
 def add_quadratic_perspective_cost(prog, Q, x, lmbda):
     """
@@ -70,30 +95,4 @@ def add_LCQ_perspective_cost(prog, Q, A, b, x, lmbda):
     """
     add_quadratic_perspective_cost(prog, Q, x, lmbda)
     prog.AddLinearConstraint(eq( A@x - b*lmbda, 0 ))
-
-if __name__=="__main__":
-    # Testing
-    from pydrake.all import MathematicalProgram, GurobiSolver
-    import numpy as np
-
-    prog = MathematicalProgram()
-
-    Q = np.eye(2)
-    A = np.eye(2)
-    b = 2*np.ones((2,))
-    x = prog.NewContinuousVariables(2,'x')
-    lmbda = prog.NewContinuousVariables(1,'lambda')[0]
-
-    add_linear_constrained_quadratic_perspective_cost(prog, Q, A, b, x, lmbda) 
-    prog.AddConstraint(lmbda == 1)
-
-    solver = GurobiSolver()
-    res = solver.Solve(prog)
-
-    print(res.is_success())
-
-    print(res.GetSolution(x))
-    print(res.get_optimal_cost())
-    print(res.GetSolution(lmbda))
-
 
