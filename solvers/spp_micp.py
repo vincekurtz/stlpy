@@ -1,8 +1,9 @@
 from solvers.solver_base import STLSolver
 from STL import STLPredicate
-from utils import Polytope, Partition, add_LCQ_perspective_cost
+from utils import *
 
 import numpy as np
+import scipy as sp
 import time
 import matplotlib.pyplot as plt
 from pydrake.all import (MathematicalProgram, 
@@ -42,7 +43,124 @@ class SPPMICPSolver(STLSolver):
 
         # Construct polytopic partitions
         self.partition_list = self.ConstructPartitions()
-        
+
+        # Construct a graph where each vertex corresponds to a partition at
+        # a given timestep, and edges exist between each pair of partitions.
+        V, E = self.ConstructGraph()
+        nV = len(V)
+        nE = len(E)
+
+        # Add list of convex partitions corresponding to vertices
+        P = [self.partition_list[s].polytope for (t,s) in V]
+
+        #############
+        # DEBUG: set up a spp problem that gives us a minimum-cost path
+        # to a target partition
+        target = self.partition_list[-1].polytope
+        start = self.partition_list[4].polytope  # contains x0
+        y0 = np.hstack([x0,np.zeros(self.m)])
+
+        # Get the vertex corresponding to the initial node in the graph
+        v0 = None
+        for i, (t,s) in enumerate(V):
+            if P[i] == start and t == 0:
+                v0 = i
+
+        # Add binary variables a_ij such that a_ij = 1 only if the edge
+        # (i,j) is traversed in the optimal path
+        a = self.mp.NewBinaryVariables(nE, 'a')
+
+        # Add (binary) variables b_i = b_s(t) representing the total
+        # flow through each node in the graph
+        b = self.mp.NewContinuousVariables(nV, 'b')
+
+        # Add continuous variables x, u corresponding to the state and
+        # control input for each node
+        X = self.mp.NewContinuousVariables(nV, self.n, 'x')
+        U = self.mp.NewContinuousVariables(nV, self.m, 'u')
+
+        # Add the spatial (bilinear) variables
+        #
+        #    y_start_ij = a_ij*y_i
+        #    y_end_ij = a_ij*y_j
+        #
+        # where y_i = [x_i;u_i]
+        Y_start = self.mp.NewContinuousVariables(nE, self.n+self.m, 'y_start')
+        Y_end = self.mp.NewContinuousVariables(nE, self.n+self.m, 'y_end')
+
+        # Set the perspective-based cost function (13a)
+        for e, (i,j) in enumerate(E):
+            # Unpack some variables
+            a_ij = a[e]
+            y_start_ij = Y_start[e,:]
+            y_end_ij = Y_end[e,:]
+
+            # Write as
+            #   min  f_tilde(lmbda, x)
+            #   s.t. g_tilde(lmbda, x) = 0
+            # where
+            #  f(x) = x'Hx
+            # and
+            #  g(x) = Gx - g 
+            lmbda = a_ij
+            x = np.hstack([y_start_ij, y_end_ij])
+            H = sp.linalg.block_diag(self.Q, self.R, 0*np.eye(self.n+self.m))  # TODO: add terminal cost
+
+            G = np.block([self.A, self.B, -np.eye(self.n), np.zeros(self.B.shape)])
+            g = np.zeros(self.n)
+
+            add_LCQ_perspective_cost(self.mp, H, G, g, x, lmbda)
+
+        # Add the bilinear envelope constraints (13b-c)
+        # TODO: check boundedness first
+        # TODO: abstract as separate function?
+        for e, (i,j) in enumerate(E):
+            # Unpack some variables
+            a_ij = a[e]
+            y_start_ij = Y_start[e,:]
+            y_end_ij = Y_end[e,:]
+            y_i = np.hstack([X[i,:], U[i,:]])
+            y_j = np.hstack([X[j,:], U[j,:]])
+
+            # (a_ij, y_i, y_start_ij) \in Lambda_i
+            add_perspective_constraint(self.mp, P[i], y_start_ij, a_ij)
+            add_perspective_constraint(self.mp, P[i], y_i - y_start_ij, 1-a_ij)
+            
+            # (a_ij, y_j, y_end_ij) \in Lambda_j
+            add_perspective_constraint(self.mp, P[j], y_end_ij, a_ij)
+            add_perspective_constraint(self.mp, P[j], y_j - y_end_ij, 1-a_ij)
+
+        # Add the flow constraints (13d)
+        for i, (t,s) in enumerate(V):
+            Oi = [k for k, e in enumerate(E) if e[0] == i]
+            Ii = [k for k, e in enumerate(E) if e[1] == i]
+
+            a_O = sum(a[k] for k in Oi)
+            a_I = sum(a[k] for k in Ii)
+
+            delta_si = 1 if t == 0 and P[s] == start else 0
+            delta_ti = 1 if t == self.T-1 and P[s] == target else 0
+
+            self.mp.AddLinearConstraint( a_O - a_I == delta_si - delta_ti )
+
+            # Define b_i as total flow thru each node
+            if t == 0:
+                self.mp.AddLinearConstraint( b[i] == a_O )
+            else:
+                self.mp.AddLinearConstraint( b[i] == a_I )
+
+        # Initial condition constraints
+        self.mp.AddLinearConstraint(eq( X[v0,:], x0 ))
+
+        # DEBUG: save stuff for later
+        self.a = a
+        self.b = b
+        self.X = X
+        self.U = U
+        self.P = P
+        self.V = V
+        self.E = E
+
     def ConstructPartitions(self):
         """
         Define a set of Polytope partitions P_l such that the same predicates hold
@@ -127,6 +245,32 @@ class SPPMICPSolver(STLSolver):
         P2 = Partition(partition.polytope.intersection(not_pred_poly), partition.predicates)
 
         return [P1, P2]
+
+    def ConstructGraph(self):
+        """
+        Create a graph G = (V, E) where each vertex/node corresponds to a partition
+        at a given timestep and edges connect all the partitions going forward in time.
+
+        @returns V  A list of vertices. Each vertex is represented by a tuple 
+                    i = (t, s) containing the timestep (t) and the index of the 
+                    corresponding partition (s).
+        @returns E  A list of edges. Each edge is represented by a tuple (i,j)
+                    with the indices of the start and end vertices. 
+
+        @note self.ConstructPartitions must be run first.
+        """
+        V = []
+        for t in range(self.T):
+            for s in range(len(self.partition_list)):
+                V.append((t,s))
+
+        E = []
+        for t in range(self.T-1):
+            for s in range(len(self.partition_list)):
+                for s_prime in range(len(self.partition_list)):
+                    E.append(( V.index((t,s)), V.index((t+1,s_prime)) ))
+
+        return (V, E)
 
     def GetPredicates(self, spec):
         """
@@ -222,6 +366,35 @@ class SPPMICPSolver(STLSolver):
                     return []
             else:
                 return []
+
+    def Solve(self):
+        """
+        Solve the optimization problem and return the optimal values of (x,u).
+        """
+        print("Solving...")
+        solver = GurobiSolver()
+        res = solver.Solve(self.mp)
+
+        if res.is_success():
+            # Extract the solution
+            a = res.GetSolution(self.a)
+            b = res.GetSolution(self.b)
+            X = res.GetSolution(self.X)
+            U = res.GetSolution(self.U)
+
+            # Preallocate optimal values of x, u
+            x = np.full((self.n, self.T), np.nan)
+            u = np.full((self.m, self.T), np.nan)
+
+            for i, (t,s) in enumerate(self.V):
+                if b[i] == 1:
+                    # This node is on the optimal path
+                    x[:,t] = X[i,:]
+                    u[:,t] = U[i,:]
+
+            return x, u
+        else:
+            return None, None
 
     def plot_partitions(self, show=True):
         """

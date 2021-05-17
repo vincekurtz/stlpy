@@ -17,7 +17,7 @@ from solvers import SPPMICPSolver, MICPSolver, GradientSolver
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
-T = 20
+T = 10
 
 # The "big-M" constant used for mixed-integer encoding
 M = 1000
@@ -47,8 +47,8 @@ in_workspace = inside_rectangle_formula((x_min, x_max, y_min, y_max), 0, 1, 6, n
 spec = control_bounded.always(0,T) & \
        velocity_bounded.always(0,T) & \
        in_workspace.always(0,T) & \
-       not_at_obstacle.always(0,T) & \
-       at_goal.eventually(0, T)
+       not_at_obstacle.always(0,T)# & \
+#       at_goal.eventually(0, T)
 #       not_at_obstacle.until(at_goal, 0, T)
 
 # DEBUG: more complicated specification
@@ -75,11 +75,10 @@ x0 = np.array([1.0,2.0,0,0])
 
 # Solve for the system trajectory
 solver = SPPMICPSolver(spec, A, B, Q, R, x0, T)
-solver.plot_partitions()
-x = None
+#solver.plot_partitions()
 #solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
-#x, u = solver.Solve()
+x, u = solver.Solve()
 
 if x is not None:
     # Set up a plot
