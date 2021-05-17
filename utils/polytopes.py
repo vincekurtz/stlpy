@@ -32,8 +32,6 @@ class Polytope():
         assert isinstance(n, int) and n > 0, "n must be a positive integer"
        
         self.n = n
-        self.eq_matrices = eq_matrices
-        self.ineq_matrices = ineq_matrices
 
         if eq_matrices is not None:
             self.A, self.b = eq_matrices
@@ -53,15 +51,27 @@ class Polytope():
             self.C = np.zeros((0,self.n))
             self.d = np.zeros(0)
 
-        # Allow for easier checks of what sort of constraints we have
-        if self.A.size == 0:
-            self.eq_matrices = None
-        if self.C.size == 0:
-            self.ineq_matrices = None
-       
         # Create a single solver instance to avoid printing the
         # 'Academic license' banner every time we solve an LP.
         self.solver = GurobiSolver()
+
+    def has_eq_constraints(self):
+        """
+        Convienience function for checking whether this Polytope includes
+        equality constraints Ax = b. 
+        """
+        if self.A.shape[0] == 0:
+            return False
+        return True
+    
+    def has_ineq_constraints(self):
+        """
+        Convienience function for checking whether this Polytope includes
+        inequality constraints Cx <= d. 
+        """
+        if self.C.shape[0] == 0:
+            return False
+        return True
 
     def contains(self, x):
         """
@@ -155,9 +165,9 @@ class Polytope():
 
         prog.AddLinearCost(a=-c_prime.T,b=0,vars=x)
 
-        if self.eq_matrices is not None:
+        if self.has_eq_constraints():
             prog.AddConstraint( eq(self.A@x, self.b) )
-        if self.ineq_matrices is not None:
+        if self.has_ineq_constraints():
             prog.AddConstraint( le(self.C@x, self.d) )
 
         prog.AddConstraint( le(c_prime@x, d_prime+1) )
@@ -183,9 +193,9 @@ class Polytope():
         """
         prog = MathematicalProgram()
         x = prog.NewContinuousVariables(self.n, 'x')
-        if self.eq_matrices is not None:
+        if self.has_eq_constraints():
             prog.AddConstraint( eq(self.A@x, self.b) )
-        if self.ineq_matrices is not None:
+        if self.has_ineq_constraints():
             prog.AddConstraint( le(self.C@x, self.d) )
         res = self.solver.Solve(prog)
 
@@ -206,9 +216,9 @@ class Polytope():
         @note   So far we just consider polytopes with inequality constraints only.
         """
         # TODO: set up some sort of flag to avoid redundant runs of this LP every time
-        if self.eq_matrices is not None:
+        if self.has_eq_constraints():
             raise NotImplementedError
-        if self.ineq_matrices is None:
+        if not self.has_ineq_constraints():
             return False
 
         # Check the kernel. If ker(C) is nonempty, the polytope is unbounded
@@ -240,7 +250,7 @@ class Polytope():
         @note   Considers polytopes with inequality constraints only
         @note   Only considers bounded polytopes, so vertices are points (not rays)
         """
-        assert self.eq_matrices is None, "Equality constraints not yet supported"
+        assert not self.has_eq_constraints(), "Equality constraints not yet supported"
         assert self.is_bounded(), "Ray representations for unbounded polytopes not yet supported"
 
         Hrep = np.hstack([self.d[np.newaxis].T,-self.C])
