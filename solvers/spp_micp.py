@@ -1,6 +1,6 @@
 from solvers.solver_base import STLSolver
 from STL import STLPredicate
-from utils import Polytope, Partition
+from utils import Polytope, Partition, add_LCQ_perspective_cost
 
 import numpy as np
 import time
