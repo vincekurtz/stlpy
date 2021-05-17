@@ -6,7 +6,6 @@ Tools for testing various formulations of STL synthesis for control of (linear) 
 - numpy
 - scipy (for gradient-based optimization)
 - Drake with Gurboi/Mosek (for MICP-based optimization)
-- [IRIS](https://github.com/rdeits/iris-distro)
 - [pycddlib](https://pycddlib.readthedocs.io/)
 
 ## Code structure
