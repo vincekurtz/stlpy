@@ -56,7 +56,7 @@ class SPPMICPSolver(STLSolver):
         #############
         # DEBUG: set up a spp problem that gives us a minimum-cost path
         # to a target partition
-        target = self.partition_list[-2].polytope
+        target = self.partition_list[6].polytope
         start = self.partition_list[4].polytope  # contains x0
         y0 = np.hstack([x0,np.zeros(self.m)])
 
@@ -196,7 +196,12 @@ class SPPMICPSolver(STLSolver):
 
                 add_perspective_constraint(self.mp, P[i], argument, scaling)
 
-            # TODO: add output spatial degree constrains
+            if len(Ii) > 0:
+                y_i = np.hstack([X[i,:],U[i,:]])
+                argument = y_i - delta_si*ys - y_end_I
+                scaling = 1 - delta_si - a_I
+
+                add_perspective_constraint(self.mp, P[i], argument, scaling)
 
         # Initial condition constraints
         self.mp.AddLinearConstraint(eq( X[v0,:], x0 ))
@@ -421,7 +426,8 @@ class SPPMICPSolver(STLSolver):
         Solve the optimization problem and return the optimal values of (x,u).
         """
         print("Solving...")
-        solver = GurobiSolver()
+        solver = MosekSolver()
+        #solver = GurobiSolver()
         res = solver.Solve(self.mp)
 
         solve_time = res.get_solver_details().optimizer_time
@@ -439,13 +445,10 @@ class SPPMICPSolver(STLSolver):
             u = np.full((self.m, self.T), np.nan)
 
             for i, (t,s) in enumerate(self.V):
-                if b[i] == 1.0:  # TODO: fix some numerical issues with this check
+                if b[i] >= 1.0:
                     # This node is on the optimal path
                     x[:,t] = X[i,:]
                     u[:,t] = U[i,:]
-
-            print(x)
-            print(u)
 
             return x, u
         else:
