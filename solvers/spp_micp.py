@@ -60,7 +60,7 @@ class SPPMICPSolver(STLSolver):
         #############
         # DEBUG: set up a spp problem that gives us a minimum-cost path
         # to a target partition
-        target = self.partition_list[7].polytope
+        target = self.partition_list[6].polytope
         start = self.partition_list[4].polytope  # contains x0
         y0 = np.hstack([x0,np.zeros(self.m)])
 
@@ -95,6 +95,9 @@ class SPPMICPSolver(STLSolver):
         # Add (binary) variables b_i = b_s(t) representing the total
         # flow through each node in the graph
         b = self.mp.NewContinuousVariables(nV, 'b')
+        #for i in range(nV):
+        #    self.mp.AddConstraint( 0 <= b[i] )
+        #    self.mp.AddConstraint( b[i] <= 1 )
 
         # Add continuous variables x, u corresponding to the state and
         # control input for each node
@@ -190,13 +193,13 @@ class SPPMICPSolver(STLSolver):
             #    self.mp.AddLinearConstraint( a_I <= 1 - delta_si )
 
             # spatial conservation-of-flow constraints (19)
-            #y_start_O = sum(Y_start[k,:] for k in Oi)
-            #y_end_I = sum(Y_end[k,:] for k in Ii)
-            #
-            #ys = np.hstack([X[v0,:], U[v0,:]])
-            #yt = np.hstack([X[vF,:], U[vF,:]])
+            y_start_O = sum(Y_start[k,:] for k in Oi)
+            y_end_I = sum(Y_end[k,:] for k in Ii)
+            
+            ys = np.hstack([X[v0,:], U[v0,:]])
+            yt = np.hstack([X[vF,:], U[vF,:]])
 
-            #self.mp.AddLinearConstraint(eq( y_start_O - y_end_I, delta_si*ys - delta_ti*yt ))
+            self.mp.AddLinearConstraint(eq( y_start_O - y_end_I, delta_si*ys - delta_ti*yt ))
 
             # spatial degree constraints
             #if len(Oi) > 0:
@@ -454,35 +457,15 @@ class SPPMICPSolver(STLSolver):
             Y_start = res.GetSolution(self.Y_start)
             Y_end = res.GetSolution(self.Y_end)
 
-            # Preallocate y = [x;u] 
+            # Preallocate x,u
             x = np.full((self.n, self.T), 0.0)
             u = np.full((self.m, self.T), 0.0)
-            y = np.full((self.n+self.m, self.T), 0.0)
-
             for i, (t,s) in enumerate(self.V):
                 x[:,t] += X[i,:]*b[i]
                 u[:,t] += U[i,:]*b[i]
-                if t == 0:
-                    Oi = [k for k, e in enumerate(self.E) if e[0] == i]
-                    y[:,t] += sum(Y_start[k] for k in Oi)
-                else:
-                    Ii = [k for k, e in enumerate(self.E) if e[1] == i]
-                    y[:,t] += sum(Y_end[k] for k in Ii)
-
-            #x = y[:self.n,:]
-            #u = y[self.n:,:]
-
-            # Sanity check
-            for t in range(self.T-1):
-                print(y[:self.n,t+1])
-                print(x[:,t+1])
-                print(self.A@x[:,t] + self.B@u[:,t])
-                print("")
-
             return x, u
+
         else:
-            print(res.get_solver_details().rescode)
-            print(res.get_solver_details().solution_status)
             return None, None
 
     def plot_partitions(self, show=True):
