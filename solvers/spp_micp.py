@@ -53,20 +53,24 @@ class SPPMICPSolver(STLSolver):
         # Add list of convex partitions corresponding to vertices
         P = [self.partition_list[s].polytope for (t,s) in V]
 
+        # Determine whether to use a convex relaxation
+        # TODO: set as optional argument, do similar for standard MICP
+        convex_relaxation = True
+
         #############
         # DEBUG: set up a spp problem that gives us a minimum-cost path
         # to a target partition
-        target = self.partition_list[6].polytope
+        target = self.partition_list[7].polytope
         start = self.partition_list[4].polytope  # contains x0
         y0 = np.hstack([x0,np.zeros(self.m)])
 
         # Plot start and target regions
-        ax = plt.gca()
-        ax.set_xlim((0,10))
-        ax.set_ylim((0,10))
-        start.plot_2d(ax=ax)
-        target.plot_2d(ax=ax)
-        plt.show()
+        #ax = plt.gca()
+        #ax.set_xlim((0,10))
+        #ax.set_ylim((0,10))
+        #start.plot_2d(ax=ax)
+        #target.plot_2d(ax=ax)
+        #plt.show()
 
         # Get the vertices corresponding to the initial and final nodes
         # in the graph
@@ -80,7 +84,13 @@ class SPPMICPSolver(STLSolver):
 
         # Add binary variables a_ij such that a_ij = 1 only if the edge
         # (i,j) is traversed in the optimal path
-        a = self.mp.NewBinaryVariables(nE, 'a')
+        if not convex_relaxation:
+            a = self.mp.NewBinaryVariables(nE, 'a')
+        else:
+            a = self.mp.NewContinuousVariables(nE, 'a')
+            for k in range(nE):
+                self.mp.AddConstraint( 0 <= a[k] )
+                self.mp.AddConstraint( a[k] <= 1 )
 
         # Add (binary) variables b_i = b_s(t) representing the total
         # flow through each node in the graph
@@ -174,34 +184,34 @@ class SPPMICPSolver(STLSolver):
             delta_ti = 1 if t == self.T-1 and P[s] == target else 0
 
             # degree constraints (20)
-            if len(Oi) > 0:
-                self.mp.AddLinearConstraint( a_O <= 1 - delta_ti )
-            if len(Ii) > 0:
-                self.mp.AddLinearConstraint( a_I <= 1 - delta_si )
+            #if len(Oi) > 0:
+            #    self.mp.AddLinearConstraint( a_O <= 1 - delta_ti )
+            #if len(Ii) > 0:
+            #    self.mp.AddLinearConstraint( a_I <= 1 - delta_si )
 
             # spatial conservation-of-flow constraints (19)
-            y_start_O = sum(Y_start[k,:] for k in Oi)
-            y_end_I = sum(Y_end[k,:] for k in Ii)
-            
-            ys = np.hstack([X[v0,:], U[v0,:]])
-            yt = np.hstack([X[vF,:], U[vF,:]])
+            #y_start_O = sum(Y_start[k,:] for k in Oi)
+            #y_end_I = sum(Y_end[k,:] for k in Ii)
+            #
+            #ys = np.hstack([X[v0,:], U[v0,:]])
+            #yt = np.hstack([X[vF,:], U[vF,:]])
 
-            self.mp.AddLinearConstraint(eq( y_start_O - y_end_I, delta_si*ys - delta_ti*yt ))
+            #self.mp.AddLinearConstraint(eq( y_start_O - y_end_I, delta_si*ys - delta_ti*yt ))
 
             # spatial degree constraints
-            if len(Oi) > 0:
-                y_i = np.hstack([X[i,:],U[i,:]])
-                argument = y_i - delta_ti*yt - y_start_O
-                scaling = 1 - delta_ti - a_O
+            #if len(Oi) > 0:
+            #    y_i = np.hstack([X[i,:],U[i,:]])
+            #    argument = y_i - delta_ti*yt - y_start_O
+            #    scaling = 1 - delta_ti - a_O
 
-                add_perspective_constraint(self.mp, P[i], argument, scaling)
+            #    add_perspective_constraint(self.mp, P[i], argument, scaling)
 
-            if len(Ii) > 0:
-                y_i = np.hstack([X[i,:],U[i,:]])
-                argument = y_i - delta_si*ys - y_end_I
-                scaling = 1 - delta_si - a_I
+            #if len(Ii) > 0:
+            #    y_i = np.hstack([X[i,:],U[i,:]])
+            #    argument = y_i - delta_si*ys - y_end_I
+            #    scaling = 1 - delta_si - a_I
 
-                add_perspective_constraint(self.mp, P[i], argument, scaling)
+            #    add_perspective_constraint(self.mp, P[i], argument, scaling)
 
         # Initial condition constraints
         self.mp.AddLinearConstraint(eq( X[v0,:], x0 ))
@@ -211,6 +221,8 @@ class SPPMICPSolver(STLSolver):
         self.b = b
         self.X = X
         self.U = U
+        self.Y_start = Y_start
+        self.Y_end = Y_end
         self.P = P
         self.V = V
         self.E = E
@@ -439,19 +451,38 @@ class SPPMICPSolver(STLSolver):
             b = res.GetSolution(self.b)
             X = res.GetSolution(self.X)
             U = res.GetSolution(self.U)
+            Y_start = res.GetSolution(self.Y_start)
+            Y_end = res.GetSolution(self.Y_end)
 
-            # Preallocate optimal values of x, u
-            x = np.full((self.n, self.T), np.nan)
-            u = np.full((self.m, self.T), np.nan)
+            # Preallocate y = [x;u] 
+            x = np.full((self.n, self.T), 0.0)
+            u = np.full((self.m, self.T), 0.0)
+            y = np.full((self.n+self.m, self.T), 0.0)
 
             for i, (t,s) in enumerate(self.V):
-                if b[i] >= 1.0:
-                    # This node is on the optimal path
-                    x[:,t] = X[i,:]
-                    u[:,t] = U[i,:]
+                x[:,t] += X[i,:]*b[i]
+                u[:,t] += U[i,:]*b[i]
+                if t == 0:
+                    Oi = [k for k, e in enumerate(self.E) if e[0] == i]
+                    y[:,t] += sum(Y_start[k] for k in Oi)
+                else:
+                    Ii = [k for k, e in enumerate(self.E) if e[1] == i]
+                    y[:,t] += sum(Y_end[k] for k in Ii)
+
+            #x = y[:self.n,:]
+            #u = y[self.n:,:]
+
+            # Sanity check
+            for t in range(self.T-1):
+                print(y[:self.n,t+1])
+                print(x[:,t+1])
+                print(self.A@x[:,t] + self.B@u[:,t])
+                print("")
 
             return x, u
         else:
+            print(res.get_solver_details().rescode)
+            print(res.get_solver_details().solution_status)
             return None, None
 
     def plot_partitions(self, show=True):
