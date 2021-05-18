@@ -49,13 +49,13 @@ class PerspectiveMICPSolver(STLSolver):
         self.u = self.mp.NewContinuousVariables(self.m, self.T, 'u')
         self.y = np.vstack([self.x,self.u])
 
-        self.zs = []
+        self.bs = []
         self.ys = []
         for s in range(len(self.partition_list)):
-            z_s = self.mp.NewBinaryVariables(self.T, 'z_%s'%s)
+            b_s = self.mp.NewBinaryVariables(self.T, 'b_%s'%s)
             y_s = self.mp.NewContinuousVariables(self.n+self.m, self.T, 'y_%s'%s)
 
-            self.zs.append(z_s)
+            self.bs.append(b_s)
             self.ys.append(y_s)
 
         # Add cost and constraints to the problem
@@ -97,18 +97,18 @@ class PerspectiveMICPSolver(STLSolver):
         """
         Add the constraints
 
-            C_s y_s[t] \leq d_s z_s[t]
+            C_s y_s[t] \leq d_s b_s[t]
             y[t] = sum_s y_s[t]
 
         to the optimization problem, which ensures
-        that y[t] is in partition `s` only if z_s[t] = 1.
+        that y[t] is in partition `s` only if b_s[t] = 1.
         """
         for t in range(self.T):
             y_sum = 0
             for s, P in enumerate(self.partition_list):
                 yst = self.ys[s][:,t]
-                zst = self.zs[s][t]
-                add_perspective_constraint(self.mp, P.polytope, yst, zst)
+                bst = self.bs[s][t]
+                add_perspective_constraint(self.mp, P.polytope, yst, bst)
 
                 y_sum += yst
 
@@ -125,7 +125,7 @@ class PerspectiveMICPSolver(STLSolver):
         """
         # Add a binary variable which takes a value of 1 only 
         # if the overall specification is satisfied.
-        z_spec = self.mp.NewBinaryVariables(1)
+        z_spec = self.mp.NewContinuousVariables(1)
         self.mp.AddConstraint(eq( z_spec, 1 ))
 
         # Recursively traverse the tree defined by the specification
@@ -140,7 +140,7 @@ class PerspectiveMICPSolver(STLSolver):
 
         If the formula is a predicate, this constraint uses
 
-            z = sum z_s[t] over partitions s that satisfy the predicate
+            z = sum b_s[t] over partitions s that satisfy the predicate
 
         which, together with the perspective-based containment constraints,
         ensures that the predicate holds only if z = 1. 
@@ -162,15 +162,18 @@ class PerspectiveMICPSolver(STLSolver):
         # We're at the bottom of the tree, so add the predicate constraints
         if isinstance(formula, STLPredicate):
             P_lst, s_lst = self.PartitionsSatisfying(formula)
-            z_sum = sum(self.zs[s][t] for s in s_lst)
-            self.mp.AddConstraint(z[0] == z_sum)
+            b_sum = sum(self.bs[s][t] for s in s_lst)
+            self.mp.AddConstraint(z[0] == b_sum)
         
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
         else:
             if formula.combination_type == "and":
                 for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = self.mp.NewBinaryVariables(1)
+                    z_sub = self.mp.NewContinuousVariables(1)
+                    self.mp.AddConstraint(z_sub[0] <= 1)
+                    self.mp.AddConstraint(0 <= z_sub[0])
+
                     t_sub = formula.timesteps[i]   # the timestep at which this formula 
                                                    # should hold
                     self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
@@ -179,7 +182,10 @@ class PerspectiveMICPSolver(STLSolver):
             else:  # combination_type == "or":
                 z_subs = []
                 for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = self.mp.NewBinaryVariables(1)
+                    z_sub = self.mp.NewContinuousVariables(1)
+                    self.mp.AddConstraint(z_sub[0] <= 1)
+                    self.mp.AddConstraint(0 <= z_sub[0])
+
                     t_sub = formula.timesteps[i]
                     z_subs.append(z_sub)
                     self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
