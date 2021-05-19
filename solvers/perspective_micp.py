@@ -39,21 +39,14 @@ class PerspectiveMICPSolver(STLSolver):
 
         ## DEBUG
         bounding_predicates = self.GetBoundingPredicates(spec)
+
         c_formulas, d_formulas = self.GetSeparatedStateFormulas(spec, bounding_predicates)
+        print("conjunctive state formulas: ")
         for phi in c_formulas:
             print(phi)
-            if not isinstance(phi, STLPredicate):
-                for subphi in phi.subformula_list:
-                    print("  ", subphi)
-                    if not isinstance(subphi, STLPredicate):
-                        for subsubphi in subphi.subformula_list:
-                            print("    ", subsubphi)
-                            if not isinstance(subsubphi, STLPredicate):
-                                for sssphi in subsubphi.subformula_list:
-                                    print("      ", sssphi)
-                                    if not isinstance(sssphi, STLPredicate):
-                                        for ssssphi in sssphi.subformula_list:
-                                            print("        ",ssssphi)
+        print("disjunctive state formulas: ")
+        for phi in d_formulas:
+            print(phi)
         
         # Construct polytopic partitions
         self.partition_list = self.ConstructPartitions()

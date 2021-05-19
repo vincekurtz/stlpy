@@ -53,9 +53,9 @@ spec = control_bounded.always(0,T) & \
 #       not_at_obstacle.until(at_goal, 0, T)
 
 # DEBUG: more complicated specification
-#spec, obstacles, targets = random_multitarget_specification(2, 2, 2, 20, seed=0)
-#plot_random_multitarget_scenario(obstacles,targets)
-#plt.show()
+spec, obstacles, targets = random_multitarget_specification(3, 2, 2, T, seed=0)
+plot_random_multitarget_scenario(obstacles,targets)
+plt.show()
 
 # System parameters
 A = np.block([[1,0,1,0],
