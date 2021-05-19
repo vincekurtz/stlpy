@@ -231,19 +231,49 @@ class PerspectiveMICPSolver(STLSolver):
 
         @returns lst    A list of Partitions representing each partition.
         """
+        # Get polytopes corresponding to all the state formulas
         bounding_polytope = self.GetBoundingPolytope(bounding_predicates)
-
-        # Construct a polytope corresponding to each state formula
+        state_polytopes = []
         for formula in state_formulas:
-            poly = self.ConstructStateFormulaPolytope(formula, bounding_polytope)
+            state_polytopes.append(
+                    self.ConstructStateFormulaPolytope(formula, bounding_polytope)
+                    )
 
-        # DEBUG
-        poly_one = self.ConstructStateFormulaPolytope(state_formulas[0], bounding_polytope)
-        poly_two = self.ConstructStateFormulaPolytope(state_formulas[1], bounding_polytope)
+        #DEBUG
+        # Check if a given state formula holds everywhere, nowhere, or only
+        # in some places over a given polytope
+        hold_status = self.HoldsOverPolytope(bounding_polytope, state_formulas[1], state_polytopes[1])
 
-        print(poly_one == poly_two)
+        print(hold_status)
 
         return []
+
+    def HoldsOverPolytope(self, poly, state_formula, state_formula_poly):
+        """
+        Check whether a given state formula holds everywhere, nowhere, 
+        or only in some places over the given polytope. 
+
+        @param poly                 The polytope that we want to test
+        @param state_formula        The state formula
+        @param state_formula_poly   A polytope corresponding to the state formula
+                                    (see self.ConstructStateFormulaPolytope)
+
+        @returns status     A string indicating the result. Can be "everywhere",
+                            "nowhere" or "some_places"
+        """
+        intersection = poly.intersection(state_formula_poly)
+
+        if intersection.is_empty():
+            if state_formula.combination_type == "and":
+                return "nowhere"
+            return "everywhere"
+
+        if intersection == poly:
+            if state_formula.combination_type == "and":
+                return "everywhere"
+            return "nowhere"
+
+        return "some_places"
 
     def ConstructPartitions(self):
         """

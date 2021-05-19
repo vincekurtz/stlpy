@@ -267,9 +267,22 @@ class Polytope():
         pass
 
     def simplify(self):
-        # Convert to vertex rep, take the convex hull, and convert back. 
-        # An easy (but a bit expensive) way to remove redundant constraints. 
-        pass
+        """
+        Use cdd's "Canonicalize" to remove redundant constraints. This allows
+        for easier comparison of polytopes.
+        """
+        assert not self.has_eq_constraints(), "Equality constraints not yet supported"
+
+        # Convert to cdd form and simplify
+        Hrep = np.hstack([self.d[np.newaxis].T,-self.C])
+        Hrep = cdd.Matrix(Hrep, number_type='float')  # 'fraction' is more precise, but
+        Hrep.rep_type = cdd.RepType.INEQUALITY        # more of a pain to convert to numpy
+        Hrep.canonicalize()
+
+        # Convert back to our form and update self.C and self.d
+        Hrep = np.asarray(Hrep)
+        self.d = Hrep[:,0]
+        self.C = -Hrep[:,1:]
 
     def add_perspective_constraint(self, prog, phi, x):
         # Should probably double check compactness first
@@ -280,12 +293,18 @@ class Polytope():
         Check whether this polytope is identical to another one. This allows
         us to do checks like
             
-            poly_one == poly_two.
+            poly_one == poly_two
 
-        This works by comparing the convex hulls of the vertices of each polytope. 
+        and 
+
+            poly_one != poly_two.
+
         """
         if not isinstance(other, Polytope):
             return False
+
+        self.simplify()
+        other.simplify()
 
         our_vertices = self.get_vertices()
         their_vertices = other.get_vertices()
