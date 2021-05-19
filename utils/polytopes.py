@@ -275,6 +275,26 @@ class Polytope():
         # Should probably double check compactness first
         pass
 
+    def __eq__(self, other):
+        """
+        Check whether this polytope is identical to another one. This allows
+        us to do checks like
+            
+            poly_one == poly_two.
+
+        This works by comparing the convex hulls of the vertices of each polytope. 
+        """
+        if not isinstance(other, Polytope):
+            return False
+
+        our_vertices = self.get_vertices()
+        their_vertices = other.get_vertices()
+
+        our_hull = ConvexHull(our_vertices)
+        their_hull = ConvexHull(our_vertices)
+
+        return np.all(our_vertices[our_hull.vertices] == their_vertices[their_hull.vertices])
+
     def plot_2d(self, ax=None, show=False, **kwargs):
         """
         Make a plot of this polytope, projected to the first two dimensions. 

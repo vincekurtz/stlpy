@@ -16,7 +16,7 @@ from scenarios.random_multitarget import *
 from solvers import SPPMICPSolver, MICPSolver, GradientSolver, PerspectiveMICPSolver
 
 # Specification Parameters
-goal_bounds = (4,8,5,9)     # (xmin, xmax, ymin, ymax)
+goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
 T = 10
 

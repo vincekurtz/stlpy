@@ -237,6 +237,12 @@ class PerspectiveMICPSolver(STLSolver):
         for formula in state_formulas:
             poly = self.ConstructStateFormulaPolytope(formula, bounding_polytope)
 
+        # DEBUG
+        poly_one = self.ConstructStateFormulaPolytope(state_formulas[0], bounding_polytope)
+        poly_two = self.ConstructStateFormulaPolytope(state_formulas[1], bounding_polytope)
+
+        print(poly_one == poly_two)
+
         return []
 
     def ConstructPartitions(self):
@@ -517,12 +523,6 @@ class PerspectiveMICPSolver(STLSolver):
 
         assert poly.is_bounded(), "Unbounded polytope: make sure all state formulas are purely conjunctive and disjuctive"
        
-        # DEBUG
-        ax = plt.gca()
-        ax.set_xlim((0,10))
-        ax.set_ylim((0,10))
-        poly.plot_2d(ax=ax,show=True)
-
         return poly
 
 
