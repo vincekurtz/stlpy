@@ -1,5 +1,5 @@
 from solvers.solver_base import STLSolver
-from STL import STLPredicate
+from STL import STLPredicate, STLFormula
 from utils import *
 
 import numpy as np
@@ -36,6 +36,24 @@ class PerspectiveMICPSolver(STLSolver):
         @param T        An integer specifiying the number of timesteps.
         """
         super().__init__(spec, A, B, Q, R, x0, T)
+
+        ## DEBUG
+        bounding_predicates = self.GetBoundingPredicates(spec)
+        c_formulas, d_formulas = self.GetSeparatedStateFormulas(spec, bounding_predicates)
+        for phi in c_formulas:
+            print(phi)
+            if not isinstance(phi, STLPredicate):
+                for subphi in phi.subformula_list:
+                    print("  ", subphi)
+                    if not isinstance(subphi, STLPredicate):
+                        for subsubphi in subphi.subformula_list:
+                            print("    ", subsubphi)
+                            if not isinstance(subsubphi, STLPredicate):
+                                for sssphi in subsubphi.subformula_list:
+                                    print("      ", sssphi)
+                                    if not isinstance(sssphi, STLPredicate):
+                                        for ssssphi in sssphi.subformula_list:
+                                            print("        ",ssssphi)
         
         # Construct polytopic partitions
         self.partition_list = self.ConstructPartitions()
@@ -59,10 +77,10 @@ class PerspectiveMICPSolver(STLSolver):
             self.ys.append(y_s)
 
         # Add cost and constraints to the problem
-        self.AddRunningCost()
-        self.AddDynamicsConstraints()
-        self.AddPartitionContainmentConstraints()
-        self.AddSTLConstraints()
+        #self.AddRunningCost()
+        #self.AddDynamicsConstraints()
+        #self.AddPartitionContainmentConstraints()
+        #self.AddSTLConstraints()
 
     def AddDynamicsConstraints(self):
         """
@@ -333,9 +351,63 @@ class PerspectiveMICPSolver(STLSolver):
             for subformula in spec.subformula_list:
                 state_formulas = self.GetNonBoundingStateFormulas(subformula, bounding_predicates)
                 for formula in state_formulas:
+                    if isinstance(formula, STLFormula) and len(formula.subformula_list) == 1:
+                        # This happens sometimes with the way we've encoded 'until',
+                        # results in duplicate state formulas for partitioning
+                        formula = formula.subformula_list[0]
                     if formula not in lst:
                         lst.append(formula)
             return lst
+    
+    def GetSeparatedStateFormulas(self, spec, bounding_predicates):
+        """
+        Return lists of conjunctive and disjuctive state formulas, not including 
+        those that simply establish bounds on the signal y.
+
+        @param spec                 The specification to parse
+        @param bounding_predicates  A list of STLPredicates that establish bounds on 
+                                    the workspace
+
+        @returns conjunction_list   A list of conjunctive state formulas
+        @returns disjunction_list   A list of disjuctive state formulas
+        """
+        c_list = []   # conjuction 
+        d_list = []  # disjuction
+
+        # The given specification is itself conjunctive state formula
+        if spec.is_conjunctive_state_formula():
+            predicates = self.GetPredicates(spec)
+            if not all([p in bounding_predicates for p in predicates]):
+                c_list.append(spec)
+            return c_list, d_list
+
+        # The given specification is a itself a disjunctive state formula
+        elif spec.is_disjunctive_state_formula():
+            predicates = self.GetPredicates(spec)
+            if not all([p in bounding_predicates for p in predicates]):
+                d_list.append(spec)
+            return c_list, d_list
+
+        # The given specification is neither a conjunctive nor a disjuctive state
+        # formula, so we need to keep parsing recursively to find the state formulas
+        else:
+            for subformula in spec.subformula_list:
+                c_formulas, d_formulas = self.GetSeparatedStateFormulas(subformula, bounding_predicates)
+                for formula in c_formulas:
+                    if isinstance(formula, STLFormula) and len(formula.subformula_list) == 1:
+                        # This happens sometimes with the way we've encoded 'until',
+                        # results in duplicate state formulas for partitioning
+                        formula = formula.subformula_list[0]
+                    if formula not in c_list:
+                        c_list.append(formula)
+                for formula in d_formulas:
+                    if isinstance(formula, STLFormula) and len(formula.subformula_list) == 1:
+                        # This happens sometimes with the way we've encoded 'until',
+                        # results in duplicate state formulas for partitioning
+                        formula = formula.subformula_list[0]
+                    if formula not in d_list:
+                        d_list.append(formula)
+            return c_list, d_list
 
     def GetBoundingPredicates(self, spec, got_always=False):
         """
@@ -345,7 +417,7 @@ class PerspectiveMICPSolver(STLSolver):
 
             - They are added to the top-level specification via "and" operators
             - The temporal operator is "always" across the whole time horizon
-            - The "always" operator acts on a state-formula with conjuction only.
+            - The "always" operator acts on a state-formula with conjunction only.
 
         For example, if the specification is
 
@@ -372,7 +444,7 @@ class PerspectiveMICPSolver(STLSolver):
             #
             # - the combination type needs to be "and"
             # - the timesteps must be a single timestep or [0,T]
-            # - at some point we must have a conjuction over [0,T] (i.e. "always" is applied)
+            # - at some point we must have a conjunction over [0,T] (i.e. "always" is applied)
             if (spec.combination_type == "and"):
                 if all(t==spec.timesteps[0] for t in spec.timesteps):
                     for subformula in spec.subformula_list:

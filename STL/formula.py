@@ -35,6 +35,26 @@ class STLFormulaBase(ABC):
         @returns status     A boolean, True only if self is a state formula.
         """
         pass
+    
+    @abstractmethod
+    def is_disjunctive_state_formula(self):
+        """
+        Indicate whether this formula is a state formula defined by
+        only disjunctions (or) over predicates. 
+
+        @returns status     A boolean, True only if self is a disjunctive state formula.
+        """
+        pass
+
+    @abstractmethod
+    def is_conjunctive_state_formula(self):
+        """
+        Indicate whether this formula is a state formula, defined by
+        only conjunctions (and) over predicates.
+
+        @returns status     A boolean, True only if self is a conjunctive state formula.
+        """
+        pass
 
     def conjunction(self, other):
         """
@@ -57,7 +77,7 @@ class STLFormulaBase(ABC):
     
     def disjunction(self, other):
         """
-        Return a new STLFormula which is the disjuction (or) of this
+        Return a new STLFormula which is the disjunction (or) of this
         formula and another one. 
 
         @param other    The STLFormula or STLPredicate to combine
@@ -130,7 +150,7 @@ class STLFormulaBase(ABC):
             subformula_list.append(other)
             self_until_tprime.append(STLFormula(subformula_list, "and", time_interval))
 
-        # Then we take the disjuction over each of these formulas
+        # Then we take the disjunction over each of these formulas
         return STLFormula(self_until_tprime, "or", [0 for i in range(len(self_until_tprime))])
 
 class STLFormula(STLFormulaBase):
@@ -139,7 +159,7 @@ class STLFormula(STLFormulaBase):
     the following operations on STLPredicates and other STLFormulas:
 
         - conjunction (and)
-        - disjuction (or)
+        - disjunction (or)
         - always (globally)
         - eventually (finally)
         - until
@@ -148,7 +168,7 @@ class STLFormula(STLFormulaBase):
     def __init__(self, subformula_list, combination_type, timesteps, name=None):
         """
         An STL formula is defined by a list of other STLFormulaBase objects
-        which are combined together using either conjuction (and) or 
+        which are combined together using either conjunction (and) or 
         disjunction (or). 
 
         @param subformula_list      A list of STLFormulaBase objects (formulas or
@@ -191,10 +211,19 @@ class STLFormula(STLFormulaBase):
         boolean_operation = all([self.timesteps[i] == self.timesteps[0] for i in range(len(self.timesteps))])
         children_are_state_formulas = all([subformula.is_state_formula() for subformula in self.subformula_list])
 
-        if boolean_operation and children_are_state_formulas:
-            return True
+        return boolean_operation and children_are_state_formulas
 
-        return False
+    def is_disjunctive_state_formula(self):
+        boolean_operation = all([self.timesteps[i] == self.timesteps[0] for i in range(len(self.timesteps))])
+        children_match = all([s.is_disjunctive_state_formula() for s in self.subformula_list])
+
+        return boolean_operation and children_match and self.combination_type == "or"
+
+    def is_conjunctive_state_formula(self):
+        boolean_operation = all([self.timesteps[i] == self.timesteps[0] for i in range(len(self.timesteps))])
+        children_match = all([s.is_conjunctive_state_formula() for s in self.subformula_list])
+
+        return boolean_operation and children_match and self.combination_type == "and"
 
     def __str__(self):
         if self.name is None:

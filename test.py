@@ -11,8 +11,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.common import *
 from scenarios.reach_avoid import *
+from scenarios.either_or import *
 from scenarios.random_multitarget import *
-from solvers import SPPMICPSolver, MICPSolver, GradientSolver
+from solvers import SPPMICPSolver, MICPSolver, GradientSolver, PerspectiveMICPSolver
 
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
@@ -47,12 +48,12 @@ in_workspace = inside_rectangle_formula((x_min, x_max, y_min, y_max), 0, 1, 6, n
 spec = control_bounded.always(0,T) & \
        velocity_bounded.always(0,T) & \
        in_workspace.always(0,T) & \
-       not_at_obstacle.always(0,T)# & \
-#       at_goal.eventually(0, T)
+       not_at_obstacle.always(0,T) & \
+       at_goal.eventually(0, T)
 #       not_at_obstacle.until(at_goal, 0, T)
 
 # DEBUG: more complicated specification
-#spec, obstacles, targets = random_multitarget_specification(10, 5, 2, 20, seed=0)
+#spec, obstacles, targets = random_multitarget_specification(2, 2, 2, 20, seed=0)
 #plot_random_multitarget_scenario(obstacles,targets)
 #plt.show()
 
@@ -74,11 +75,13 @@ R = 1e-1*np.eye(2)
 x0 = np.array([1.0,2.0,0,0])
 
 # Solve for the system trajectory
-solver = SPPMICPSolver(spec, A, B, Q, R, x0, T)
-#solver.plot_partitions()
+#solver = SPPMICPSolver(spec, A, B, Q, R, x0, T)
+solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T)
+solver.plot_partitions()
 #solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
-x, u = solver.Solve()
+#x, u = solver.Solve()
+x = None
 
 if x is not None:
     # Set up a plot

@@ -36,6 +36,12 @@ class STLPredicate(STLFormulaBase):
     def is_state_formula(self):
         return True
 
+    def is_disjunctive_state_formula(self):
+        return True
+
+    def is_conjunctive_state_formula(self):
+        return True
+
     def __str__(self):
         if self.name is None:
             return "{ Predicate %s*y >= %s }" % (self.A, self.b)

@@ -45,8 +45,8 @@ R = 1e-1*np.eye(2)
 x0 = np.array([1.0,1.0,0,0])
 
 # Solve for the system trajectory
-solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
-#solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T)
+#solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
+solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
 x, u = solver.Solve()
 
