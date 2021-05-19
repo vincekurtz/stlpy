@@ -231,45 +231,55 @@ class PerspectiveMICPSolver(STLSolver):
 
         @returns lst    A list of Partitions representing each partition.
         """
-        # Get polytopes corresponding to all the state formulas
+        start_time = time.time()
+
+        # Create a partition describing all of the bounds on y
         bounding_polytope = self.GetBoundingPolytope(bounding_predicates)
-        state_polytopes = []
+        bounds = Partition(bounding_polytope, [])
+
+        # Generate list of all non-bounding predicates
+        predicates = [p for p in self.GetPredicates(self.spec) if not p in bounding_predicates]
+
+        # Get labeled polytopes corresponding to all the state formulas
+        # (These are Partition objects, but will not necessarily be included in the
+        # partition list, since they might overlap)
+        state_partitions = []
         for formula in state_formulas:
-            state_polytopes.append(
-                    self.ConstructStateFormulaPolytope(formula, bounding_polytope)
-                    )
+            poly = self.ConstructStateFormulaPolytope(formula, bounding_polytope)
+            state_partitions.append(Partition(poly, [formula]))
 
-        #DEBUG
-        # Check if a given state formula holds everywhere, nowhere, or only
-        # in some places over a given polytope
-        hold_status = self.HoldsOverPolytope(bounding_polytope, state_formulas[1], state_polytopes[1])
+        # Create partitions
+        partition_list = [bounds]
+        for p in predicates:
+            partition_list = self.StateSplitAllPartitions(partition_list, p, state_partitions)
 
-        print(hold_status)
+        print("Created %s partitions in %0.4fs" % (len(partition_list), time.time()-start_time))
 
-        return []
+        return partition_list
 
-    def HoldsOverPolytope(self, poly, state_formula, state_formula_poly):
+    def HoldsOverPolytope(self, poly, state_partition):
         """
         Check whether a given state formula holds everywhere, nowhere, 
         or only in some places over the given polytope. 
 
-        @param poly                 The polytope that we want to test
-        @param state_formula        The state formula
-        @param state_formula_poly   A polytope corresponding to the state formula
-                                    (see self.ConstructStateFormulaPolytope)
+        @param poly             The polytope that we want to test
+        @param state_partition  A Partition object containing labeled with the
+                                state formula in question, and including corresponding
+                                polytopic region.
 
         @returns status     A string indicating the result. Can be "everywhere",
                             "nowhere" or "some_places"
         """
-        intersection = poly.intersection(state_formula_poly)
+        intersection = poly.intersection(state_partition.polytope)
+        intersection.simplify()
 
-        if intersection.is_empty():
-            if state_formula.combination_type == "and":
+        if (not intersection.is_bounded()) or intersection.is_empty():
+            if state_partition.formulas[0].combination_type == "and":
                 return "nowhere"
             return "everywhere"
 
         if intersection == poly:
-            if state_formula.combination_type == "and":
+            if state_partition.formulas[0].combination_type == "and":
                 return "everywhere"
             return "nowhere"
 
@@ -288,13 +298,6 @@ class PerspectiveMICPSolver(STLSolver):
         bounding_predicates = self.GetBoundingPredicates(self.spec)
         bounding_polytope = self.GetBoundingPolytope(bounding_predicates)
         bounds = Partition(bounding_polytope, bounding_predicates)
-
-        # Check that the bounding poltyope is non-empty.
-        assert not bounds.polytope.is_empty(), "Bounding polytope is empty: infeasible specification"
-        
-        # Check that the bounding polytope is compact (this is needed for the perspective
-        # function-based encodings)
-        assert bounds.polytope.is_bounded(), "Unbounded specification. Consider adding constraints like G_[0,T] state_bounded"
 
         # Generate list of all non-bounding predicates
         predicates = [p for p in self.GetPredicates(self.spec) if not p in bounding_predicates]
@@ -349,10 +352,89 @@ class PerspectiveMICPSolver(STLSolver):
         pred_poly = Polytope(self.d, ineq_matrices=(-pred.A, -pred.b))
         not_pred_poly = Polytope(self.d, ineq_matrices=(pred.A, pred.b))
 
-        P1 = Partition(partition.polytope.intersection(pred_poly), partition.predicates + [pred])
-        P2 = Partition(partition.polytope.intersection(not_pred_poly), partition.predicates)
+        P1 = Partition(partition.polytope.intersection(pred_poly), partition.formulas + [pred])
+        P2 = Partition(partition.polytope.intersection(not_pred_poly), partition.formulas)
 
         return [P1, P2]
+
+    def StateSplitAllPartitions(self, partition_list, pred, state_partitions):
+        """
+        Given a list of Partitions and a predicate, generate a list of new
+        partitions such that the value of all the state formulas is the same across 
+        each new partition. 
+
+        @param partition_list   A list of Partitions
+        @param pred             The STLPredicate to split on 
+        @param state_partitions A list of Partition objects containing each state
+                                formula and the corresponding polytope
+
+        @returns new_partition_list A new list of Partitions
+        """
+        new_partition_list = []
+        for partition in partition_list:
+            new_partition_list += self.StateSplitPartition(partition, pred, state_partitions)
+        return new_partition_list
+
+    def StateSplitPartition(self, partition, pred, state_partitions):
+        """
+        Given a (bounded) partition and a (linear) predicate, generate
+        new partitions such that the values of all state formulas are the same
+        accross new partitions. 
+
+        @param partition        The Partition that we'll split on
+        @param pred             The STLPredicate that we'll use to do the splitting
+        @param state_partitions A list of Partition objects containing each state
+                                formula and the corresponding polytope
+
+        @returns partition_list     A list of new Partitions
+        """
+        assert isinstance(partition, Partition)
+        assert isinstance(pred, STLPredicate)
+
+        # Check if this predicate intersects the given partition. If it 
+        # doesn't, we can simply return the original partition.
+        pred_redundant = partition.polytope.check_ineq_redundancy(-pred.A, -pred.b)
+        negation_redundant = partition.polytope.check_ineq_redundancy(pred.A, pred.b)
+        redundant = pred_redundant or negation_redundant
+        if redundant: return [partition]
+
+        # Create two new partitions based on spliting with the predicate
+        poly_one = Polytope(self.d, ineq_matrices=(-pred.A, -pred.b)).intersection(partition.polytope)
+        poly_two = Polytope(self.d, ineq_matrices=(pred.A, pred.b)).intersection(partition.polytope)
+
+        part_one = Partition(poly_one, [])
+        part_two = Partition(poly_two, [])
+
+        # Determine the state formulas that hold over each polytope
+        part_one_everywhere = []
+        part_one_nowhere = []
+        part_two_everywhere = []
+        part_two_nowhere = []
+
+        for sp in state_partitions:
+            state_formula = sp.formulas[0]
+            
+            p1_status = self.HoldsOverPolytope(poly_one, sp)
+            if p1_status == "everywhere":
+                part_one_everywhere.append(state_formula)
+            elif p1_status == "nowhere":
+                part_one_nowhere.append(state_formula)
+
+            p2_status = self.HoldsOverPolytope(poly_two, sp)
+            if p2_status == "everywhere":
+                part_two_everywhere.append(state_formula)
+            elif p2_status == "nowhere":
+                part_two_nowhere.append(state_formula)
+
+        # Check whether labels of both partitions are identical. If they are, we
+        # don't need to split. 
+        labels_match = (part_one_everywhere == part_two_everywhere) and \
+                (part_one_nowhere == part_two_nowhere)
+        if labels_match:
+            return [partition]
+        
+        # Otherwise, we split and return the two partitions
+        return [part_one, part_two]
 
     def GetPredicates(self, spec):
         """
@@ -518,6 +600,13 @@ class PerspectiveMICPSolver(STLSolver):
             C[i,:] = -pred.A  # polytopes defined as C*y <= d, but
             d[i] = -pred.b    # predicates defined as A*y >= b
         poly = Polytope(self.d, ineq_matrices=(C,d)) 
+        
+        # Check that the bounding poltyope is non-empty.
+        assert not poly.is_empty(), "Bounding polytope is empty: infeasible specification"
+        
+        # Check that the bounding polytope is compact (this is needed for the perspective
+        # function-based encodings)
+        assert poly.is_bounded(), "Unbounded specification. Consider adding constraints like G_[0,T] state_bounded"
 
         return poly
 

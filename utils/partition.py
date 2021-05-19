@@ -3,11 +3,11 @@ from utils import Polytope
 class Partition:
     """
     A Partition consists of a (bounded) polytope and a list
-    of STLPredicate that hold everywhere in this polytope
+    of STLFormulas that hold everywhere in this polytope
     """
-    def __init__(self, polytope, predicates):
+    def __init__(self, polytope, formulas):
         self.polytope = polytope
-        self.predicates = predicates
+        self.formulas = formulas
 
     def plot(self, **kwargs):
         """
@@ -17,7 +17,7 @@ class Partition:
 
     def __str__(self):
         string = "%s-d Partition with: " % self.polytope.n
-        for pred in self.predicates:
-            string += "\n    %s" % pred
+        for f in self.formulas:
+            string += "\n    %s" % f
         return string
 
