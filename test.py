@@ -48,12 +48,12 @@ in_workspace = inside_rectangle_formula((x_min, x_max, y_min, y_max), 0, 1, 6, n
 spec = control_bounded.always(0,T) & \
        velocity_bounded.always(0,T) & \
        in_workspace.always(0,T) & \
-       not_at_obstacle.always(0,T) & \
-       at_goal.eventually(0, T)
-#       not_at_obstacle.until(at_goal, 0, T)
+       not_at_obstacle.until(at_goal, 0, T)
+#       not_at_obstacle.always(0,T) & \
+#       at_goal.eventually(0, T)
 
 # DEBUG: more complicated specification
-#spec, obstacles, targets = random_multitarget_specification(3, 2, 2, T, seed=0)
+#spec, obstacles, targets = random_multitarget_specification(2, 2, 1, T, seed=0)
 #plot_random_multitarget_scenario(obstacles,targets)
 #plt.show(block=False)
 
@@ -82,8 +82,7 @@ solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T)
 solver.plot_partitions()
 #solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
-#x, u = solver.Solve()
-x = None
+x, u = solver.Solve()
 
 if x is not None:
     # Set up a plot

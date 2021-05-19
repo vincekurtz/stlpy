@@ -37,17 +37,13 @@ class PerspectiveMICPSolver(STLSolver):
         """
         super().__init__(spec, A, B, Q, R, x0, T)
 
-        
-        # Construct polytopic partitions
-        bounding_predicates = self.GetBoundingPredicates(spec)
-        c_formulas, d_formulas = self.GetSeparatedStateFormulas(spec, bounding_predicates)
-        self.partition_list = self.ConstructStateFormulaPartitions(
-                                    c_formulas + d_formulas,
-                                    bounding_predicates)
+        # Extract global bounds on the signal from the specification
+        self.bounding_predicates = self.GetBoundingPredicates(spec)
 
-        # DEBUG
-        for p in self.partition_list:
-            print(p)
+        # Construct polytopic partitions based on state formulas
+        c_formulas, d_formulas = self.GetSeparatedStateFormulas(spec)
+        self.state_formulas = c_formulas + d_formulas
+        self.partition_list = self.ConstructStateFormulaPartitions()
 
         # Create the drake MathematicalProgram instance that will allow
         # us to interface with a MIP solver like Gurobi or Mosek
@@ -68,10 +64,10 @@ class PerspectiveMICPSolver(STLSolver):
             self.ys.append(y_s)
 
         # Add cost and constraints to the problem
-        #self.AddRunningCost()
-        #self.AddDynamicsConstraints()
-        #self.AddPartitionContainmentConstraints()
-        #self.AddSTLConstraints()
+        self.AddRunningCost()
+        self.AddDynamicsConstraints()
+        self.AddPartitionContainmentConstraints()
+        self.AddSTLConstraints()
 
     def AddDynamicsConstraints(self):
         """
@@ -137,6 +133,14 @@ class PerspectiveMICPSolver(STLSolver):
         z_spec = self.mp.NewContinuousVariables(1)
         self.mp.AddConstraint(eq( z_spec, 1 ))
 
+        # Add constraints on the indicator variables b_s[t] such that
+        # we can only be in one mode at a time
+        for t in range(self.T):
+            b_sum = 0
+            for s in range(len(self.partition_list)):
+                b_sum += self.bs[s][t]
+            self.mp.AddConstraint(b_sum == 1)
+
         # Recursively traverse the tree defined by the specification
         # subformulas and add similar binary constraints. 
         self.AddSubformulaConstraints(self.spec, z_spec, 0)
@@ -147,14 +151,14 @@ class PerspectiveMICPSolver(STLSolver):
         add constraints to the optimization problem such that z
         takes value 1 only if the formula is satisfied (at time t). 
 
-        If the formula is a predicate, this constraint uses
+        If the formula is a state formula, this constraint uses
 
-            z = sum b_s[t] over partitions s that satisfy the predicate
+            z = sum b_s[t] over partitions s that satisfy state formula
 
         which, together with the perspective-based containment constraints,
-        ensures that the predicate holds only if z = 1. 
+        ensures that the state formula holds only if z = 1. 
 
-        If the formula is not a predicate, we recursively traverse the
+        If the formula is not a state formula, we recursively traverse the
         subformulas associated with this formula, adding new binary 
         variables z_i for each subformula and constraining
 
@@ -168,12 +172,18 @@ class PerspectiveMICPSolver(STLSolver):
         if the subformulas are combined with disjuction (at least one
         subformula must hold). 
         """
-        # We're at the bottom of the tree, so add the predicate constraints
-        if isinstance(formula, STLPredicate):
+        if formula in self.bounding_predicates:
+            # We can safely ignore any predicates that have to do only
+            # with establishing bounds, since the partitioning already
+            # accounts for this
+            pass
+
+        elif formula in self.state_formulas:
+            # For a state formula, we need to add the corresponding constriants
             P_lst, s_lst = self.PartitionsSatisfying(formula)
             b_sum = sum(self.bs[s][t] for s in s_lst)
             self.mp.AddConstraint(z[0] == b_sum)
-        
+
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
         else:
@@ -206,46 +216,45 @@ class PerspectiveMICPSolver(STLSolver):
                 vars = np.vstack([z,z_subs])
                 self.mp.AddLinearConstraint(A=A, lb=lb, ub=ub, vars=vars)
 
-    def PartitionsSatisfying(self, predicate):
+    def PartitionsSatisfying(self, state_formula):
         """
-        Return a list of all of the partitions that satisfy the given predicate. 
+        Return a list of all of the partitions that satisfy the given state formula. 
 
-        @param predicate    The STLPredicate under consideration
+        @param state_formula    The STLFormula under consideration
 
         @returns Ps   A list of polytope Partitions P that satisfy the predicate
         @returns ss   A the indices of these same partitions
 
         @note self.ConstructPartitions must be called first
         """
-        assert isinstance(predicate, STLPredicate)
-        Ps = [P for s, P in enumerate(self.partition_list) if predicate in P.predicates]
-        ss = [s for s, P in enumerate(self.partition_list) if predicate in P.predicates]
+        Ps = [P for s, P in enumerate(self.partition_list) if state_formula in P.formulas]
+        ss = [s for s, P in enumerate(self.partition_list) if state_formula in P.formulas]
         return Ps, ss
 
-    def ConstructStateFormulaPartitions(self, state_formulas, bounding_predicates):
+    def ConstructStateFormulaPartitions(self):
         """
         Define a set of Polytope partitions such that the same state formulas 
         hold accross each partition.
 
-        @param  state_formulas      A list of STLFormulas representing state formulas
-        @param  bounding_predicates A list of STLPredicates that establish signal bounds
-
         @returns lst    A list of Partitions representing each partition.
+
+        @note self.state_formulas must be defined first
+        @note self.bounding_predicates must be defined first
         """
         start_time = time.time()
 
         # Create a partition describing all of the bounds on y
-        bounding_polytope = self.GetBoundingPolytope(bounding_predicates)
+        bounding_polytope = self.GetBoundingPolytope(self.bounding_predicates)
         bounds = Partition(bounding_polytope, [])
 
         # Generate list of all non-bounding predicates
-        predicates = [p for p in self.GetPredicates(self.spec) if not p in bounding_predicates]
+        predicates = [p for p in self.GetPredicates(self.spec) if not p in self.bounding_predicates]
 
         # Get labeled polytopes corresponding to all the state formulas
         # (These are Partition objects, but will not necessarily be included in the
         # partition list, since they might overlap)
         state_partitions = []
-        for formula in state_formulas:
+        for formula in self.state_formulas:
             poly = self.ConstructStateFormulaPolytope(formula, bounding_polytope)
             state_partitions.append(Partition(poly, [formula]))
 
@@ -483,17 +492,17 @@ class PerspectiveMICPSolver(STLSolver):
                         lst.append(formula)
             return lst
     
-    def GetSeparatedStateFormulas(self, spec, bounding_predicates):
+    def GetSeparatedStateFormulas(self, spec):
         """
         Return lists of conjunctive and disjuctive state formulas, not including 
         those that simply establish bounds on the signal y.
 
         @param spec                 The specification to parse
-        @param bounding_predicates  A list of STLPredicates that establish bounds on 
-                                    the workspace
 
         @returns conjunction_list   A list of conjunctive state formulas
         @returns disjunction_list   A list of disjuctive state formulas
+
+        @note self.bounding_predicates must be set first
         """
         c_list = []   # conjuction 
         d_list = []  # disjuction
@@ -501,14 +510,14 @@ class PerspectiveMICPSolver(STLSolver):
         # The given specification is itself conjunctive state formula
         if spec.is_conjunctive_state_formula():
             predicates = self.GetPredicates(spec)
-            if not all([p in bounding_predicates for p in predicates]):
+            if not all([p in self.bounding_predicates for p in predicates]):
                 c_list.append(spec)
             return c_list, d_list
 
         # The given specification is a itself a disjunctive state formula
         elif spec.is_disjunctive_state_formula():
             predicates = self.GetPredicates(spec)
-            if not all([p in bounding_predicates for p in predicates]):
+            if not all([p in self.bounding_predicates for p in predicates]):
                 d_list.append(spec)
             return c_list, d_list
 
@@ -516,7 +525,7 @@ class PerspectiveMICPSolver(STLSolver):
         # formula, so we need to keep parsing recursively to find the state formulas
         else:
             for subformula in spec.subformula_list:
-                c_formulas, d_formulas = self.GetSeparatedStateFormulas(subformula, bounding_predicates)
+                c_formulas, d_formulas = self.GetSeparatedStateFormulas(subformula)
                 for formula in c_formulas:
                     if isinstance(formula, STLFormula) and len(formula.subformula_list) == 1:
                         # This happens sometimes with the way we've encoded 'until',
