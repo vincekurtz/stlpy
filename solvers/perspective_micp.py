@@ -39,17 +39,14 @@ class PerspectiveMICPSolver(STLSolver):
 
         ## DEBUG
         bounding_predicates = self.GetBoundingPredicates(spec)
-
         c_formulas, d_formulas = self.GetSeparatedStateFormulas(spec, bounding_predicates)
-        print("conjunctive state formulas: ")
-        for phi in c_formulas:
-            print(phi)
-        print("disjunctive state formulas: ")
-        for phi in d_formulas:
-            print(phi)
+        state_formulas = c_formulas + d_formulas
+        self.partition_list = self.ConstructStateFormulaPartitions(
+                                    state_formulas,
+                                    bounding_predicates)
         
         # Construct polytopic partitions
-        self.partition_list = self.ConstructPartitions()
+        #self.partition_list = self.ConstructPartitions()
 
         # Create the drake MathematicalProgram instance that will allow
         # us to interface with a MIP solver like Gurobi or Mosek
@@ -224,6 +221,24 @@ class PerspectiveMICPSolver(STLSolver):
         ss = [s for s, P in enumerate(self.partition_list) if predicate in P.predicates]
         return Ps, ss
 
+    def ConstructStateFormulaPartitions(self, state_formulas, bounding_predicates):
+        """
+        Define a set of Polytope partitions such that the same state formulas 
+        hold accross each partition.
+
+        @param  state_formulas      A list of STLFormulas representing state formulas
+        @param  bounding_predicates A list of STLPredicates that establish signal bounds
+
+        @returns lst    A list of Partitions representing each partition.
+        """
+        bounding_polytope = self.GetBoundingPolytope(bounding_predicates)
+
+        # Construct a polytope corresponding to each state formula
+        for formula in state_formulas:
+            poly = self.ConstructStateFormulaPolytope(formula, bounding_polytope)
+
+        return []
+
     def ConstructPartitions(self):
         """
         Define a set of Polytope partitions P_l such that the same predicates hold
@@ -232,16 +247,10 @@ class PerspectiveMICPSolver(STLSolver):
         @returns lst    A list of Partitions representing each partition.
         """
         start_time = time.time()
-        # Generate list of predicates that establish bounds on state and control input
-        bounding_predicates = self.GetBoundingPredicates(self.spec)
 
         # Create a partition describing all of the bounds on y
-        C = np.full((len(bounding_predicates),self.d), np.nan)
-        d = np.full((len(bounding_predicates),), np.nan)
-        for i, pred in enumerate(bounding_predicates):
-            C[i,:] = -pred.A  # polytopes defined as C*y <= d, but
-            d[i] = -pred.b    # predicates defined as A*y >= b
-        bounding_polytope = Polytope(self.d, ineq_matrices=(C,d)) 
+        bounding_predicates = self.GetBoundingPredicates(self.spec)
+        bounding_polytope = self.GetBoundingPolytope(bounding_predicates)
         bounds = Partition(bounding_polytope, bounding_predicates)
 
         # Check that the bounding poltyope is non-empty.
@@ -457,6 +466,65 @@ class PerspectiveMICPSolver(STLSolver):
                     return []
             else:
                 return []
+       
+    def GetBoundingPolytope(self, bounding_predicates):
+        """
+        Construct a polytope that bounds the signal y for all time
+
+        @param bounding_predicates  A list of STLPredicates that establish bounds on y
+                                    (see self.GetBoundingPredicates)
+
+        @returns poly   A Polytope that bounds the y for all time.
+        """
+        C = np.full((len(bounding_predicates),self.d), np.nan)
+        d = np.full((len(bounding_predicates),), np.nan)
+        for i, pred in enumerate(bounding_predicates):
+            C[i,:] = -pred.A  # polytopes defined as C*y <= d, but
+            d[i] = -pred.b    # predicates defined as A*y >= b
+        poly = Polytope(self.d, ineq_matrices=(C,d)) 
+
+        return poly
+
+    def ConstructStateFormulaPolytope(self, formula, bounding_poly):
+        """
+        Given a (conjunctive or disjunctive) state formula, construct a
+        corresponding polytope. 
+
+        @param formula          The STLFormula in question
+        @param bounding_poly    A Polytope establishing global bounds on the signal y
+
+        @returns poly   A Polytope such that the given state formula holds everywhere 
+                        (in the case of conjunction) or nowhere (in the case of disjuction)
+                        within this polytope. 
+        """
+        pred = self.GetPredicates(formula)
+
+        C = np.full((len(pred),self.d),np.nan)
+        d = np.full((len(pred),),np.nan)
+
+        if formula.combination_type == "and":  # conjunctive type
+            for i, p in enumerate(pred):
+                C[i,:] = -p.A
+                d[i] = -p.b
+        elif formula.combination_type == "or":  # disjuctive type
+            for i, p in enumerate(pred):
+                C[i,:] = p.A
+                d[i] = p.b
+        else:
+            raise ValueError("Unknown combination type %s" % formula.combination_type)
+
+        poly = Polytope(self.d, ineq_matrices=(C,d)).intersection(bounding_poly)
+
+        assert poly.is_bounded(), "Unbounded polytope: make sure all state formulas are purely conjunctive and disjuctive"
+       
+        # DEBUG
+        ax = plt.gca()
+        ax.set_xlim((0,10))
+        ax.set_ylim((0,10))
+        poly.plot_2d(ax=ax,show=True)
+
+        return poly
+
 
     def Solve(self):
         """

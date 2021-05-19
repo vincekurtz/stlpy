@@ -16,7 +16,7 @@ from scenarios.random_multitarget import *
 from solvers import SPPMICPSolver, MICPSolver, GradientSolver, PerspectiveMICPSolver
 
 # Specification Parameters
-goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
+goal_bounds = (4,8,5,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
 T = 10
 
@@ -53,9 +53,9 @@ spec = control_bounded.always(0,T) & \
 #       not_at_obstacle.until(at_goal, 0, T)
 
 # DEBUG: more complicated specification
-spec, obstacles, targets = random_multitarget_specification(3, 2, 2, T, seed=0)
-plot_random_multitarget_scenario(obstacles,targets)
-plt.show()
+#spec, obstacles, targets = random_multitarget_specification(3, 2, 2, T, seed=0)
+#plot_random_multitarget_scenario(obstacles,targets)
+#plt.show()
 
 # System parameters
 A = np.block([[1,0,1,0],
