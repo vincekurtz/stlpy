@@ -37,16 +37,17 @@ class PerspectiveMICPSolver(STLSolver):
         """
         super().__init__(spec, A, B, Q, R, x0, T)
 
-        ## DEBUG
-        bounding_predicates = self.GetBoundingPredicates(spec)
-        c_formulas, d_formulas = self.GetSeparatedStateFormulas(spec, bounding_predicates)
-        state_formulas = c_formulas + d_formulas
-        self.partition_list = self.ConstructStateFormulaPartitions(
-                                    state_formulas,
-                                    bounding_predicates)
         
         # Construct polytopic partitions
-        #self.partition_list = self.ConstructPartitions()
+        bounding_predicates = self.GetBoundingPredicates(spec)
+        c_formulas, d_formulas = self.GetSeparatedStateFormulas(spec, bounding_predicates)
+        self.partition_list = self.ConstructStateFormulaPartitions(
+                                    c_formulas + d_formulas,
+                                    bounding_predicates)
+
+        # DEBUG
+        for p in self.partition_list:
+            print(p)
 
         # Create the drake MathematicalProgram instance that will allow
         # us to interface with a MIP solver like Gurobi or Mosek
@@ -425,6 +426,9 @@ class PerspectiveMICPSolver(STLSolver):
                 part_two_everywhere.append(state_formula)
             elif p2_status == "nowhere":
                 part_two_nowhere.append(state_formula)
+
+        part_one.formulas = part_one_everywhere
+        part_two.formulas = part_two_everywhere
 
         # Check whether labels of both partitions are identical. If they are, we
         # don't need to split. 
