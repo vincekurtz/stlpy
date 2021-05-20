@@ -66,11 +66,11 @@ class PerspectiveMICPSolver(STLSolver):
             self.ys.append(y_s)
 
         # Add cost and constraints to the problem
-        #self.AddRunningCost()
-        #self.AddDynamicsConstraints()
+        self.AddRunningCost()
+        self.AddDynamicsConstraints()
 
-        self.AddPerspectiveRunningCost()
-        self.AddPerspectiveDynamicsConstraints()
+        #self.AddPerspectiveRunningCost()
+        #self.AddPerspectiveDynamicsConstraints()
 
         self.AddPartitionContainmentConstraints()
         self.AddSTLConstraints()
@@ -742,6 +742,23 @@ class PerspectiveMICPSolver(STLSolver):
             print("No solution found")
             x = None
             u = None
+
+        #DEBUG
+        # Plot y_s(t)
+        ax = plt.gca()
+        ax.set_xlim((0,10))
+        ax.set_ylim((0,10))
+
+        plt.scatter(*x[:2,:], label='x', linewidth=5, alpha=0.5)
+        for s in range(self.S):
+            y = res.GetSolution(self.ys[s])
+            b = res.GetSolution(self.b[s])
+            print(b)
+            for t in range(self.T):
+                plt.scatter(*y[:2,t], marker='^', color='k', label='y_%s'%s, alpha=b[t])
+
+        #plt.legend()
+        plt.show()
 
         return x, u
 
