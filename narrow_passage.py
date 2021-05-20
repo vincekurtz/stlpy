@@ -11,7 +11,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.narrow_passage import narrow_passage_specification, plot_narrow_passage_scenario
-from solvers import MICPSolver, GradientSolver
+from solvers import MICPSolver, GradientSolver, PerspectiveMICPSolver
 
 # Specification Parameters
 T = 20
@@ -42,6 +42,7 @@ x0 = np.array([2.0,2.0,0,0])
 
 # Solve for the system trajectory
 solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
+#solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
 x, u = solver.Solve()
 

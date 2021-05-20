@@ -23,7 +23,7 @@ class PerspectiveMICPSolver(STLSolver):
     satisfying trajectory. 
     """
 
-    def __init__(self, spec, A, B, Q, R, x0, T):
+    def __init__(self, spec, A, B, Q, R, x0, T, relaxed=False):
         """
         Initialize the solver.
 
@@ -34,6 +34,8 @@ class PerspectiveMICPSolver(STLSolver):
         @param R        A (m,m) matrix specifing a running control cost
         @param x0       The initial state of the system.
         @param T        An integer specifiying the number of timesteps.
+        @param relaxed  (optional) A boolean indicating whether to solve
+                        a convex relaxation of the problem. Defaults to False.
         """
         super().__init__(spec, A, B, Q, R, x0, T)
 
@@ -45,9 +47,8 @@ class PerspectiveMICPSolver(STLSolver):
         self.state_formulas = c_formulas + d_formulas
         self.partition_list = self.ConstructStateFormulaPartitions()
 
-        # Create the drake MathematicalProgram instance that will allow
-        # us to interface with a MIP solver like Gurobi or Mosek
-        self.mp = MathematicalProgram()
+        # Flag for whether to use convex relaxation
+        self.convex_relaxation = relaxed
 
         # Create optimization variables
         self.x = self.mp.NewContinuousVariables(self.n, self.T, 'x')
@@ -57,7 +58,7 @@ class PerspectiveMICPSolver(STLSolver):
         self.bs = []
         self.ys = []
         for s in range(len(self.partition_list)):
-            b_s = self.mp.NewBinaryVariables(self.T, 'b_%s'%s)
+            b_s = self.NewBinaryVariables(self.T, 'b_%s'%s)
             y_s = self.mp.NewContinuousVariables(self.n+self.m, self.T, 'y_%s'%s)
 
             self.bs.append(b_s)
@@ -657,12 +658,18 @@ class PerspectiveMICPSolver(STLSolver):
        
         return poly
 
-
     def Solve(self):
         """
         Solve the optimization problem and return the optimal values of (x,u).
         """
-        print("Solving...")
+
+        # Print out some solver data
+        num_continuous_variables, num_binary_variables = self.GetVariableData()
+        print("Solving MICP with")
+        print("    %s binary variables" % num_binary_variables)
+        print("    %s continuous variables" % num_continuous_variables)
+
+        # Set up the solver and solve the optimization problem
         solver = GurobiSolver()
         #solver = MosekSolver()
         res = solver.Solve(self.mp)
@@ -676,6 +683,7 @@ class PerspectiveMICPSolver(STLSolver):
 
             y = np.vstack([x,u])
             rho = self.spec.robustness(y,0)
+            print("Optimal Cost: ", res.get_optimal_cost())
             print("Optimal Robustness: ", rho[0])
         else:
             print("No solution found")

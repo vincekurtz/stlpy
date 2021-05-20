@@ -35,7 +35,7 @@ class MICPSolver(STLSolver):
         IEEE Trans. Autom. Control. 2019
     """
 
-    def __init__(self, spec, A, B, Q, R, x0, T, M):
+    def __init__(self, spec, A, B, Q, R, x0, T, M, relaxed=False):
         """
         Initialize the solver.
 
@@ -47,18 +47,19 @@ class MICPSolver(STLSolver):
         @param x0       The initial state of the system.
         @param T        An integer specifiying the number of timesteps.
         @param M        A large positive scalar, used for the "big-M" method
+        @param relaxed  (optional) A boolean indicating whether to solve
+                        a convex relaxation of the problem. Default to False.
         """
         assert M > 0, "M should be a (large) positive scalar"
         super().__init__(spec, A, B, Q, R, x0, T)
         self.M = M
 
-        # Create the drake MathematicalProgram instance that will allow
-        # us to interface with a MIP solver like Gurobi or Mosek
-        self.mp = MathematicalProgram()
-
         # Create optimization variables for x and u
         self.x = self.mp.NewContinuousVariables(self.n, self.T, 'x')
         self.u = self.mp.NewContinuousVariables(self.m, self.T, 'u')
+
+        # Flag for whether to use a convex relaxation
+        self.convex_relaxation = relaxed
 
         # Add cost and constraints to the optimization problem
         self.AddRunningCost()
@@ -69,6 +70,14 @@ class MICPSolver(STLSolver):
         """
         Solve the optimization problem and return the optimal values of (x,u).
         """
+
+        # Print out some solver data
+        num_continuous_variables, num_binary_variables = self.GetVariableData()
+        print("Solving MICP with")
+        print("    %s binary variables" % num_binary_variables)
+        print("    %s continuous variables" % num_continuous_variables)
+
+        # Set up the solver and solve the optimization problem
         solver = GurobiSolver()
         #solver = MosekSolver()
         res = solver.Solve(self.mp)
@@ -82,6 +91,7 @@ class MICPSolver(STLSolver):
 
             y = np.vstack([x,u])
             rho = self.spec.robustness(y,0)
+            print("Optimal Cost: ", res.get_optimal_cost())
             print("Optimal robustness: ", rho[0])
         else:
             print("No solution found")
@@ -130,7 +140,7 @@ class MICPSolver(STLSolver):
         """
         # Add a binary variable which takes a value of 1 only 
         # if the overall specification is satisfied.
-        z_spec = self.mp.NewBinaryVariables(1)
+        z_spec = self.NewBinaryVariables(1)
         self.mp.AddConstraint(eq( z_spec, 1 ))
 
         # Recursively traverse the tree defined by the specification
@@ -179,7 +189,7 @@ class MICPSolver(STLSolver):
         else:
             if formula.combination_type == "and":
                 for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = self.mp.NewBinaryVariables(1)
+                    z_sub = self.NewBinaryVariables(1)
                     t_sub = formula.timesteps[i]   # the timestep at which this formula 
                                                    # should hold
                     self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
@@ -188,7 +198,7 @@ class MICPSolver(STLSolver):
             else:  # combination_type == "or":
                 z_subs = []
                 for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = self.mp.NewBinaryVariables(1)
+                    z_sub = self.NewBinaryVariables(1)
                     t_sub = formula.timesteps[i]
                     z_subs.append(z_sub)
                     self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
