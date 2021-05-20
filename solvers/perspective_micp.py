@@ -79,7 +79,7 @@ class PerspectiveMICPSolver(STLSolver):
         """
         Add the constraints
 
-            x_{t+1} = A@x_t + B@u_t
+            x_{t+1} = A*x_t + B*u_t
             x_0 = x0
 
         to the optimization problem. 
@@ -108,31 +108,31 @@ class PerspectiveMICPSolver(STLSolver):
         """
         Add the constraints
 
-            [A, B, -I, 0] [y_s(t); y_s(t+1)] = 0
+            x(t+1) = sum_s A*x_s(t) + B*u_s(t)
             [I 0] y_s(t) = x0*b_s(t)
 
         to the optimization problem, which imply the dynamics constraints
 
-            x_{t+1} = A@x_t + B@u_t
+            x_{t+1} = A*x_t + B*u_t
             x_0 = x0
         """
         # Initial condition
-        H0 = np.hstack([np.eye(self.n), np.zeros((self.n,self.m))])
+        H = np.hstack([np.eye(self.n), np.zeros((self.n,self.m))])
         for s in range(self.S):
             y0 = self.ys[s][:,0]
-            self.mp.AddConstraint(eq( H0@y0, self.x0*self.b[s][0] ))
+            self.mp.AddConstraint(eq( H@y0, self.x0*self.b[s][0] ))
 
         # Dynamics
-        H = np.hstack([self.A, self.B, -np.eye(self.n), np.zeros(self.B.shape)])
         for t in range(self.T-1):
-            #yy = np.hstack([self.y[:,t], self.y[:,t+1]])
-            #self.mp.AddConstraint(eq( H@yy, 0 ))
+            x_next = 0
 
             for s in range(self.S):
-                yy = np.hstack([self.ys[s][:,t], self.ys[s][:,t+1]])
-                self.mp.AddConstraint(eq( H@yy, 0 ))
+                x_s = self.ys[s][:self.n,t]
+                u_s = self.ys[s][self.n:,t]
 
+                x_next += self.A@x_s + self.B@u_s
 
+            self.mp.AddConstraint(eq( self.x[:,t+1], x_next ))
 
     def AddPerspectiveRunningCost(self):
         """
