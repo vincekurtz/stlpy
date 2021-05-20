@@ -46,6 +46,7 @@ class PerspectiveMICPSolver(STLSolver):
         c_formulas, d_formulas = self.GetSeparatedStateFormulas(spec)
         self.state_formulas = c_formulas + d_formulas
         self.partition_list = self.ConstructStateFormulaPartitions()
+        self.S = len(self.partition_list)
 
         # Flag for whether to use convex relaxation
         self.convex_relaxation = relaxed
@@ -55,18 +56,22 @@ class PerspectiveMICPSolver(STLSolver):
         self.u = self.mp.NewContinuousVariables(self.m, self.T, 'u')
         self.y = np.vstack([self.x,self.u])
 
-        self.bs = []
+        self.b = []
         self.ys = []
-        for s in range(len(self.partition_list)):
+        for s in range(self.S):
             b_s = self.NewBinaryVariables(self.T, 'b_%s'%s)
             y_s = self.mp.NewContinuousVariables(self.n+self.m, self.T, 'y_%s'%s)
 
-            self.bs.append(b_s)
+            self.b.append(b_s)
             self.ys.append(y_s)
 
         # Add cost and constraints to the problem
-        self.AddRunningCost()
-        self.AddDynamicsConstraints()
+        #self.AddRunningCost()
+        #self.AddDynamicsConstraints()
+
+        self.AddPerspectiveRunningCost()
+        self.AddPerspectiveDynamicsConstraints()
+
         self.AddPartitionContainmentConstraints()
         self.AddSTLConstraints()
 
@@ -99,6 +104,54 @@ class PerspectiveMICPSolver(STLSolver):
         for t in range(self.T):
             self.mp.AddCost( self.x[:,t].T@self.Q@self.x[:,t] + self.u[:,t].T@self.R@self.u[:,t] )
 
+    def AddPerspectiveDynamicsConstraints(self):
+        """
+        Add the constraints
+
+            [A, B, -I, 0] [y_s(t); y_s(t+1)] = 0
+            [I 0] y_s(t) = x0*b_s(t)
+
+        to the optimization problem, which imply the dynamics constraints
+
+            x_{t+1} = A@x_t + B@u_t
+            x_0 = x0
+        """
+        # Initial condition
+        H0 = np.hstack([np.eye(self.n), np.zeros((self.n,self.m))])
+        for s in range(self.S):
+            y0 = self.ys[s][:,0]
+            self.mp.AddConstraint(eq( H0@y0, self.x0*self.b[s][0] ))
+
+        # Dynamics
+        H = np.hstack([self.A, self.B, -np.eye(self.n), np.zeros(self.B.shape)])
+        for t in range(self.T-1):
+            #yy = np.hstack([self.y[:,t], self.y[:,t+1]])
+            #self.mp.AddConstraint(eq( H@yy, 0 ))
+
+            for s in range(self.S):
+                yy = np.hstack([self.ys[s][:,t], self.ys[s][:,t+1]])
+                self.mp.AddConstraint(eq( H@yy, 0 ))
+
+
+
+    def AddPerspectiveRunningCost(self):
+        """
+        Add the perspective running cost
+
+            min sum_s l_tilde( b_s(t), y_s(t) )
+
+        to the optimization problem, where l_tilde is the
+        perspective of the running cost
+
+            l(y_t) = x'Qx + u'Ru.
+
+        """
+        for t in range(self.T):
+            for s in range(self.S):
+                # Write l(y) = y'Hy
+                H = sp.linalg.block_diag(self.Q, self.R)
+                add_quadratic_perspective_cost(self.mp, H, self.ys[s][:,t], self.b[s][t])
+
     def AddPartitionContainmentConstraints(self):
         """
         Add the constraints
@@ -113,7 +166,7 @@ class PerspectiveMICPSolver(STLSolver):
             y_sum = 0
             for s, P in enumerate(self.partition_list):
                 yst = self.ys[s][:,t]
-                bst = self.bs[s][t]
+                bst = self.b[s][t]
                 add_perspective_constraint(self.mp, P.polytope, yst, bst)
 
                 y_sum += yst
@@ -138,8 +191,8 @@ class PerspectiveMICPSolver(STLSolver):
         # we can only be in one mode at a time
         for t in range(self.T):
             b_sum = 0
-            for s in range(len(self.partition_list)):
-                b_sum += self.bs[s][t]
+            for s in range(self.S):
+                b_sum += self.b[s][t]
             self.mp.AddConstraint(b_sum == 1)
 
         # Recursively traverse the tree defined by the specification
@@ -182,7 +235,7 @@ class PerspectiveMICPSolver(STLSolver):
         elif formula in self.state_formulas:
             # For a state formula, we need to add the corresponding constriants
             P_lst, s_lst = self.PartitionsSatisfying(formula)
-            b_sum = sum(self.bs[s][t] for s in s_lst)
+            b_sum = sum(self.b[s][t] for s in s_lst)
             self.mp.AddConstraint(z[0] == b_sum)
 
         # We haven't reached the bottom of the tree, so keep adding
