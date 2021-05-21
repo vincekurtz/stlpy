@@ -13,7 +13,7 @@ class Partition:
         """
         Make a (2d) plot of this partition.
         """
-        self.polytope.plot_2d(**kwargs)
+        return self.polytope.plot_2d(**kwargs)
 
     def __str__(self):
         string = "%s-d Partition with: " % self.polytope.n

@@ -48,9 +48,9 @@ in_workspace = inside_rectangle_formula((x_min, x_max, y_min, y_max), 0, 1, 6, n
 spec = control_bounded.always(0,T) & \
        velocity_bounded.always(0,T) & \
        in_workspace.always(0,T) & \
-       not_at_obstacle.until(at_goal, 0, T)
-#       not_at_obstacle.always(0,T) & \
-#       at_goal.eventually(0, T)
+       not_at_obstacle.always(0,T) & \
+       at_goal.eventually(T, T)
+#       not_at_obstacle.until(at_goal, 0, T)
 
 # DEBUG: more complicated specification
 #spec, obstacles, targets = random_multitarget_specification(2, 2, 1, T, seed=0)
@@ -78,11 +78,13 @@ x0 = np.array([1.0,2.0,0,0])
 
 # Solve for the system trajectory
 #solver = SPPMICPSolver(spec, A, B, Q, R, x0, T)
-solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
+solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=True)
 #solver.plot_partitions()
 #solver = MICPSolver(spec, A, B, Q, R, x0, T, M, relaxed=False)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
 x, u = solver.Solve()
+
+solver.animate_partition_sequence()
 
 if x is not None:
     # Set up a plot
@@ -100,6 +102,6 @@ if x is not None:
     ax.set_aspect('equal')
 
     # Show the solution
-    solver.plot_relaxed_solution(show=False)
+    #solver.plot_relaxed_solution(show=False)
     plt.scatter(*x[:2,:])
     plt.show()

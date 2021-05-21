@@ -5,11 +5,14 @@ from utils import *
 import numpy as np
 import scipy as sp
 import time
-import matplotlib.pyplot as plt
 from pydrake.all import (MathematicalProgram, 
                          GurobiSolver, 
                          MosekSolver, 
                          eq)
+        
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from itertools import cycle
 
 class PerspectiveMICPSolver(STLSolver):
     """
@@ -790,13 +793,59 @@ class PerspectiveMICPSolver(STLSolver):
         if show:
             plt.show()
 
+    def animate_partition_sequence(self):
+        """
+        Make an animation of the sequence of partitions corresponding to the 
+        solution. 
+
+        Recalling that the signal passes through the s^th partition at time t
+        if b_s[t] = 1, we use b_s[t] to determine the opacity of each partition.
+
+        @note self.Solve must be called and return a valid solution first. 
+        """
+        assert hasattr(self, 'res'), "self.Solve() must return a positive result first"
+
+        fig = plt.gcf()
+        ax = plt.gca()
+
+        # Add transparent patches for each partition
+        patches = []
+        for P in self.partition_list:
+            patch = P.plot(ax=ax,edgecolor='k',alpha=0.5)
+            patches.append(patch)
+
+        # Get solution values for b_s[t]
+        b = np.full((self.S, self.T),np.nan)
+        for s in range(self.S):
+            for t in range(self.T):
+                b[s][t] = self.res.GetSolution(self.b[s][t])
+
+        # Function for sending data to the animation
+        def data_gen():
+            gen_list = ((t,b[:,t]) for t in range(self.T))
+            return gen_list
+
+        # Function that's called at each step of the animation
+        def run(data):
+            t, b = data
+            ax.set_title("t = %s" % t)
+            for s in range(self.S):
+                patches[s].set_alpha(b[s])
+
+        ani = FuncAnimation(fig, run, data_gen, interval=500)
+
+        plt.show()
+
 
     def plot_partitions(self, show=True):
         """
         Make plot of the projection of all partitions to 2d. 
         """
+
+        colors = cycle(plt.rcParams['axes.prop_cycle'].by_key()['color'])
+
         for partition in self.partition_list:
-            partition.plot(edgecolor='k')
+            partition.plot(edgecolor='k',facecolor=next(colors))
 
         if show: 
             plt.show()

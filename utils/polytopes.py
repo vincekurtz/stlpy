@@ -6,6 +6,7 @@ from pydrake.all import MathematicalProgram, GurobiSolver, ge, le, eq
 from scipy.spatial import ConvexHull
 
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
 
 class Polytope():
     """
@@ -322,6 +323,8 @@ class Polytope():
         @param show     (optional) whether to display the plot immediately.
         @param kwargs   (optional) additional keyword arguments to pass to matplotlib.
 
+        @returns patch  A polyhedral patch corresponding to this polytope
+
         @note   Considers bounded polytopes with inequality constraints only. 
         """
         if ax is None:
@@ -335,8 +338,12 @@ class Polytope():
         hull = ConvexHull(V)
         V = V[hull.vertices]
 
-        # Make the plot
-        ax.fill(*V.T, **kwargs)
-        
+        # Create the polygonal patch
+        patch = Polygon(V, **kwargs)
+        ax.add_patch(patch)
+        ax.autoscale_view()
+
         if show: plt.show()
+
+        return patch
 
