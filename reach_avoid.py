@@ -48,7 +48,7 @@ x0 = np.array([1.0,2.0,0,0])
 #x = None
 #solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
-solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T)
+solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
 x, u = solver.Solve()
 
 if x is not None:

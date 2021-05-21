@@ -60,7 +60,8 @@ class PerspectiveMICPSolver(STLSolver):
         self.ys = []
         for s in range(self.S):
             b_s = self.NewBinaryVariables(self.T, 'b_%s'%s)
-            y_s = self.mp.NewContinuousVariables(self.n+self.m, self.T, 'y_%s'%s)
+            #y_s = self.mp.NewContinuousVariables(self.n+self.m, self.T, 'y_%s'%s)
+            y_s = 0
 
             self.b.append(b_s)
             self.ys.append(y_s)
@@ -72,7 +73,8 @@ class PerspectiveMICPSolver(STLSolver):
         #self.AddPerspectiveRunningCost()
         #self.AddPerspectiveDynamicsConstraints()
 
-        self.AddPartitionContainmentConstraints()
+        #self.AddPartitionContainmentConstraints()
+        self.AddBigMPartitionContainmentConstraints()
         self.AddSTLConstraints()
 
     def AddDynamicsConstraints(self):
@@ -172,6 +174,25 @@ class PerspectiveMICPSolver(STLSolver):
                 y_sum += yst
 
             self.mp.AddConstraint(eq( y_sum, self.y[:,t] ))
+
+    def AddBigMPartitionContainmentConstraints(self):
+        """
+        Add the constraints 
+
+            C_s y[t] \leq d_s + M*(1 - b_s[t])
+
+        to the optimization problem, which ensures
+        that y[t] is in partition `s` only if b_s[t] = 1.
+        """
+        M = 1000  # a very large number
+        for t in range(self.T):
+            y = self.y[:,t]
+            for s, P in enumerate(self.partition_list):
+                b = self.b[s][t]
+                C = P.polytope.C
+                d = P.polytope.d
+
+                self.mp.AddConstraint(le(C@y, d + M*(1-b)))
 
     def AddSTLConstraints(self):
         """
@@ -743,22 +764,21 @@ class PerspectiveMICPSolver(STLSolver):
             x = None
             u = None
 
-        #DEBUG
-        # Plot y_s(t)
-        ax = plt.gca()
-        ax.set_xlim((0,10))
-        ax.set_ylim((0,10))
+        #DEBUG: Plot y_s(t)
+        #ax = plt.gca()
+        #ax.set_xlim((0,10))
+        #ax.set_ylim((0,10))
 
-        plt.scatter(*x[:2,:], label='x', linewidth=5, alpha=0.5)
-        for s in range(self.S):
-            y = res.GetSolution(self.ys[s])
-            b = res.GetSolution(self.b[s])
-            print(b)
-            for t in range(self.T):
-                plt.scatter(*y[:2,t], marker='^', color='k', label='y_%s'%s, alpha=b[t])
+        #plt.scatter(*x[:2,:], label='x', linewidth=5, alpha=0.5)
+        #for s in range(self.S):
+        #    y = res.GetSolution(self.ys[s])
+        #    b = res.GetSolution(self.b[s])
+        #    print(b)
+        #    for t in range(self.T):
+        #        plt.scatter(*y[:2,t], marker='^', color='k', label='y_%s'%s, alpha=b[t])
 
-        #plt.legend()
-        plt.show()
+        ##plt.legend()
+        #plt.show()
 
         return x, u
 

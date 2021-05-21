@@ -57,6 +57,6 @@ def plot_either_or_scenario(goal, target_one, target_two, obstacle):
     ax.add_patch(make_rectangle_patch(*goal, color='green', alpha=0.5))
 
     # set the field of view
-    ax.set_xlim((0,12))
-    ax.set_ylim((0,12))
+    ax.set_xlim((0,10))
+    ax.set_ylim((0,10))
     ax.set_aspect('equal')
