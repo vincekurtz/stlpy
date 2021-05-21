@@ -100,5 +100,6 @@ if x is not None:
     ax.set_aspect('equal')
 
     # Show the solution
+    solver.plot_relaxed_solution(show=False)
     plt.scatter(*x[:2,:])
     plt.show()

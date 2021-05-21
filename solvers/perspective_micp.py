@@ -60,8 +60,7 @@ class PerspectiveMICPSolver(STLSolver):
         self.ys = []
         for s in range(self.S):
             b_s = self.NewBinaryVariables(self.T, 'b_%s'%s)
-            #y_s = self.mp.NewContinuousVariables(self.n+self.m, self.T, 'y_%s'%s)
-            y_s = 0
+            y_s = self.mp.NewContinuousVariables(self.n+self.m, self.T, 'y_%s'%s)
 
             self.b.append(b_s)
             self.ys.append(y_s)
@@ -72,9 +71,9 @@ class PerspectiveMICPSolver(STLSolver):
 
         #self.AddPerspectiveRunningCost()
         #self.AddPerspectiveDynamicsConstraints()
+        #self.AddBigMPartitionContainmentConstraints()
 
-        #self.AddPartitionContainmentConstraints()
-        self.AddBigMPartitionContainmentConstraints()
+        self.AddPartitionContainmentConstraints()
         self.AddSTLConstraints()
 
     def AddDynamicsConstraints(self):
@@ -759,28 +758,38 @@ class PerspectiveMICPSolver(STLSolver):
             rho = self.spec.robustness(y,0)
             print("Optimal Cost: ", res.get_optimal_cost())
             print("Optimal Robustness: ", rho[0])
+
+            # Store the solution. This will allow us to make
+            # pretty plots, etc later. 
+            self.res = res
         else:
             print("No solution found")
             x = None
             u = None
 
-        #DEBUG: Plot y_s(t)
-        #ax = plt.gca()
-        #ax.set_xlim((0,10))
-        #ax.set_ylim((0,10))
-
-        #plt.scatter(*x[:2,:], label='x', linewidth=5, alpha=0.5)
-        #for s in range(self.S):
-        #    y = res.GetSolution(self.ys[s])
-        #    b = res.GetSolution(self.b[s])
-        #    print(b)
-        #    for t in range(self.T):
-        #        plt.scatter(*y[:2,t], marker='^', color='k', label='y_%s'%s, alpha=b[t])
-
-        ##plt.legend()
-        #plt.show()
-
         return x, u
+
+    def plot_relaxed_solution(self, show=True):
+        """
+        Make a plot of the first two dimensions of the signal y_s, 
+        with opacity determined by y_s. 
+
+        Recall that y_s is constrained to the s^th partition, and
+        y[t] = y_s[t] if b_s[t] = 1. 
+
+        @note self.Solve must be called and return a valid solution first. 
+        """
+        assert hasattr(self, 'res'), "self.Solve() must return a positive result first"
+
+        for s in range(self.S):
+            y = self.res.GetSolution(self.ys[s])
+            b = self.res.GetSolution(self.b[s])
+            for t in range(self.T):
+                plt.scatter(*y[:2,t], marker='^', color='k', alpha=b[t])
+
+        if show:
+            plt.show()
+
 
     def plot_partitions(self, show=True):
         """
