@@ -75,20 +75,24 @@ class SPPMICPSolver(STLSolver):
         self.y = np.vstack([self.x,self.u])
 
         self.a = self.NewBinaryVariables(self.nE, 'a')
-        self.b = self.NewBinaryVariables(self.nV, 'a')
+        self.b = self.NewBinaryVariables(self.nV, 'b')  # could also define as continuous
+
+        self.ys = []
+        for s in range(self.S):
+            y_s = self.mp.NewContinuousVariables(self.n+self.m, self.T, 'y_%s'%s)
+            self.ys.append(y_s)
 
         # Add cost and constraints to the problem
-
         self.AddRunningCost()
         self.AddDynamicsConstraints()
-
-        #self.AddPerspectiveRunningCost()
-        #self.AddPerspectiveDynamicsConstraints()
-        self.AddBigMPartitionContainmentConstraints()
         self.AddBinaryFlowConstraints()
 
-        #self.AddPartitionContainmentConstraints()
+        self.AddPartitionContainmentConstraints()
         self.AddSTLConstraints()
+        
+        #self.AddPerspectiveRunningCost()
+        #self.AddPerspectiveDynamicsConstraints()
+        #self.AddBigMPartitionContainmentConstraints()
 
     def AddBinaryFlowConstraints(self):
         """
@@ -221,8 +225,9 @@ class SPPMICPSolver(STLSolver):
         for t in range(self.T):
             y_sum = 0
             for s, P in enumerate(self.partition_list):
+                i = self.V.index((t,s))
                 yst = self.ys[s][:,t]
-                bst = self.b[s][t]
+                bst = self.b[i]
                 add_perspective_constraint(self.mp, P.polytope, yst, bst)
 
                 y_sum += yst
@@ -894,8 +899,6 @@ class SPPMICPSolver(STLSolver):
             for t in range(self.T):
                 i = self.V.index((t,s))
                 b[s][t] = self.res.GetSolution(self.b[i])
-        # DEBUG
-        print(b)
 
         # Function for sending data to the animation
         def data_gen():
@@ -905,6 +908,8 @@ class SPPMICPSolver(STLSolver):
         # Function that's called at each step of the animation
         def run(data):
             t, b = data
+            b = np.clip(b,0,1)  # sometimes (due to numerics) values of b will be just
+                                # outside [0,1], so clip them here
             ax.set_title("t = %s" % t)
             for s in range(self.S):
                 patches[s].set_alpha(b[s])
@@ -912,7 +917,6 @@ class SPPMICPSolver(STLSolver):
         ani = FuncAnimation(fig, run, data_gen, interval=500)
 
         plt.show()
-
 
     def plot_partitions(self, show=True):
         """
