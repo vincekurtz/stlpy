@@ -49,7 +49,7 @@ spec = control_bounded.always(0,T) & \
        velocity_bounded.always(0,T) & \
        in_workspace.always(0,T) & \
        not_at_obstacle.always(0,T) & \
-       at_goal.eventually(T, T)
+       at_goal.eventually(0, T)
 #       not_at_obstacle.until(at_goal, 0, T)
 
 # DEBUG: more complicated specification
@@ -77,8 +77,8 @@ R = 1e-1*np.eye(2)
 x0 = np.array([1.0,2.0,0,0])
 
 # Solve for the system trajectory
-#solver = SPPMICPSolver(spec, A, B, Q, R, x0, T)
-solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=True)
+solver = SPPMICPSolver(spec, A, B, Q, R, x0, T)
+#solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
 #solver.plot_partitions()
 #solver = MICPSolver(spec, A, B, Q, R, x0, T, M, relaxed=False)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
