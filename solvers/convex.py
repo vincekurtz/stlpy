@@ -3,30 +3,35 @@ from STL import STLPredicate, STLFormula
 from utils import *
 
 import numpy as np
-import scipy as sp
 import time
 from pydrake.all import (MathematicalProgram, 
                          GurobiSolver, 
                          MosekSolver, 
                          eq)
+
+import sympy as sp
         
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from itertools import cycle
 
-class PerspectiveMICPSolver(STLSolver):
+class ConvexSolver(STLSolver):
     """
     Given an STLFormula (spec), a system of the form 
 
         x_{t+1} = A*x_t + B*u_t,
         y_t = [x_t;u_t],
 
-    use a Mixed-Integer Convex Programming encoding based on perspective
+    and a cost
+
+        J = sum x'Qx + u'Ru,
+
+    use a Convex Programming encoding based on perspective
     functions for disjuctive programming to find a minimum-cost
     satisfying trajectory. 
     """
 
-    def __init__(self, spec, A, B, Q, R, x0, T, relaxed=False):
+    def __init__(self, spec, A, B, Q, R, x0, T):
         """
         Initialize the solver.
 
@@ -51,151 +56,72 @@ class PerspectiveMICPSolver(STLSolver):
         self.partition_list = self.ConstructStateFormulaPartitions()
         self.S = len(self.partition_list)
 
-        # Flag for whether to use convex relaxation
-        self.convex_relaxation = relaxed
-
-        # Create optimization variables
-        self.x = self.mp.NewContinuousVariables(self.n, self.T, 'x')
-        self.u = self.mp.NewContinuousVariables(self.m, self.T, 'u')
-        self.y = np.vstack([self.x,self.u])
-
-        self.b = []
-        self.ys = []
+        # Create boolean variables b_s(t) such that b_s(t) = 1 only
+        # if we're in partition s at time t.
+        self.b = np.full((self.S, self.T), np.nan, dtype=np.object)
         for s in range(self.S):
-            b_s = self.NewBinaryVariables(self.T, 'b_%s'%s)
-            y_s = self.mp.NewContinuousVariables(self.n+self.m, self.T, 'y_%s'%s)
+            for t in range(self.T):
+                self.b[s,t] = sp.symbols('b_%s_%s' % (s,t))
 
-            self.b.append(b_s)
-            self.ys.append(y_s)
+        # Write the specification as a boolean function over b_s(t)
+        f = self.CreateBooleanFormula(self.spec, 0)
 
-        # Add cost and constraints to the problem
-        
-        #self.AddRunningCost()
-        #self.AddDynamicsConstraints()
-        self.AddPerspectiveRunningCost()
-        self.AddPerspectiveDynamicsConstraints()
+        # Rewrite the specification in disjunctive normal form (DNF)
+        print(f)
+        print(len(f.args))
+        for i in range(len(f.args)):
+            print(len(f.args[i].args))
+        #f = sp.logic.boolalg.to_dnf(f)  # this is super slow...
 
-        #self.AddBigMPartitionContainmentConstraints()
-        self.AddPartitionContainmentConstraints()
+        # Use each argument of the DNF formula to construct a set of convex constraints
+        # such that respecting these convex constraints ensures satisfaction of the formula
 
-        self.AddSTLConstraints()
+        # (optional) prune out infeasible arguments by solving an LP
 
-    def AddDynamicsConstraints(self):
+        # Set up a (convex) disjunctive programming problem which finds a minimum
+        # cost satisfying trajectory by solving an SOCP.
+
+    def CreateBooleanFormula(self, formula, t):
         """
-        Add the constraints
+        Given an STL specification, return a (sympy) boolean formula f
+        over the variables b_s(t), where b_s(t)=1 means the system is 
+        in partition s at time t, and f=1 means the specification is satisfied. 
 
-            x_{t+1} = A*x_t + B*u_t
-            x_0 = x0
+        @param  formula The STLFormula or STLPredicate to consider
+        @param  t       An integer timestep (in [0,T]) at which spec holds
 
-        to the optimization problem. 
+        @returns    f   A sympy boolean formula representing the specification.
+
+        @note Boolean variables self.b must be defined.
         """
-        # Initial condition
-        self.mp.AddConstraint(eq( self.x[:,0], self.x0 ))
+        if formula in self.bounding_predicates:
+            # We can safely ignore any predicates that have to do only
+            # with establishing bounds, since the partitioning already
+            # accounts for this
+            f = True
 
-        # Dynamics
-        for t in range(self.T-1):
-            self.mp.AddConstraint(eq(
-                self.x[:,t+1], self.A@self.x[:,t] + self.B@self.u[:,t]
-            ))
+        elif formula in self.state_formulas:
+            # For a state formula, we need to add the corresponding constriants
+            P_lst, s_lst = self.PartitionsSatisfying(formula)
+            b_lst = [self.b[s][t] for s in s_lst]
+            f = sp.logic.boolalg.Or(*b_lst)
 
-    def AddRunningCost(self):
-        """
-        Add the running cost
+        # We haven't reached the bottom of the tree, so keep adding
+        # boolean constraints recursively
+        else:
+            sub_fs = []
+            for i, subformula in enumerate(formula.subformula_list):
+                t_sub = t + formula.timesteps[i]   # the timestep at which this subformula 
+                                                   # should hold
+                sub_fs.append(self.CreateBooleanFormula(subformula, t_sub))
 
-            min x'Qx + u'Ru
+            if formula.combination_type == "and":
+                f = sp.logic.boolalg.And(*sub_fs)
 
-        to the optimization problem. 
-        """
-        for t in range(self.T):
-            self.mp.AddCost( self.x[:,t].T@self.Q@self.x[:,t] + self.u[:,t].T@self.R@self.u[:,t] )
+            else:  # combination_type == "or":
+                f = sp.logic.boolalg.Or(*sub_fs)
 
-    def AddPerspectiveDynamicsConstraints(self):
-        """
-        Add the constraints
-
-            x(t+1) = sum_s A*x_s(t) + B*u_s(t)
-            [I 0] y_s(t) = x0*b_s(t)
-
-        to the optimization problem, which imply the dynamics constraints
-
-            x_{t+1} = A*x_t + B*u_t
-            x_0 = x0
-        """
-        # Initial condition
-        H = np.hstack([np.eye(self.n), np.zeros((self.n,self.m))])
-        for s in range(self.S):
-            y0 = self.ys[s][:,0]
-            self.mp.AddConstraint(eq( H@y0, self.x0*self.b[s][0] ))
-
-        # Dynamics
-        for t in range(self.T-1):
-            x_next = 0
-
-            for s in range(self.S):
-                x_s = self.ys[s][:self.n,t]
-                u_s = self.ys[s][self.n:,t]
-
-                x_next += self.A@x_s + self.B@u_s
-
-            self.mp.AddConstraint(eq( self.x[:,t+1], x_next ))
-
-    def AddPerspectiveRunningCost(self):
-        """
-        Add the perspective running cost
-
-            min sum_s l_tilde( b_s(t), y_s(t) )
-
-        to the optimization problem, where l_tilde is the
-        perspective of the running cost
-
-            l(y_t) = x'Qx + u'Ru.
-
-        """
-        for t in range(self.T):
-            for s in range(self.S):
-                # Write l(y) = y'Hy
-                H = sp.linalg.block_diag(self.Q, self.R)
-                add_quadratic_perspective_cost(self.mp, H, self.ys[s][:,t], self.b[s][t])
-
-    def AddPartitionContainmentConstraints(self):
-        """
-        Add the constraints
-
-            C_s y_s[t] \leq d_s b_s[t]
-            y[t] = sum_s y_s[t]
-
-        to the optimization problem, which ensures
-        that y[t] is in partition `s` only if b_s[t] = 1.
-        """
-        for t in range(self.T):
-            y_sum = 0
-            for s, P in enumerate(self.partition_list):
-                yst = self.ys[s][:,t]
-                bst = self.b[s][t]
-                add_perspective_constraint(self.mp, P.polytope, yst, bst)
-
-                y_sum += yst
-
-            self.mp.AddConstraint(eq( y_sum, self.y[:,t] ))
-
-    def AddBigMPartitionContainmentConstraints(self):
-        """
-        Add the constraints 
-
-            C_s y[t] \leq d_s + M*(1 - b_s[t])
-
-        to the optimization problem, which ensures
-        that y[t] is in partition `s` only if b_s[t] = 1.
-        """
-        M = 1000  # a very large number
-        for t in range(self.T):
-            y = self.y[:,t]
-            for s, P in enumerate(self.partition_list):
-                b = self.b[s][t]
-                C = P.polytope.C
-                d = P.polytope.d
-
-                self.mp.AddConstraint(le(C@y, d + M*(1-b)))
+        return f
 
     def AddSTLConstraints(self):
         """
@@ -210,14 +136,6 @@ class PerspectiveMICPSolver(STLSolver):
         # if the overall specification is satisfied.
         z_spec = self.mp.NewContinuousVariables(1)
         self.mp.AddConstraint(eq( z_spec, 1 ))
-
-        # Add constraints on the indicator variables b_s[t] such that
-        # we can only be in one mode at a time
-        for t in range(self.T):
-            b_sum = 0
-            for s in range(self.S):
-                b_sum += self.b[s][t]
-            self.mp.AddConstraint(b_sum == 1)
 
         # Recursively traverse the tree defined by the specification
         # subformulas and add similar binary constraints. 
@@ -303,7 +221,7 @@ class PerspectiveMICPSolver(STLSolver):
         @returns Ps   A list of polytope Partitions P that satisfy the predicate
         @returns ss   A the indices of these same partitions
 
-        @note self.ConstructPartitions must be called first
+        @note self.ConstructStateFormulaPartitions must be called first
         """
         Ps = [P for s, P in enumerate(self.partition_list) if state_formula in P.formulas]
         ss = [s for s, P in enumerate(self.partition_list) if state_formula in P.formulas]
@@ -372,78 +290,6 @@ class PerspectiveMICPSolver(STLSolver):
             return "nowhere"
 
         return "some_places"
-
-    def ConstructPartitions(self):
-        """
-        Define a set of Polytope partitions P_l such that the same predicates hold
-        for all values within each partition. 
-
-        @returns lst    A list of Partitions representing each partition.
-        """
-        start_time = time.time()
-
-        # Create a partition describing all of the bounds on y
-        bounding_predicates = self.GetBoundingPredicates(self.spec)
-        bounding_polytope = self.GetBoundingPolytope(bounding_predicates)
-        bounds = Partition(bounding_polytope, bounding_predicates)
-
-        # Generate list of all non-bounding predicates
-        predicates = [p for p in self.GetPredicates(self.spec) if not p in bounding_predicates]
-
-        # Create partitions
-        partition_list = [bounds]
-        for p in predicates:
-            partition_list = self.SplitAllPartitions(partition_list, p)
-
-        print("Created %s partitions in %0.4fs" % (len(partition_list), time.time()-start_time))
-
-        return partition_list
-
-    def SplitAllPartitions(self, partition_list, pred):
-        """
-        Given a list of Partitions and a predicate, generate a list of new
-        partitions such that the value of the predicate is the same across 
-        each new partition. 
-
-        @param partition_list   A list of Partitions
-        @param pred             The STLPredicate to split on 
-
-        @returns new_partition_list A new list of Partitions
-        """
-        new_partition_list = []
-        for partition in partition_list:
-            new_partition_list += self.SplitPartition(partition, pred)
-        return new_partition_list
-
-    def SplitPartition(self, partition, pred):
-        """
-        Given a (bounded) partition and a (linear) predicate, generate
-        new partitions such that the value of the predicate is the same
-        accross new partitions. 
-
-        @param partition    The Partition that we'll split
-        @param pred         The STLPredicate that we'll use to do the splitting
-
-        @returns partition_list     A list of new Partitions
-        """
-        assert isinstance(partition, Partition)
-        assert isinstance(pred, STLPredicate)
-
-        # Check if this predicate intersects the given partition. If it 
-        # doesn't, we can simply return the original partition.
-        pred_redundant = partition.polytope.check_ineq_redundancy(-pred.A, -pred.b)
-        negation_redundant = partition.polytope.check_ineq_redundancy(pred.A, pred.b)
-        redundant = pred_redundant or negation_redundant
-        if redundant: return [partition]
-
-        # Create two new partitions based on spliting with the predicate
-        pred_poly = Polytope(self.d, ineq_matrices=(-pred.A, -pred.b))
-        not_pred_poly = Polytope(self.d, ineq_matrices=(pred.A, pred.b))
-
-        P1 = Partition(partition.polytope.intersection(pred_poly), partition.formulas + [pred])
-        P2 = Partition(partition.polytope.intersection(not_pred_poly), partition.formulas)
-
-        return [P1, P2]
 
     def StateSplitAllPartitions(self, partition_list, pred, state_partitions):
         """
@@ -739,37 +585,8 @@ class PerspectiveMICPSolver(STLSolver):
         """
         Solve the optimization problem and return the optimal values of (x,u).
         """
-
-        # Print out some solver data
-        num_continuous_variables, num_binary_variables = self.GetVariableData()
-        print("Solving MICP with")
-        print("    %s binary variables" % num_binary_variables)
-        print("    %s continuous variables" % num_continuous_variables)
-
-        # Set up the solver and solve the optimization problem
-        solver = GurobiSolver()
-        #solver = MosekSolver()
-        res = solver.Solve(self.mp)
-
-        solve_time = res.get_solver_details().optimizer_time
-        print("Solve time: ", solve_time)
-
-        if res.is_success():
-            x = res.GetSolution(self.x)
-            u = res.GetSolution(self.u)
-
-            y = np.vstack([x,u])
-            rho = self.spec.robustness(y,0)
-            print("Optimal Cost: ", res.get_optimal_cost())
-            print("Optimal Robustness: ", rho[0])
-
-            # Store the solution. This will allow us to make
-            # pretty plots, etc later. 
-            self.res = res
-        else:
-            print("No solution found")
-            x = None
-            u = None
+        x = None
+        u = None
 
         return x, u
 
