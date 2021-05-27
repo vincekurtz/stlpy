@@ -13,7 +13,7 @@ from scenarios.common import *
 from scenarios.reach_avoid import *
 from scenarios.either_or import *
 from scenarios.random_multitarget import *
-from solvers import SPPMICPSolver, MICPSolver, GradientSolver, PerspectiveMICPSolver, ConvexSolver
+from solvers import SPPMICPSolver, MICPSolver, GradientSolver, PerspectiveMICPSolver
 
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
@@ -77,12 +77,11 @@ R = 1e-1*np.eye(2)
 x0 = np.array([1.0,2.0,0,0])
 
 # Solve for the system trajectory
-#solver = SPPMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
+solver = SPPMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
 #solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
 #solver = MICPSolver(spec, A, B, Q, R, x0, T, M, relaxed=False)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
-solver = ConvexSolver(spec, A, B, Q, R, x0, T)
-#solver.plot_partitions()
+solver.plot_partitions()
 
 x, u = solver.Solve()
 

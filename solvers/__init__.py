@@ -2,4 +2,3 @@ from solvers.gradient_based_optimization import GradientSolver
 from solvers.standard_micp import MICPSolver
 from solvers.spp_micp import SPPMICPSolver
 from solvers.perspective_micp import PerspectiveMICPSolver
-from solvers.convex import ConvexSolver
