@@ -82,13 +82,21 @@ class SPPMICPSolver(STLSolver):
             y_s = self.mp.NewContinuousVariables(self.n+self.m, self.T, 'y_%s'%s)
             self.ys.append(y_s)
 
-        # Add cost and constraints to the problem
+        #DEBUG: formulate pure reachability problem rather than STL constrained problem
+        self.sF = 0  # target partition is the goal region
+
         self.AddRunningCost()
         self.AddDynamicsConstraints()
         self.AddBinaryFlowConstraints()
-
         self.AddPartitionContainmentConstraints()
-        self.AddSTLConstraints()
+
+        # Add cost and constraints to the problem
+        #self.AddRunningCost()
+        #self.AddDynamicsConstraints()
+        #self.AddBinaryFlowConstraints()
+
+        #self.AddPartitionContainmentConstraints()
+        #self.AddSTLConstraints()
         
         #self.AddPerspectiveRunningCost()
         #self.AddPerspectiveDynamicsConstraints()
@@ -120,13 +128,19 @@ class SPPMICPSolver(STLSolver):
                 self.mp.AddLinearConstraint( a_O - a_I == 0 )
             elif t == 0 and s == self.s0:
                 self.mp.AddLinearConstraint( a_O - a_I == 1 )
+            elif t == self.T-1 and s == self.sF:
+                # DEBUG: fix target region
+                self.mp.AddLinearConstraint( a_O - a_I == -1 )
 
+
+        # DEBUG: consider flow only
             # Total flow
             if t == 0:
                 self.mp.AddLinearConstraint( self.b[i] == a_O )
             else:
                 self.mp.AddLinearConstraint( self.b[i] == a_I )
 
+        # DEBUG: consider flow only
         # Occupancy constraint
         for t in range(self.T):
             b_sum = 0

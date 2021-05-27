@@ -81,7 +81,7 @@ solver = SPPMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
 #solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
 #solver = MICPSolver(spec, A, B, Q, R, x0, T, M, relaxed=False)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
-solver.plot_partitions()
+#solver.plot_partitions()
 
 x, u = solver.Solve()
 
