@@ -82,7 +82,7 @@ class SPPMICPSolver(STLSolver):
         self.AddBinaryFlowConstraints()
         self.AddBilinearEnvelopeConstraints()
         self.AddDynamicsConstraints()
-        #self.AddRunningCost()
+        self.AddRunningCost()
 
     def AddBilinearEnvelopeConstraints(self):
         """
@@ -175,7 +175,29 @@ class SPPMICPSolver(STLSolver):
 
             l = x'Qx + u'Ru
         """
-        pass
+        # We'll implement this cost as a linear cost over slack variables
+        # along with SOC constraints:
+        #
+        #   min  l
+        #   s.t. a_ij*l >= x_start'*Q*x_start + u_start'*R*u_start
+        #                    + x_end'*Q*x_end   (if t=T)
+        #        a_ij >= 0
+        #        l >= 0
+        for e, (i,j) in enumerate(self.E):
+            l = self.mp.NewContinuousVariables(1,'l')[0]
+            a = self.a[e]
+            t, s = self.V[j]
+
+            x_start = self.y_start[e][:self.n]
+            u_start = self.y_start[e][self.n:]
+            x_end = self.y_end[e][:self.n]
+
+            quad_expr = x_start.T@self.Q@x_start + u_start.T@self.R@u_start
+            if t == self.T-1:  # add terminal cost
+                quad_expr += x_end.T@self.Q@x_end
+            
+            self.mp.AddCost(l)
+            self.mp.AddRotatedLorentzConeConstraint(l, a, quad_expr)
 
     def AddBinaryFlowConstraints(self):
         """
