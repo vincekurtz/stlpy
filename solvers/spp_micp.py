@@ -5,11 +5,9 @@ from utils import *
 import numpy as np
 import scipy as sp
 import time
-from pydrake.all import (MathematicalProgram, 
-                         Evaluate,
-                         GurobiSolver, 
-                         MosekSolver, 
-                         eq)
+from pydrake.all import (MathematicalProgram, Evaluate,
+                         GurobiSolver, MosekSolver, 
+                         eq, le)
         
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -72,41 +70,115 @@ class SPPMICPSolver(STLSolver):
 
         # Create optimization variables
         self.a = self.NewBinaryVariables(self.nE, 'a')  # a_ij = 1 iff edge (ij) is traversed
-        self.y = self.NewBinaryVariables(self.nV, self.n+self.m)  # continuous state y_i=[x;u]
-                                                                  # for each node
-        self.y_start = self.NewBinaryVariables(self.nE, self.n+self.m)  # y_start = a_ij*y_i
-        self.y_end = self.NewBinaryVariables(self.nE, self.n+self.m)    # y_end = a_ij*y_j
+        self.y = self.mp.NewContinuousVariables(self.nV, self.n+self.m)  # continuous state y_i=[x;u]
+                                                                         # for each node
+        self.y_start = self.mp.NewContinuousVariables(self.nE, self.n+self.m)  # y_start = a_ij*y_i
+        self.y_end = self.mp.NewContinuousVariables(self.nE, self.n+self.m)    # y_end = a_ij*y_j
 
         #DEBUG: formulate pure reachability problem rather than STL constrained problem
         self.sF = 0  # target partition is the goal region
 
         # Add cost and constraints to the problem
-        #self.AddRunningCost()
+        self.AddBinaryFlowConstraints()
+        self.AddBilinearEnvelopeConstraints()
         #self.AddDynamicsConstraints()
-        #self.AddBinaryFlowConstraints()
+        #self.AddRunningCost()
 
-        #self.AddPartitionContainmentConstraints()
-        #self.AddSTLConstraints()
-        
-        #self.AddPerspectiveRunningCost()
-        #self.AddPerspectiveDynamicsConstraints()
-        #self.AddBigMPartitionContainmentConstraints()
+    def AddBilinearEnvelopeConstraints(self):
+        """
+        Add the constraints
+
+            (a_ij, y_i, y_start_ij) \in Lambda_i
+            (a_ij, y_j, y_end_ij) \in Lambda_j,
+
+        to the optimization problem, where
+
+            (a, y, z) \in Lambda_i
+
+        ensures that z = a*y and y \in P_i if a is binary. 
+        """
+        for e, (i,j) in enumerate(self.E):
+            # (a_ij, y_i, y_start_ij) \in Lambda_i
+            self.AddLambdaConstraint(self.a[e], self.y[i], self.y_start[e], i)
+
+            # (a_ij, y_j, y_end_ij) \in Lambda_j,
+            self.AddLambdaConstraint(self.a[e], self.y[j], self.y_end[e], j)
+
+    def AddLambdaConstraint(self, a, y, z, i):
+        """
+        Add the constraint
+
+            (a, y, z) \in Lambda_i, 
+
+        to the optimization problem, where
+            
+            Lambda_i = { a, y, z | a \in [0,1], 
+                                   z \in a*P_i,
+                                   y-z \in (1-a)*P_i }
+
+        and P_i is the i^th polytopic partition.
+
+        @param a    A (binary or relaxed) indicator variable
+        @param y    A continuous state which we will constrain to P_i
+        @param z    The bilinear flow variable z = a*y
+        """
+        t, s = self.V[i]
+        P = self.partition_list[s].polytope
+
+        # Each partition P = {y | C*y <= d}. 
+        #
+        # So we can implement the contraints (a, y, z) \in Lambda_i as
+        #
+        #   C*z <= d*a
+        #   C*(y-z) <= d*(1-a)
+        #
+        # (Note that a is already constrained to [0,1])
+        self.mp.AddLinearConstraint(le( P.C@z, P.d*a ))
+        self.mp.AddLinearConstraint(le( P.C@(y-z), P.d*(1-a) ))
+
+    def AddDynamicsConstraints(self):
+        """
+        Add the constraints
+
+            (y_start_ij, y_end_ij) \in a_ij*Y_ij,
+
+        to the optimization where
+
+            Y_ij = { y_i, y_j | x_j = A*x_i + B*u_i }
+
+        imposes the (linear) dynamics constraints. 
+        """
+        # Also, impose the initial condition constraints
+        pass
+
+    def AddRunningCost(self):
+        """
+        Adds the running cost
+
+            sum_{ij \in E} l_tilde(a_ij, y_start_ij, y_end_ij)
+
+        to the optimization problem, where l_tilde is the perspective
+        of the quadratic cost
+
+            l = x'Qx + u'Ru
+        """
+        pass
 
     def AddBinaryFlowConstraints(self):
         """
         Add the constraints
 
-            b_s[t] = b_i = sum a_ij,            (total flow constraint)
-
             a_O - a_I = 0  if 0 < t < T,        (input-output flow constraints)
                         1  if t = 0 and s = s0
 
-            sum_s b_s[t] = 1 for all t          (occupancy constraint)
+            a_O <= 1                            (degree constraints)
+            a_I <= 1
+
+            sum_s TotalFlow[s,t] = 1            (occupancy constraint)
 
         to the optimization problem. 
         """
 
-        # flow constraints
         for i, (t,s) in enumerate(self.V):
             Oi = [k for k, e in enumerate(self.E) if e[0] == i]
             Ii = [k for k, e in enumerate(self.E) if e[1] == i]
@@ -122,141 +194,20 @@ class SPPMICPSolver(STLSolver):
                 # DEBUG: fix target region
                 self.mp.AddLinearConstraint( a_O - a_I == -1 )
 
+            # Degree constraints (redundant with cost)
+            if t < self.T-1:
+                self.mp.AddLinearConstraint( a_O <= 1 )
+            if 0 < t:
+                self.mp.AddLinearConstraint( a_I <= 1 )
 
-        # DEBUG: consider flow only
-            # Total flow
-        #    if t == 0:
-        #        self.mp.AddLinearConstraint( self.b[i] == a_O )
-        #    else:
-        #        self.mp.AddLinearConstraint( self.b[i] == a_I )
-
-        # DEBUG: consider flow only
-        # Occupancy constraint
-        #for t in range(self.T):
-        #    b_sum = 0
-        #    for s in range(self.S):
-        #        i = self.V.index((t,s))
-        #        b_sum += self.b[i]
-        #    self.mp.AddConstraint( b_sum == 1 )
-
-    def AddDynamicsConstraints(self):
-        """
-        Add the constraints
-
-            x_{t+1} = A*x_t + B*u_t
-            x_0 = x0
-
-        to the optimization problem. 
-        """
-        # Initial condition
-        self.mp.AddConstraint(eq( self.x[:,0], self.x0 ))
-
-        # Dynamics
-        for t in range(self.T-1):
-            self.mp.AddConstraint(eq(
-                self.x[:,t+1], self.A@self.x[:,t] + self.B@self.u[:,t]
-            ))
-
-    def AddRunningCost(self):
-        """
-        Add the running cost
-
-            min x'Qx + u'Ru
-
-        to the optimization problem. 
-        """
+        # Occupancy constraint (redundant with cost)
         for t in range(self.T):
-            self.mp.AddCost( self.x[:,t].T@self.Q@self.x[:,t] + self.u[:,t].T@self.R@self.u[:,t] )
-
-    def AddPerspectiveDynamicsConstraints(self):
-        """
-        Add the constraints
-
-            x(t+1) = sum_s A*x_s(t) + B*u_s(t)
-            [I 0] y_s(t) = x0*b_s(t)
-
-        to the optimization problem, which imply the dynamics constraints
-
-            x_{t+1} = A*x_t + B*u_t
-            x_0 = x0
-        """
-        # Initial condition
-        H = np.hstack([np.eye(self.n), np.zeros((self.n,self.m))])
-        for s in range(self.S):
-            y0 = self.ys[s][:,0]
-            self.mp.AddConstraint(eq( H@y0, self.x0*self.b[s][0] ))
-
-        # Dynamics
-        for t in range(self.T-1):
-            x_next = 0
-
+            summ = 0
             for s in range(self.S):
-                x_s = self.ys[s][:self.n,t]
-                u_s = self.ys[s][self.n:,t]
-
-                x_next += self.A@x_s + self.B@u_s
-
-            self.mp.AddConstraint(eq( self.x[:,t+1], x_next ))
-
-    def AddPerspectiveRunningCost(self):
-        """
-        Add the perspective running cost
-
-            min sum_s l_tilde( b_s(t), y_s(t) )
-
-        to the optimization problem, where l_tilde is the
-        perspective of the running cost
-
-            l(y_t) = x'Qx + u'Ru.
-
-        """
-        for t in range(self.T):
-            for s in range(self.S):
-                # Write l(y) = y'Hy
-                H = sp.linalg.block_diag(self.Q, self.R)
-                add_quadratic_perspective_cost(self.mp, H, self.ys[s][:,t], self.b[s][t])
-
-    def AddPartitionContainmentConstraints(self):
-        """
-        Add the constraints
-
-            C_s y_s[t] \leq d_s b_s[t]
-            y[t] = sum_s y_s[t]
-
-        to the optimization problem, which ensures
-        that y[t] is in partition `s` only if b_s[t] = 1.
-        """
-        for t in range(self.T):
-            y_sum = 0
-            for s, P in enumerate(self.partition_list):
                 i = self.V.index((t,s))
-                yst = self.ys[s][:,t]
-                bst = self.b[i]
-                add_perspective_constraint(self.mp, P.polytope, yst, bst)
-
-                y_sum += yst
-
-            self.mp.AddConstraint(eq( y_sum, self.y[:,t] ))
-
-    def AddBigMPartitionContainmentConstraints(self):
-        """
-        Add the constraints 
-
-            C_s y[t] \leq d_s + M*(1 - b_s[t])
-
-        to the optimization problem, which ensures
-        that y[t] is in partition `s` only if b_s[t] = 1.
-        """
-        M = 1000  # a very large number
-        for t in range(self.T):
-            y = self.y[:,t]
-            for s, P in enumerate(self.partition_list):
-                i = self.V.index((t,s))
-                b = self.b[i]
-                C = P.polytope.C
-                d = P.polytope.d
-
-                self.mp.AddConstraint(le(C@y, d + M*(1-b)))
+                b = self.GetTotalFlow(i)
+                summ += b
+            self.mp.AddLinearConstraint( summ == 1 )
 
     def AddSTLConstraints(self):
         """
@@ -836,15 +787,19 @@ class SPPMICPSolver(STLSolver):
 
         if res.is_success():
             y = np.full((self.n+self.m, self.T), 0.0)
+            b = np.full((self.S, self.T), np.nan)
 
             for i in range(self.nV):
                 t, s = self.V[i]
                 
-                b = res.GetSolution(self.GetTotalFlow(i))
+                bi = res.GetSolution(self.GetTotalFlow(i))
                 yi = res.GetSolution(self.y[i,:])
-                byi = Evaluate(b*yi).flatten()
+                byi = Evaluate(bi*yi).flatten()
 
                 y[:,t] += byi
+                b[s,t] = Evaluate([bi])
+
+            print(b)
 
             x = y[:self.n,:]
             u = y[self.n:,:]
