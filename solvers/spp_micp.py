@@ -6,6 +6,7 @@ import numpy as np
 import scipy as sp
 import time
 from pydrake.all import (MathematicalProgram, 
+                         Evaluate,
                          GurobiSolver, 
                          MosekSolver, 
                          eq)
@@ -70,25 +71,14 @@ class SPPMICPSolver(STLSolver):
         self.nE = len(self.E)
 
         # Create optimization variables
-        self.x = self.mp.NewContinuousVariables(self.n, self.T, 'x')
-        self.u = self.mp.NewContinuousVariables(self.m, self.T, 'u')
-        self.y = np.vstack([self.x,self.u])
-
-        self.a = self.NewBinaryVariables(self.nE, 'a')
-        self.b = self.NewBinaryVariables(self.nV, 'b')  # could also define as continuous
-
-        self.ys = []
-        for s in range(self.S):
-            y_s = self.mp.NewContinuousVariables(self.n+self.m, self.T, 'y_%s'%s)
-            self.ys.append(y_s)
+        self.a = self.NewBinaryVariables(self.nE, 'a')  # a_ij = 1 iff edge (ij) is traversed
+        self.y = self.NewBinaryVariables(self.nV, self.n+self.m)  # continuous state y_i=[x;u]
+                                                                  # for each node
+        self.y_start = self.NewBinaryVariables(self.nE, self.n+self.m)  # y_start = a_ij*y_i
+        self.y_end = self.NewBinaryVariables(self.nE, self.n+self.m)    # y_end = a_ij*y_j
 
         #DEBUG: formulate pure reachability problem rather than STL constrained problem
         self.sF = 0  # target partition is the goal region
-
-        self.AddRunningCost()
-        self.AddDynamicsConstraints()
-        self.AddBinaryFlowConstraints()
-        self.AddPartitionContainmentConstraints()
 
         # Add cost and constraints to the problem
         #self.AddRunningCost()
@@ -135,19 +125,19 @@ class SPPMICPSolver(STLSolver):
 
         # DEBUG: consider flow only
             # Total flow
-            if t == 0:
-                self.mp.AddLinearConstraint( self.b[i] == a_O )
-            else:
-                self.mp.AddLinearConstraint( self.b[i] == a_I )
+        #    if t == 0:
+        #        self.mp.AddLinearConstraint( self.b[i] == a_O )
+        #    else:
+        #        self.mp.AddLinearConstraint( self.b[i] == a_I )
 
         # DEBUG: consider flow only
         # Occupancy constraint
-        for t in range(self.T):
-            b_sum = 0
-            for s in range(self.S):
-                i = self.V.index((t,s))
-                b_sum += self.b[i]
-            self.mp.AddConstraint( b_sum == 1 )
+        #for t in range(self.T):
+        #    b_sum = 0
+        #    for s in range(self.S):
+        #        i = self.V.index((t,s))
+        #        b_sum += self.b[i]
+        #    self.mp.AddConstraint( b_sum == 1 )
 
     def AddDynamicsConstraints(self):
         """
@@ -801,6 +791,30 @@ class SPPMICPSolver(STLSolver):
        
         return poly
 
+    def GetTotalFlow(self, i):
+        """
+        Given the index i of a node in the graph, return a Drake expression corresponding
+        to the total flow b_i through that node, where
+
+            b_i = sum_{ j in Oi } a_ij  if t = 0
+                  sum_{ j in Ii } a_ji  otherwise
+
+        @param  i   The index of the node in question (integer in [0,nV])
+
+        @returns b_i    A Drake expression corresponding to the total flow thru node i.
+        """
+        assert 0 <= i and i <= self.nV, "Asked for node %i, but must be in [0,%s]" % (i,self.nV)
+        t, s = self.V[i]
+
+        if t == 0:
+            Oi = [k for k, e in enumerate(self.E) if e[0] == i]
+            a_O = sum(self.a[k] for k in Oi)
+            return a_O
+        else:
+            Ii = [k for k, e in enumerate(self.E) if e[1] == i]
+            a_I = sum(self.a[k] for k in Ii)
+            return a_I
+
     def Solve(self):
         """
         Solve the optimization problem and return the optimal values of (x,u).
@@ -821,10 +835,20 @@ class SPPMICPSolver(STLSolver):
         print("Solve time: ", solve_time)
 
         if res.is_success():
-            x = res.GetSolution(self.x)
-            u = res.GetSolution(self.u)
+            y = np.full((self.n+self.m, self.T), 0.0)
 
-            y = np.vstack([x,u])
+            for i in range(self.nV):
+                t, s = self.V[i]
+                
+                b = res.GetSolution(self.GetTotalFlow(i))
+                yi = res.GetSolution(self.y[i,:])
+                byi = Evaluate(b*yi).flatten()
+
+                y[:,t] += byi
+
+            x = y[:self.n,:]
+            u = y[self.n:,:]
+
             rho = self.spec.robustness(y,0)
             print("Optimal Cost: ", res.get_optimal_cost())
             print("Optimal Robustness: ", rho[0])
@@ -832,6 +856,7 @@ class SPPMICPSolver(STLSolver):
             # Store the solution. This will allow us to make
             # pretty plots, etc later. 
             self.res = res
+
         else:
             print("No solution found")
             x = None
