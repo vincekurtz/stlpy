@@ -81,7 +81,7 @@ class SPPMICPSolver(STLSolver):
         # Add cost and constraints to the problem
         self.AddBinaryFlowConstraints()
         self.AddBilinearEnvelopeConstraints()
-        #self.AddDynamicsConstraints()
+        self.AddDynamicsConstraints()
         #self.AddRunningCost()
 
     def AddBilinearEnvelopeConstraints(self):
@@ -148,8 +148,21 @@ class SPPMICPSolver(STLSolver):
 
         imposes the (linear) dynamics constraints. 
         """
-        # Also, impose the initial condition constraints
-        pass
+        # Set the initial condition constraints
+        i = self.V.index((0,self.s0))
+        x0 = self.y[i][:self.n]
+
+        self.mp.AddLinearConstraint(eq( x0, self.x0 ))
+
+        for e, (i,j) in enumerate(self.E):
+            y_start = self.y_start[e]
+            y_end = self.y_end[e]
+
+            x_start = y_start[:self.n]
+            u_start = y_start[self.n:]
+            x_end = y_end[:self.n]
+
+            self.mp.AddLinearConstraint(eq( x_end, self.A@x_start + self.B@u_start ))
 
     def AddRunningCost(self):
         """
