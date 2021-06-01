@@ -47,6 +47,7 @@ class SPPMICPSolver(STLSolver):
         c_formulas, d_formulas = self.GetSeparatedStateFormulas(spec)
         self.state_formulas = c_formulas + d_formulas
         self.partition_list = self.ConstructStateFormulaPartitions()
+        self.partition_list.pop()  # DEBUG: remove a partition to treat as obstacle
         self.S = len(self.partition_list)
 
         # Identify the starting partition
@@ -88,10 +89,34 @@ class SPPMICPSolver(STLSolver):
         # Add additional constraints which tighten the convex relaxation
         self.AddOccupancyConstraints()  # DEBUG: this seems essential but it shouldn't be
         self.AddDegreeConstraints()
-        #self.AddSpatialFlowConstraints()
+        self.AddSpatialFlowConstraints()
 
     def AddSpatialFlowConstraints(self):
-        pass
+        """ 
+        Add the (redundant) spatial flow constraints
+
+            y_O - y_I = 0  if 0 < t < T,
+                        y  if t = 0 and s = s0,
+
+        where 
+            y_O = sum_{outcoing edges} y_start, 
+            y_I = sum_{incoming edges} y_end.
+        """
+        for i, (t,s) in enumerate(self.V):
+            Oi = [k for k, e in enumerate(self.E) if e[0] == i]
+            Ii = [k for k, e in enumerate(self.E) if e[1] == i]
+            y_O = sum(self.y_start[k] for k in Oi)
+            y_I = sum(self.y_end[k] for k in Ii)
+
+            if 0 < t and t < self.T-1:
+                self.mp.AddLinearConstraint(eq( y_O - y_I, 0 ))
+            elif t == 0 and s == self.s0:
+                y = self.y[self.V.index((t,s))]
+                self.mp.AddLinearConstraint(eq( y_O - y_I, y ))
+            elif t == self.T-1 and s == self.sF:
+                # DEBUG: fix target region
+                y = self.y[self.V.index((t,s))]
+                self.mp.AddLinearConstraint(eq( y_O - y_I, -y ))
 
     def AddSpatialDegreeConstraints(self):
         pass
