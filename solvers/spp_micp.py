@@ -47,7 +47,6 @@ class SPPMICPSolver(STLSolver):
         c_formulas, d_formulas = self.GetSeparatedStateFormulas(spec)
         self.state_formulas = c_formulas + d_formulas
         self.partition_list = self.ConstructStateFormulaPartitions()
-        self.partition_list.pop()  # DEBUG: remove a partition to treat as obstacle
         self.S = len(self.partition_list)
 
         # Identify the starting partition
@@ -77,9 +76,6 @@ class SPPMICPSolver(STLSolver):
         self.y_start = self.mp.NewContinuousVariables(self.nE, self.n+self.m)  # y_start = a_ij*y_i
         self.y_end = self.mp.NewContinuousVariables(self.nE, self.n+self.m)    # y_end = a_ij*y_j
 
-        #DEBUG: formulate pure reachability problem rather than STL constrained problem
-        self.sF = 0  # target partition is the goal region
-
         # Add cost and constraints to the problem
         self.AddBinaryFlowConstraints()
         self.AddBilinearEnvelopeConstraints()
@@ -90,6 +86,9 @@ class SPPMICPSolver(STLSolver):
         self.AddOccupancyConstraints()  # DEBUG: this seems essential but it shouldn't be
         self.AddDegreeConstraints()
         self.AddSpatialFlowConstraints()
+
+        # Add STL Constraints
+        self.AddSTLConstraints()
 
     def AddSpatialFlowConstraints(self):
         """ 
@@ -113,10 +112,6 @@ class SPPMICPSolver(STLSolver):
             elif t == 0 and s == self.s0:
                 y = self.y[self.V.index((t,s))]
                 self.mp.AddLinearConstraint(eq( y_O - y_I, y ))
-            elif t == self.T-1 and s == self.sF:
-                # DEBUG: fix target region
-                y = self.y[self.V.index((t,s))]
-                self.mp.AddLinearConstraint(eq( y_O - y_I, -y ))
 
     def AddSpatialDegreeConstraints(self):
         pass
@@ -183,9 +178,6 @@ class SPPMICPSolver(STLSolver):
                 self.mp.AddLinearConstraint( a_O - a_I == 0 )
             elif t == 0 and s == self.s0:
                 self.mp.AddLinearConstraint( a_O - a_I == 1 )
-            elif t == self.T-1 and s == self.sF:
-                # DEBUG: fix target region
-                self.mp.AddLinearConstraint( a_O - a_I == -1 )
 
     def AddBilinearEnvelopeConstraints(self):
         """
@@ -294,11 +286,11 @@ class SPPMICPSolver(STLSolver):
 
             x_start = self.y_start[e][:self.n]
             u_start = self.y_start[e][self.n:]
-            #x_end = self.y_end[e][:self.n]
+            x_end = self.y_end[e][:self.n]
 
             quad_expr = x_start.T@self.Q@x_start + u_start.T@self.R@u_start
-            #if t == self.T-1:  # add terminal cost
-            #    quad_expr += x_end.T@self.Q@x_end
+            if t == self.T-1:  # add terminal cost
+                quad_expr += x_end.T@self.Q@x_end
             
             self.mp.AddCost(l)
             self.mp.AddRotatedLorentzConeConstraint(l, a, quad_expr)
@@ -329,7 +321,7 @@ class SPPMICPSolver(STLSolver):
 
         If the formula is a state formula, this constraint uses
 
-            z = sum b_s[t] over partitions s that satisfy state formula
+            z = sum TotalFlow[s,t] over partitions s that satisfy state formula
 
         which, together with the perspective-based containment constraints,
         ensures that the state formula holds only if z = 1. 
@@ -355,13 +347,13 @@ class SPPMICPSolver(STLSolver):
             pass
 
         elif formula in self.state_formulas:
-            # For a state formula, we need to add the corresponding constriants
+            # For a state formula, we need to add the corresponding constraints
             P_lst, s_lst = self.PartitionsSatisfying(formula)
-            b_sum = 0
+            total_flow = 0
             for s in s_lst:
                 i = self.V.index((t,s))
-                b_sum += self.b[i]
-            self.mp.AddConstraint(z[0] == b_sum)
+                total_flow += self.GetTotalFlow(i)
+            self.mp.AddConstraint(z[0] == total_flow)
 
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
@@ -375,6 +367,8 @@ class SPPMICPSolver(STLSolver):
                     t_sub = formula.timesteps[i]   # the timestep at which this formula 
                                                    # should hold
                     self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
+
+                    # z <= z_i
                     self.mp.AddConstraint( z[0] <= z_sub[0] )
 
             else:  # combination_type == "or":
