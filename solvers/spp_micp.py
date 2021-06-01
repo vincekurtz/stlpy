@@ -70,6 +70,7 @@ class SPPMICPSolver(STLSolver):
 
         # Create optimization variables
         self.a = self.NewBinaryVariables(self.nE, 'a')  # a_ij = 1 iff edge (ij) is traversed
+        self.l = self.mp.NewContinuousVariables(self.nE, 'l')  # Cost associated with each edge
         self.y = self.mp.NewContinuousVariables(self.nV, self.n+self.m)  # continuous state y_i=[x;u]
                                                                          # for each node
         self.y_start = self.mp.NewContinuousVariables(self.nE, self.n+self.m)  # y_start = a_ij*y_i
@@ -83,6 +84,83 @@ class SPPMICPSolver(STLSolver):
         self.AddBilinearEnvelopeConstraints()
         self.AddDynamicsConstraints()
         self.AddRunningCost()
+
+        # Add additional constraints which tighten the convex relaxation
+        self.AddOccupancyConstraints()  # DEBUG: this seems essential but it shouldn't be
+        self.AddDegreeConstraints()
+        #self.AddSpatialFlowConstraints()
+
+    def AddSpatialFlowConstraints(self):
+        pass
+
+    def AddSpatialDegreeConstraints(self):
+        pass
+    
+    def AddDegreeConstraints(self):
+        """
+        Add the (redundant) degree constraints
+
+            a_O <= 1
+            a_I <= 1
+
+            sum_s TotalFlow[s,t] = 1            (occupancy constraint)
+
+        to the optimization problem, where a_O and a_I are total outgoing
+        and incoming flows for each node. 
+ 
+        """
+        for i, (t,s) in enumerate(self.V):
+            Oi = [k for k, e in enumerate(self.E) if e[0] == i]
+            Ii = [k for k, e in enumerate(self.E) if e[1] == i]
+            a_O = sum(self.a[k] for k in Oi)
+            a_I = sum(self.a[k] for k in Ii)
+
+            if t < self.T-1:
+                self.mp.AddLinearConstraint( a_O <= 1 )
+            if 0 < t:
+                self.mp.AddLinearConstraint( a_I <= 1 )
+
+
+    def AddOccupancyConstraints(self):
+        """
+        Add (redundant) constraints enforcing the sum of the total flows
+        at each timestep to be equal to one. 
+        """
+        # TODO: looks like this constraint is essential for getting
+        # a meaningful result, but it shouldn't be as long as the cost
+        # is properly defined. Need to look into that. 
+
+        for t in range(self.T):
+            summ = 0
+            for s in range(self.S):
+                i = self.V.index((t,s))
+                b = self.GetTotalFlow(i)
+                summ += b
+            self.mp.AddLinearConstraint( summ == 1 )
+
+    def AddBinaryFlowConstraints(self):
+        """
+        Add the constraints
+
+            a_O - a_I = 0  if 0 < t < T,
+                        1  if t = 0 and s = s0
+
+        to the optimization problem, where a_O and a_I are total outgoing
+        and incoming flows for each node. 
+        """
+        for i, (t,s) in enumerate(self.V):
+            Oi = [k for k, e in enumerate(self.E) if e[0] == i]
+            Ii = [k for k, e in enumerate(self.E) if e[1] == i]
+            a_O = sum(self.a[k] for k in Oi)
+            a_I = sum(self.a[k] for k in Ii)
+
+            if 0 < t and t < self.T-1:
+                self.mp.AddLinearConstraint( a_O - a_I == 0 )
+            elif t == 0 and s == self.s0:
+                self.mp.AddLinearConstraint( a_O - a_I == 1 )
+            elif t == self.T-1 and s == self.sF:
+                # DEBUG: fix target region
+                self.mp.AddLinearConstraint( a_O - a_I == -1 )
 
     def AddBilinearEnvelopeConstraints(self):
         """
@@ -184,65 +262,21 @@ class SPPMICPSolver(STLSolver):
         #        a_ij >= 0
         #        l >= 0
         for e, (i,j) in enumerate(self.E):
-            l = self.mp.NewContinuousVariables(1,'l')[0]
+            #l = self.mp.NewContinuousVariables(1,'l')[0]
+            l = self.l[e]
             a = self.a[e]
             t, s = self.V[j]
 
             x_start = self.y_start[e][:self.n]
             u_start = self.y_start[e][self.n:]
-            x_end = self.y_end[e][:self.n]
+            #x_end = self.y_end[e][:self.n]
 
             quad_expr = x_start.T@self.Q@x_start + u_start.T@self.R@u_start
-            if t == self.T-1:  # add terminal cost
-                quad_expr += x_end.T@self.Q@x_end
+            #if t == self.T-1:  # add terminal cost
+            #    quad_expr += x_end.T@self.Q@x_end
             
             self.mp.AddCost(l)
             self.mp.AddRotatedLorentzConeConstraint(l, a, quad_expr)
-
-    def AddBinaryFlowConstraints(self):
-        """
-        Add the constraints
-
-            a_O - a_I = 0  if 0 < t < T,        (input-output flow constraints)
-                        1  if t = 0 and s = s0
-
-            a_O <= 1                            (degree constraints)
-            a_I <= 1
-
-            sum_s TotalFlow[s,t] = 1            (occupancy constraint)
-
-        to the optimization problem. 
-        """
-
-        for i, (t,s) in enumerate(self.V):
-            Oi = [k for k, e in enumerate(self.E) if e[0] == i]
-            Ii = [k for k, e in enumerate(self.E) if e[1] == i]
-            a_O = sum(self.a[k] for k in Oi)
-            a_I = sum(self.a[k] for k in Ii)
-
-            # input-output flow
-            if 0 < t and t < self.T-1:
-                self.mp.AddLinearConstraint( a_O - a_I == 0 )
-            elif t == 0 and s == self.s0:
-                self.mp.AddLinearConstraint( a_O - a_I == 1 )
-            elif t == self.T-1 and s == self.sF:
-                # DEBUG: fix target region
-                self.mp.AddLinearConstraint( a_O - a_I == -1 )
-
-            # Degree constraints (redundant with cost)
-            if t < self.T-1:
-                self.mp.AddLinearConstraint( a_O <= 1 )
-            if 0 < t:
-                self.mp.AddLinearConstraint( a_I <= 1 )
-
-        # Occupancy constraint (redundant with cost)
-        for t in range(self.T):
-            summ = 0
-            for s in range(self.S):
-                i = self.V.index((t,s))
-                b = self.GetTotalFlow(i)
-                summ += b
-            self.mp.AddLinearConstraint( summ == 1 )
 
     def AddSTLConstraints(self):
         """
@@ -834,10 +868,10 @@ class SPPMICPSolver(STLSolver):
                 y[:,t] += byi
                 b[s,t] = Evaluate([bi])
 
-            print(b)
-
             x = y[:self.n,:]
             u = y[self.n:,:]
+
+            print(b)
 
             rho = self.spec.robustness(y,0)
             print("Optimal Cost: ", res.get_optimal_cost())
