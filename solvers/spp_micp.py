@@ -295,6 +295,9 @@ class SPPMICPSolver(STLSolver):
             self.mp.AddCost(l)
             self.mp.AddRotatedLorentzConeConstraint(l, a, quad_expr)
 
+            # DEBUG
+            #self.mp.AddCost(a)
+
     def AddSTLConstraints(self):
         """
         Add the STL constraints
@@ -854,7 +857,7 @@ class SPPMICPSolver(STLSolver):
             a_I = sum(self.a[k] for k in Ii)
             return a_I
 
-    def Solve(self):
+    def Solve(self, verbose=False):
         """
         Solve the optimization problem and return the optimal values of (x,u).
         """
@@ -868,6 +871,10 @@ class SPPMICPSolver(STLSolver):
         # Set up the solver and solve the optimization problem
         solver = GurobiSolver()
         #solver = MosekSolver()
+
+        if verbose:
+            self.mp.SetSolverOption(solver.solver_id(), "OutputFlag",1)
+
         res = solver.Solve(self.mp)
 
         solve_time = res.get_solver_details().optimizer_time

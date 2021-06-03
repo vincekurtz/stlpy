@@ -45,12 +45,12 @@ R = 1e-1*np.eye(2)
 x0 = np.array([1.0,1.0,0,0])
 
 # Solve for the system trajectory
-#solver = MICPSolver(spec, A, B, Q, R, x0, T, M, relaxed=True)
-solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=True)
-#solver = SPPMICPSolver(spec, A, B, Q, R, x0, T, relaxed=True)
+solver = MICPSolver(spec, A, B, Q, R, x0, T, M, relaxed=False)
+#solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=True)
+#solver = SPPMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
 #solver.plot_partitions()
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
-x, u = solver.Solve()
+x, u = solver.Solve(verbose=True)
 
 if x is not None:
     # Plot the solution

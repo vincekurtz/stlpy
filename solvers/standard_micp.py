@@ -66,7 +66,7 @@ class MICPSolver(STLSolver):
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
 
-    def Solve(self):
+    def Solve(self, verbose=False):
         """
         Solve the optimization problem and return the optimal values of (x,u).
         """
@@ -80,6 +80,11 @@ class MICPSolver(STLSolver):
         # Set up the solver and solve the optimization problem
         solver = GurobiSolver()
         #solver = MosekSolver()
+
+        if verbose:
+            self.mp.SetSolverOption(solver.solver_id(), "OutputFlag", 1)
+            self.mp.SetSolverOption(solver.solver_id(), "Presolve", 2)
+
         res = solver.Solve(self.mp)
 
         solve_time = res.get_solver_details().optimizer_time
