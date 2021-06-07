@@ -17,7 +17,7 @@ from solvers import SPPMICPSolver, MICPSolver, GradientSolver, PerspectiveMICPSo
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
-T = 10
+T = 30
 
 # The "big-M" constant used for mixed-integer encoding
 M = 1000
@@ -45,10 +45,9 @@ x0 = np.array([1.0,2.0,0,0])
 
 # Solve for the system trajectory
 #solver = SPPMICPSolver(spec, A, B, Q, R, x0, T)
-#x = None
-#solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
+solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
-solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
+#solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
 x, u = solver.Solve()
 
 if x is not None:

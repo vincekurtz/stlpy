@@ -83,9 +83,9 @@ class SPPMICPSolver(STLSolver):
         self.AddRunningCost()
 
         # Add additional constraints which tighten the convex relaxation
-        self.AddOccupancyConstraints()  # DEBUG: this seems essential but it shouldn't be
-        self.AddDegreeConstraints()
-        self.AddSpatialFlowConstraints()
+        #self.AddOccupancyConstraints()
+        #self.AddDegreeConstraints()
+        #self.AddSpatialFlowConstraints()
 
         # Add STL Constraints
         self.AddSTLConstraints()
@@ -136,7 +136,10 @@ class SPPMICPSolver(STLSolver):
             a_I = sum(self.a[k] for k in Ii)
 
             if t < self.T-1:
-                self.mp.AddLinearConstraint( a_O <= 1 )
+                if t == 0 and s == self.s0:
+                    self.mp.AddLinearConstraint( a_O == 1 )
+                else:
+                    self.mp.AddLinearConstraint( a_O <= 1 )
             if 0 < t:
                 self.mp.AddLinearConstraint( a_I <= 1 )
 
@@ -146,10 +149,6 @@ class SPPMICPSolver(STLSolver):
         Add (redundant) constraints enforcing the sum of the total flows
         at each timestep to be equal to one. 
         """
-        # TODO: looks like this constraint is essential for getting
-        # a meaningful result, but it shouldn't be as long as the cost
-        # is properly defined. Need to look into that. 
-
         for t in range(self.T):
             summ = 0
             for s in range(self.S):
@@ -176,8 +175,11 @@ class SPPMICPSolver(STLSolver):
 
             if 0 < t and t < self.T-1:
                 self.mp.AddLinearConstraint( a_O - a_I == 0 )
-            elif t == 0 and s == self.s0:
-                self.mp.AddLinearConstraint( a_O - a_I == 1 )
+            elif t == 0:
+                if s == self.s0:
+                    self.mp.AddLinearConstraint( a_O - a_I == 1 )
+                else:
+                    self.mp.AddLinearConstraint( a_O - a_I == 0 )
 
     def AddBilinearEnvelopeConstraints(self):
         """

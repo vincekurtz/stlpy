@@ -83,7 +83,6 @@ class MICPSolver(STLSolver):
 
         if verbose:
             self.mp.SetSolverOption(solver.solver_id(), "OutputFlag", 1)
-            self.mp.SetSolverOption(solver.solver_id(), "Presolve", 2)
 
         res = solver.Solve(self.mp)
 
