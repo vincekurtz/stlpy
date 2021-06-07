@@ -4,7 +4,7 @@ import numpy as np
 from pydrake.all import (MathematicalProgram, 
                          GurobiSolver, 
                          MosekSolver, 
-                         eq)
+                         eq, le, ge)
 
 class MICPSolver(STLSolver):
     """
@@ -58,11 +58,15 @@ class MICPSolver(STLSolver):
         self.x = self.mp.NewContinuousVariables(self.n, self.T, 'x')
         self.u = self.mp.NewContinuousVariables(self.m, self.T, 'u')
 
+        # DEBUG
+        self.rho = self.mp.NewContinuousVariables(1,'rho')[0]
+
         # Flag for whether to use a convex relaxation
         self.convex_relaxation = relaxed
 
         # Add cost and constraints to the optimization problem
-        self.AddRunningCost()
+        #self.AddRunningCost()
+        self.AddRobustnessCost()
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
 
@@ -133,6 +137,16 @@ class MICPSolver(STLSolver):
         for t in range(self.T):
             self.mp.AddCost( self.x[:,t].T@self.Q@self.x[:,t] + self.u[:,t].T@self.R@self.u[:,t] )
 
+    def AddRobustnessCost(self):
+        """
+        Add the STL Robustness cost
+
+            min -rho(y)
+
+        to the optimization problem.
+        """
+        self.mp.AddCost(-self.rho)
+
     def AddSTLConstraints(self):
         """
         Add the STL constraints
@@ -146,6 +160,9 @@ class MICPSolver(STLSolver):
         # if the overall specification is satisfied.
         z_spec = self.NewBinaryVariables(1)
         self.mp.AddConstraint(eq( z_spec, 1 ))
+
+        # Add a constraint that the robustness measure must be positive
+        self.mp.AddConstraint( self.rho >= 0 )
 
         # Recursively traverse the tree defined by the specification
         # subformulas and add similar binary constraints. 
@@ -181,12 +198,11 @@ class MICPSolver(STLSolver):
         """
         # We're at the bottom of the tree, so add the big-M constraints
         if isinstance(formula, STLPredicate):
-            # A[x;u] - b + (1-z)*M >= 0
-            A = np.hstack([formula.A,-np.array([[self.M]])])
-            lb = formula.b - self.M
-            ub = np.array([np.inf])
-            vars = np.hstack([self.x[:,t],self.u[:,t],z])
-            self.mp.AddLinearConstraint(A=A, lb=lb, ub=ub, vars=vars)
+            # A[x;u] - b + (1-z)*M >= rho
+            xu = np.hstack([self.x[:,t],self.u[:,t]])
+            self.mp.AddLinearConstraint(ge(
+                formula.A@xu - formula.b + (1-z)*self.M, self.rho
+            ))
         
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively

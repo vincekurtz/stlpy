@@ -83,9 +83,9 @@ class SPPMICPSolver(STLSolver):
         self.AddRunningCost()
 
         # Add additional constraints which tighten the convex relaxation
-        #self.AddOccupancyConstraints()
-        #self.AddDegreeConstraints()
-        #self.AddSpatialFlowConstraints()
+        self.AddOccupancyConstraints()
+        self.AddDegreeConstraints()
+        self.AddSpatialFlowConstraints()
 
         # Add STL Constraints
         self.AddSTLConstraints()
@@ -109,9 +109,12 @@ class SPPMICPSolver(STLSolver):
 
             if 0 < t and t < self.T-1:
                 self.mp.AddLinearConstraint(eq( y_O - y_I, 0 ))
-            elif t == 0 and s == self.s0:
-                y = self.y[self.V.index((t,s))]
-                self.mp.AddLinearConstraint(eq( y_O - y_I, y ))
+            elif t == 0:
+                if s == self.s0:
+                    y = self.y[self.V.index((t,s))]
+                    self.mp.AddLinearConstraint(eq( y_O - y_I, y ))
+                else:
+                    self.mp.AddLinearConstraint(eq( y_O - y_I, 0 ))
 
     def AddSpatialDegreeConstraints(self):
         pass
