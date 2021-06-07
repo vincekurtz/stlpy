@@ -59,6 +59,10 @@ class PerspectiveMICPSolver(STLSolver):
         self.u = self.mp.NewContinuousVariables(self.m, self.T, 'u')
         self.y = np.vstack([self.x,self.u])
 
+        # DEBUG
+        self.rho = self.mp.NewContinuousVariables(1,'rho')[0]
+        self.mp.AddCost(-self.rho)
+
         self.b = []
         self.ys = []
         for s in range(self.S):
@@ -69,14 +73,13 @@ class PerspectiveMICPSolver(STLSolver):
             self.ys.append(y_s)
 
         # Add cost and constraints to the problem
-        
         #self.AddRunningCost()
-        #self.AddDynamicsConstraints()
-        self.AddPerspectiveRunningCost()
-        self.AddPerspectiveDynamicsConstraints()
+        self.AddDynamicsConstraints()
+        #self.AddPerspectiveRunningCost()
+        #self.AddPerspectiveDynamicsConstraints()
 
-        #self.AddBigMPartitionContainmentConstraints()
-        self.AddPartitionContainmentConstraints()
+        self.AddBigMPartitionContainmentConstraints()
+        #self.AddPartitionContainmentConstraints()
 
         self.AddSTLConstraints()
 
@@ -182,10 +185,11 @@ class PerspectiveMICPSolver(STLSolver):
         """
         Add the constraints 
 
-            C_s y[t] \leq d_s + M*(1 - b_s[t])
+            C_s y[t] + rho <= d_s + M*(1 - b_s[t])
 
         to the optimization problem, which ensures
-        that y[t] is in partition `s` only if b_s[t] = 1.
+        that y[t] is in partition `s` only if b_s[t] = 1
+        and rho >= 0.
         """
         M = 1000  # a very large number
         for t in range(self.T):
@@ -195,7 +199,7 @@ class PerspectiveMICPSolver(STLSolver):
                 C = P.polytope.C
                 d = P.polytope.d
 
-                self.mp.AddConstraint(le(C@y, d + M*(1-b)))
+                self.mp.AddConstraint(le(C@y + self.rho, d + M*(1-b)))
 
     def AddSTLConstraints(self):
         """
@@ -210,6 +214,9 @@ class PerspectiveMICPSolver(STLSolver):
         # if the overall specification is satisfied.
         z_spec = self.mp.NewContinuousVariables(1)
         self.mp.AddConstraint(eq( z_spec, 1 ))
+
+        # Constrain the overall robustness measure to be positive
+        self.mp.AddConstraint( self.rho >= 0 )
 
         # Add constraints on the indicator variables b_s[t] such that
         # we can only be in one mode at a time
@@ -735,7 +742,7 @@ class PerspectiveMICPSolver(STLSolver):
        
         return poly
 
-    def Solve(self):
+    def Solve(self, verbose=False):
         """
         Solve the optimization problem and return the optimal values of (x,u).
         """
@@ -748,7 +755,10 @@ class PerspectiveMICPSolver(STLSolver):
 
         # Set up the solver and solve the optimization problem
         solver = GurobiSolver()
-        #solver = MosekSolver()
+
+        if verbose:
+            self.mp.SetSolverOption(solver.solver_id(), "OutputFlag", 1)
+
         res = solver.Solve(self.mp)
 
         solve_time = res.get_solver_details().optimizer_time

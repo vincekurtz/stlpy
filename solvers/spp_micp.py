@@ -80,7 +80,7 @@ class SPPMICPSolver(STLSolver):
         self.AddBinaryFlowConstraints()
         self.AddBilinearEnvelopeConstraints()
         self.AddDynamicsConstraints()
-        self.AddRunningCost()
+        #self.AddRunningCost()
 
         # Add additional constraints which tighten the convex relaxation
         self.AddOccupancyConstraints()

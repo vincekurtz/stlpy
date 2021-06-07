@@ -18,7 +18,7 @@ goal = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 target_one = (1,2,6,7)
 target_two = (7,8,4.5,5.5)
 obstacle = (3,5,4,6)
-T = 12
+T = 22
 
 # The "big-M" constant used for mixed-integer encoding
 M = 1000
