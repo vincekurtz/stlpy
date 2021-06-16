@@ -18,7 +18,7 @@ goal = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 target_one = (1,2,6,7)
 target_two = (7,8,4.5,5.5)
 obstacle = (3,5,4,6)
-T = 22
+T = 12
 
 # The "big-M" constant used for mixed-integer encoding
 M = 1000
@@ -45,9 +45,9 @@ R = 1e-1*np.eye(2)
 x0 = np.array([1.0,1.0,0,0])
 
 # Solve for the system trajectory
-solver = MICPSolver(spec, A, B, Q, R, x0, T, M, relaxed=False)
+#solver = MICPSolver(spec, A, B, Q, R, x0, T, M, relaxed=False)
 #solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=True)
-#solver = SPPMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
+solver = SPPMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
 #solver.plot_partitions()
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
 x, u = solver.Solve(verbose=True)

@@ -80,7 +80,8 @@ class SPPMICPSolver(STLSolver):
         self.AddBinaryFlowConstraints()
         self.AddBilinearEnvelopeConstraints()
         self.AddDynamicsConstraints()
-        self.AddRunningCost()
+        #self.AddRunningCost()
+        self.AddApproximateRunningCost()
 
         # Add additional constraints which tighten the convex relaxation
         self.AddOccupancyConstraints()
@@ -284,7 +285,6 @@ class SPPMICPSolver(STLSolver):
         #        a_ij >= 0
         #        l >= 0
         for e, (i,j) in enumerate(self.E):
-            #l = self.mp.NewContinuousVariables(1,'l')[0]
             l = self.l[e]
             a = self.a[e]
             t, s = self.V[j]
@@ -297,10 +297,39 @@ class SPPMICPSolver(STLSolver):
             #if t == self.T-1:  # add terminal cost
             #    quad_expr += x_end.T@self.Q@x_end
             
-            #self.mp.AddCost(l)
-            #self.mp.AddRotatedLorentzConeConstraint(l, a, quad_expr)
+            self.mp.AddCost(l)
+            self.mp.AddRotatedLorentzConeConstraint(l, a, quad_expr)
 
-            # DEBUG: take a linear approximation of the cone constraint
+    def AddApproximateRunningCost(self):
+        """
+        Adds a linear approximation of running cost
+
+            sum_{ij \in E} l_tilde(a_ij, y_start_ij, y_end_ij)
+
+        to the optimization problem, where l_tilde is the perspective
+        of the quadratic cost
+
+            l = x'Qx + u'Ru.
+
+        Ordinarily this would be a SOC constraint, but we'll take a linear
+        inner approximation of that cone. 
+        """
+        # The original cost function is implemented as a linear cost over
+        # slack variable l along with SOC constraints:
+        #
+        #   min  l
+        #   s.t. a_ij*l >= x_start'*Q*x_start + u_start'*R*u_start
+        #                    + x_end'*Q*x_end   (if t=T)
+        #        a_ij >= 0
+        #        l >= 0
+        for e, (i,j) in enumerate(self.E):
+            l = self.l[e]
+            a = self.a[e]
+            t, s = self.V[j]
+
+            x_start = self.y_start[e][:self.n]
+            u_start = self.y_start[e][self.n:]
+            
             y = np.hstack([x_start,u_start])            # la >= y'Qy
             Q = sp.linalg.block_diag(self.Q, self.R)    # l >= 0, a >= 0
 
@@ -316,11 +345,12 @@ class SPPMICPSolver(STLSolver):
                           [np.zeros((n,1)), np.zeros((n,1)), np.eye(n)      ]])
             z = np.linalg.inv(T)@x   # z0 >= |zN|
 
-            self.mp.AddCost(l)
             for i in range(1,n+2):
                 # Linear inner approximation of z0 >= |zN|
                 self.mp.AddConstraint(z[0]/np.sqrt(2) >= z[i])
                 self.mp.AddConstraint(z[0]/np.sqrt(2) >= -z[i])
+            
+            self.mp.AddCost(l)
 
     def AddSTLConstraints(self):
         """
@@ -900,6 +930,9 @@ class SPPMICPSolver(STLSolver):
             self.mp.SetSolverOption(solver.solver_id(), "OutputFlag",1)
         if not presolve:
             self.mp.SetSolverOption(solver.solver_id(), "Presolve", 0)
+
+        # DEBUG
+        self.mp.SetSolverOption(solver.solver_id(), "Presolve", 2)
 
         res = solver.Solve(self.mp)
 
