@@ -318,9 +318,9 @@ class SPPMICPSolver(STLSolver):
 
             self.mp.AddCost(l)
             for i in range(1,n+2):
-                # Linear outer approximation of z0 >= |zN|
-                self.mp.AddConstraint(z[0] >= z[i])
-                self.mp.AddConstraint(z[0] >= -z[i])
+                # Linear inner approximation of z0 >= |zN|
+                self.mp.AddConstraint(z[0]/np.sqrt(2) >= z[i])
+                self.mp.AddConstraint(z[0]/np.sqrt(2) >= -z[i])
 
     def AddSTLConstraints(self):
         """
