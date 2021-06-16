@@ -80,7 +80,7 @@ class SPPMICPSolver(STLSolver):
         self.AddBinaryFlowConstraints()
         self.AddBilinearEnvelopeConstraints()
         self.AddDynamicsConstraints()
-        #self.AddRunningCost()
+        self.AddRunningCost()
 
         # Add additional constraints which tighten the convex relaxation
         self.AddOccupancyConstraints()
@@ -294,14 +294,33 @@ class SPPMICPSolver(STLSolver):
             x_end = self.y_end[e][:self.n]
 
             quad_expr = x_start.T@self.Q@x_start + u_start.T@self.R@u_start
-            if t == self.T-1:  # add terminal cost
-                quad_expr += x_end.T@self.Q@x_end
+            #if t == self.T-1:  # add terminal cost
+            #    quad_expr += x_end.T@self.Q@x_end
             
-            self.mp.AddCost(l)
-            self.mp.AddRotatedLorentzConeConstraint(l, a, quad_expr)
+            #self.mp.AddCost(l)
+            #self.mp.AddRotatedLorentzConeConstraint(l, a, quad_expr)
 
-            # DEBUG
-            #self.mp.AddCost(a)
+            # DEBUG: take a linear approximation of the cone constraint
+            y = np.hstack([x_start,u_start])            # la >= y'Qy
+            Q = sp.linalg.block_diag(self.Q, self.R)    # l >= 0, a >= 0
+
+            C = sp.linalg.sqrtm(Q)
+            x0 = 0.5*l              # 2*x0*x1 >= |xN|^2
+            x1 = a                  # x0 >= 0
+            xN = C@y                # x1 >= 0
+            x = np.hstack([x0,x1,xN])
+
+            n = len(y)
+            T = np.block([[1/np.sqrt(2)   ,  1/np.sqrt(2)  , np.zeros((1,n))],
+                          [1/np.sqrt(2)   , -1/np.sqrt(2)  , np.zeros((1,n))],
+                          [np.zeros((n,1)), np.zeros((n,1)), np.eye(n)      ]])
+            z = np.linalg.inv(T)@x   # z0 >= |zN|
+
+            self.mp.AddCost(l)
+            for i in range(1,n+2):
+                # Linear outer approximation of z0 >= |zN|
+                self.mp.AddConstraint(z[0] >= z[i])
+                self.mp.AddConstraint(z[0] >= -z[i])
 
     def AddSTLConstraints(self):
         """
@@ -862,7 +881,7 @@ class SPPMICPSolver(STLSolver):
             a_I = sum(self.a[k] for k in Ii)
             return a_I
 
-    def Solve(self, verbose=False):
+    def Solve(self, verbose=False, presolve=True):
         """
         Solve the optimization problem and return the optimal values of (x,u).
         """
@@ -879,6 +898,8 @@ class SPPMICPSolver(STLSolver):
 
         if verbose:
             self.mp.SetSolverOption(solver.solver_id(), "OutputFlag",1)
+        if not presolve:
+            self.mp.SetSolverOption(solver.solver_id(), "Presolve", 0)
 
         res = solver.Solve(self.mp)
 

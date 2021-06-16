@@ -54,23 +54,21 @@ class MICPSolver(STLSolver):
         super().__init__(spec, A, B, Q, R, x0, T)
         self.M = M
 
-        # Create optimization variables for x and u
+        # Create optimization variables
         self.x = self.mp.NewContinuousVariables(self.n, self.T, 'x')
         self.u = self.mp.NewContinuousVariables(self.m, self.T, 'u')
-
-        # DEBUG
         self.rho = self.mp.NewContinuousVariables(1,'rho')[0]
 
         # Flag for whether to use a convex relaxation
         self.convex_relaxation = relaxed
 
         # Add cost and constraints to the optimization problem
-        #self.AddRunningCost()
-        self.AddRobustnessCost()
+        self.AddRunningCost()
+        #self.AddRobustnessCost()
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
 
-    def Solve(self, verbose=False):
+    def Solve(self, verbose=False, presolve=True):
         """
         Solve the optimization problem and return the optimal values of (x,u).
         """
@@ -87,6 +85,8 @@ class MICPSolver(STLSolver):
 
         if verbose:
             self.mp.SetSolverOption(solver.solver_id(), "OutputFlag", 1)
+        if not presolve:
+            self.mp.SetSolverOption(solver.solver_id(), "Presolve", 0)
 
         res = solver.Solve(self.mp)
 
