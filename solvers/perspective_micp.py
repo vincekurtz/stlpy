@@ -59,10 +59,6 @@ class PerspectiveMICPSolver(STLSolver):
         self.u = self.mp.NewContinuousVariables(self.m, self.T, 'u')
         self.y = np.vstack([self.x,self.u])
 
-        # DEBUG
-        self.rho = self.mp.NewContinuousVariables(1,'rho')[0]
-        self.mp.AddCost(-self.rho)
-
         self.b = []
         self.ys = []
         for s in range(self.S):
@@ -74,12 +70,14 @@ class PerspectiveMICPSolver(STLSolver):
 
         # Add cost and constraints to the problem
         #self.AddRunningCost()
-        self.AddDynamicsConstraints()
         #self.AddPerspectiveRunningCost()
-        #self.AddPerspectiveDynamicsConstraints()
+        self.AddApproximatePerspectiveRunningCost()
 
-        self.AddBigMPartitionContainmentConstraints()
-        #self.AddPartitionContainmentConstraints()
+        #self.AddDynamicsConstraints()
+        self.AddPerspectiveDynamicsConstraints()
+
+        #self.AddBigMPartitionContainmentConstraints()
+        self.AddPartitionContainmentConstraints()
 
         self.AddSTLConstraints()
 
@@ -160,6 +158,50 @@ class PerspectiveMICPSolver(STLSolver):
                 H = sp.linalg.block_diag(self.Q, self.R)
                 add_quadratic_perspective_cost(self.mp, H, self.ys[s][:,t], self.b[s][t])
 
+    def AddApproximatePerspectiveRunningCost(self):
+        """
+        Add a linearization of the perspective running cost
+
+            min sum_s l_tilde( b_s(t), y_s(t) )
+
+        to the optimization problem, where l_tilde is the
+        perspective of the running cost
+
+            l(y_t) = x'Qx + u'Ru.
+
+        """
+        for t in range(self.T):
+            for s in range(self.S):
+                # The original cost is encoded as an SOCP constraint
+                # l*b >= y'*H*y
+                # l >= 0
+                # b >= 0
+                l = self.mp.NewContinuousVariables(1,'l')[0]
+                b = self.b[s][t]
+                y = self.ys[s][:,t]
+                H = sp.linalg.block_diag(self.Q, self.R)
+
+                # Rotated Lorentz cone constraint 2*x0*x1 >= |xN|^2
+                C = sp.linalg.sqrtm(H)
+                x0 = 0.5*l
+                x1 = b
+                xN = C@y
+                x = np.hstack([x0,x1,xN])
+
+                # Regular Lorentz cone constraint z0 >= |zN|
+                n = len(y)
+                T = np.block([[1/np.sqrt(2)   ,  1/np.sqrt(2)  , np.zeros((1,n))],
+                              [1/np.sqrt(2)   , -1/np.sqrt(2)  , np.zeros((1,n))],
+                              [np.zeros((n,1)), np.zeros((n,1)), np.eye(n)      ]])
+                z = np.linalg.inv(T)@x
+
+                # Linear inner approximation of the Lorentz cone
+                for i in range(1,n+2):
+                    self.mp.AddConstraint(z[0]/np.sqrt(2) >= z[i])
+                    self.mp.AddConstraint(z[0]/np.sqrt(2) >= -z[i])
+
+                self.mp.AddCost(l)
+
     def AddPartitionContainmentConstraints(self):
         """
         Add the constraints
@@ -199,7 +241,7 @@ class PerspectiveMICPSolver(STLSolver):
                 C = P.polytope.C
                 d = P.polytope.d
 
-                self.mp.AddConstraint(le(C@y + self.rho, d + M*(1-b)))
+                self.mp.AddConstraint(le(C@y, d + M*(1-b)))
 
     def AddSTLConstraints(self):
         """
@@ -214,9 +256,6 @@ class PerspectiveMICPSolver(STLSolver):
         # if the overall specification is satisfied.
         z_spec = self.mp.NewContinuousVariables(1)
         self.mp.AddConstraint(eq( z_spec, 1 ))
-
-        # Constrain the overall robustness measure to be positive
-        self.mp.AddConstraint( self.rho >= 0 )
 
         # Add constraints on the indicator variables b_s[t] such that
         # we can only be in one mode at a time
