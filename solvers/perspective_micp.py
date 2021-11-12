@@ -1,4 +1,4 @@
-from solvers.solver_base import STLSolver
+from solvers.drake_solver_base import DrakeSTLSolver
 from STL import STLPredicate, STLFormula
 from utils import *
 
@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from itertools import cycle
 
-class PerspectiveMICPSolver(STLSolver):
+class PerspectiveMICPSolver(DrakeSTLSolver):
     """
     Given an STLFormula (spec), a system of the form 
 

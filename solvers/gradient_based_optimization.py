@@ -33,7 +33,8 @@ class GradientSolver(STLSolver):
         @param x0       The initial state of the system.
         @param T        An integer specifiying the number of timesteps.
         """
-        super().__init__(spec, A, B, Q, R, x0, T)
+        super().__init__(spec, A, B, x0, T)
+        self._include_quadratic_cost(Q,R)
 
     def Solve(self):
         """

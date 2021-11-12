@@ -1,4 +1,4 @@
-from solvers.solver_base import STLSolver
+from solvers.drake_solver_base import DrakeSTLSolver
 from STL import STLPredicate
 import numpy as np
 from pydrake.all import (MathematicalProgram, 
@@ -6,7 +6,7 @@ from pydrake.all import (MathematicalProgram,
                          MosekSolver, 
                          eq, le, ge)
 
-class MICPSolver(STLSolver):
+class MICPSolver(DrakeSTLSolver):
     """
     Given an STLFormula (spec) and a system of the form 
 
