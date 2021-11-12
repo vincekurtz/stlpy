@@ -12,7 +12,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.reach_avoid import reach_avoid_specification, plot_reach_avoid_scenario
-from solvers import MICPSolver, GradientSolver, PerspectiveMICPSolver
+from solvers import MICPSolver, GradientSolver, PerspectiveMICPSolver, GurobiMICPSolver
 
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
@@ -44,7 +44,8 @@ R = 1e-1*np.eye(2)
 x0 = np.array([1.0,2.0,0,0])
 
 # Solve for the system trajectory
-solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
+#solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
+solver = GurobiMICPSolver(spec, A, B, x0, T, M)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
 #solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
 x, u = solver.Solve()
