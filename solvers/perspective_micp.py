@@ -793,10 +793,11 @@ class PerspectiveMICPSolver(STLSolver):
         print("    %s continuous variables" % num_continuous_variables)
 
         # Set up the solver and solve the optimization problem
-        solver = GurobiSolver()
+        #solver = GurobiSolver()
+        solver = MosekSolver()
 
-        if verbose:
-            self.mp.SetSolverOption(solver.solver_id(), "OutputFlag", 1)
+        #if verbose:
+        #    self.mp.SetSolverOption(solver.solver_id(), "OutputFlag", 1)
 
         res = solver.Solve(self.mp)
 

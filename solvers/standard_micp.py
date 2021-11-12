@@ -63,7 +63,7 @@ class MICPSolver(STLSolver):
         self.convex_relaxation = relaxed
 
         # Add cost and constraints to the optimization problem
-        self.AddRunningCost()
+        #self.AddRunningCost()
         #self.AddRobustnessCost()
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
@@ -80,13 +80,13 @@ class MICPSolver(STLSolver):
         print("    %s continuous variables" % num_continuous_variables)
 
         # Set up the solver and solve the optimization problem
-        solver = GurobiSolver()
-        #solver = MosekSolver()
+        #solver = GurobiSolver()
+        solver = MosekSolver()
 
-        if verbose:
-            self.mp.SetSolverOption(solver.solver_id(), "OutputFlag", 1)
-        if not presolve:
-            self.mp.SetSolverOption(solver.solver_id(), "Presolve", 0)
+        #if verbose:
+        #    self.mp.SetSolverOption(solver.solver_id(), "OutputFlag", 1)
+        #if not presolve:
+        #    self.mp.SetSolverOption(solver.solver_id(), "Presolve", 0)
 
         res = solver.Solve(self.mp)
 
