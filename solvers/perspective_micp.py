@@ -70,8 +70,8 @@ class PerspectiveMICPSolver(STLSolver):
 
         # Add cost and constraints to the problem
         #self.AddRunningCost()
-        #self.AddPerspectiveRunningCost()
-        self.AddApproximatePerspectiveRunningCost()
+        self.AddPerspectiveRunningCost()
+        #self.AddApproximatePerspectiveRunningCost()
 
         #self.AddDynamicsConstraints()
         self.AddPerspectiveDynamicsConstraints()

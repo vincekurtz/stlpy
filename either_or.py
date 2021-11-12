@@ -11,14 +11,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.either_or import either_or_specification, plot_either_or_scenario
-from solvers import MICPSolver, GradientSolver, PerspectiveMICPSolver, SPPMICPSolver
+from solvers import MICPSolver, GradientSolver, PerspectiveMICPSolver
 
 # Specification Parameters
 goal = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 target_one = (1,2,6,7)
 target_two = (7,8,4.5,5.5)
 obstacle = (3,5,4,6)
-T = 50
+T = 20
 
 # The "big-M" constant used for mixed-integer encoding
 M = 1000
@@ -47,10 +47,8 @@ x0 = np.array([1.0,1.0,0,0])
 # Solve for the system trajectory
 #solver = MICPSolver(spec, A, B, Q, R, x0, T, M, relaxed=False)
 solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
-#solver = SPPMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
-#solver.plot_partitions()
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
-x, u = solver.Solve(verbose=True)
+x, u = solver.Solve()
 
 if x is not None:
     # Plot the solution

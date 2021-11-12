@@ -17,7 +17,7 @@ class STLSolver:
 
         x'Qx + u'Ru
 
-    is provide. 
+    is provided.
     """
     def __init__(self, spec, A, B, Q, R, x0, T):
         """

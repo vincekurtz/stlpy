@@ -63,7 +63,7 @@ class MICPSolver(STLSolver):
         self.convex_relaxation = relaxed
 
         # Add cost and constraints to the optimization problem
-        #self.AddRunningCost()
+        self.AddRunningCost()
         #self.AddRobustnessCost()
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
