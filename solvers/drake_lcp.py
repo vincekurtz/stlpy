@@ -3,7 +3,7 @@ from STL import STLPredicate
 import numpy as np
 
 from pydrake.all import MathematicalProgram, eq, le, ge
-from pydrake.solvers.all import IpoptSolver, SnoptSolver, DrealSolver
+from pydrake.solvers.all import IpoptSolver, SnoptSolver
 from pydrake.solvers.nlopt import NloptSolver
 
 import time
@@ -62,6 +62,7 @@ class DrakeLCPSolver(STLSolver):
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
         self.AddRobustnessCost()
+        self.AddControlBoundConstraints()
         
         print(f"Setup complete in {time.time()-st} seconds.")
 
@@ -113,6 +114,19 @@ class DrakeLCPSolver(STLSolver):
                 self.x[:,t+1], self.A@self.x[:,t] + self.B@self.u[:,t]
             ))
 
+    def AddControlBoundConstraints(self, u_max=1.0):
+        """
+        Add the constraints
+
+            -u_max <= u_t <= u_max
+
+        to the optimization problem
+        """
+        u = self.u.flatten()
+        N = len(u)
+        lb = -u_max*np.ones(N)
+        ub = u_max*np.ones(N)
+        self.mp.AddLinearConstraint(A=np.eye(N), lb=lb, ub=ub, vars=u)
 
     def AddRobustnessCost(self):
         """
@@ -130,6 +144,9 @@ class DrakeLCPSolver(STLSolver):
         to the optimization problem, via the recursive introduction
         of binary variables for all subformulas in the specification.
         """
+        # Constraint the overall formula robustness to be positive
+        self.mp.AddConstraint(self.rho[0] >= 0)
+
         # Recursively traverse the tree defined by the specification
         # to add constraints that define the STL robustness score
         self.AddSubformulaConstraints(self.spec, self.rho, 0)
@@ -242,9 +259,15 @@ class DrakeLCPSolver(STLSolver):
 
         self.mp.AddConstraint(eq(x, x_plus - x_minus))
         self.mp.AddConstraint(eq(y, x_plus + x_minus))
-        self.mp.AddConstraint(ge(x_plus, 0.0))
-        self.mp.AddConstraint(ge(x_minus, 0.0))
-        self.mp.AddConstraint(x_plus.T@x_minus <= 0)
+
+        M = np.array([[0.,1.],[0.,0.]])
+        q = np.array([0.,0.])
+        x = np.hstack([x_plus,x_minus])
+        self.mp.AddLinearComplementarityConstraint(M,q,x)
+
+        #self.mp.AddConstraint(ge(x_plus, 0.0))
+        #self.mp.AddConstraint(ge(x_minus, 0.0))
+        #self.mp.AddConstraint(x_plus.T@x_minus <= 0.1)
 
     def _encode_max(self, a, b, c):
         """
