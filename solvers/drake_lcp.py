@@ -3,7 +3,7 @@ from STL import STLPredicate
 import numpy as np
 
 from pydrake.all import MathematicalProgram, eq, le, ge
-from pydrake.solvers.all import IpoptSolver, SnoptSolver
+from pydrake.solvers.all import IpoptSolver, SnoptSolver, OsqpSolver
 from pydrake.solvers.nlopt import NloptSolver
 
 import time
@@ -49,6 +49,7 @@ class DrakeLCPSolver(STLSolver):
 
         # Choose a solver
         self.solver = SnoptSolver()
+        #self.solver = OsqpSolver()
 
         print("Setting up optimization problem...")
         st = time.time()  # for computing setup time
@@ -62,7 +63,7 @@ class DrakeLCPSolver(STLSolver):
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
         self.AddRobustnessCost()
-        self.AddControlBoundConstraints()
+        #self.AddControlBoundConstraints()
         
         print(f"Setup complete in {time.time()-st} seconds.")
 
@@ -260,14 +261,16 @@ class DrakeLCPSolver(STLSolver):
         self.mp.AddConstraint(eq(x, x_plus - x_minus))
         self.mp.AddConstraint(eq(y, x_plus + x_minus))
 
-        M = np.array([[0.,1.],[0.,0.]])
-        q = np.array([0.,0.])
-        x = np.hstack([x_plus,x_minus])
-        self.mp.AddLinearComplementarityConstraint(M,q,x)
+        #M = np.array([[0.,1.],[0.,0.]])
+        #q = np.array([0.,0.])
+        #x = np.hstack([x_plus,x_minus])
+        #self.mp.AddLinearComplementarityConstraint(M,q,x)
 
-        #self.mp.AddConstraint(ge(x_plus, 0.0))
-        #self.mp.AddConstraint(ge(x_minus, 0.0))
+        self.mp.AddConstraint(ge(x_plus, 0.0))
+        self.mp.AddConstraint(ge(x_minus, 0.0))
         #self.mp.AddConstraint(x_plus.T@x_minus <= 0.1)
+
+        self.mp.AddCost(x_plus.T@x_minus)
 
     def _encode_max(self, a, b, c):
         """
