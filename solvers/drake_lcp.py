@@ -48,7 +48,7 @@ class DrakeLCPSolver(STLSolver):
         self.mp = MathematicalProgram()
 
         # Choose a solver
-        self.solver = IpoptSolver()
+        self.solver = SnoptSolver()
 
         print("Setting up optimization problem...")
         st = time.time()  # for computing setup time
@@ -69,14 +69,25 @@ class DrakeLCPSolver(STLSolver):
         """
         Solve the optimization problem and return the optimal values of (x,u).
         """
-        res = self.solver.Solve(self.mp)
+        # Local solvers tend to be sensitive to the initial guess
+        np.random.seed(0)
+        initial_guess = np.random.normal(size=self.mp.initial_guess().shape)
+
+        st = time.time()
+        res = self.solver.Solve(self.mp, initial_guess=initial_guess)
+        solve_time = time.time() - st
 
         if res.is_success():
             print("\nOptimal Solution Found!\n")
             x = res.GetSolution(self.x)
             u = res.GetSolution(self.u)
 
-            # TODO: Report optimal cost and robustness
+            # Report solve time and robustness
+            y = np.vstack([x,u])
+            rho = self.spec.robustness(y,0)
+            print("Solve time: ", solve_time)
+            print("Optimal robustness: ", rho[0])
+
         else:
             print("\nNo solution found.\n")
             x = None
@@ -233,7 +244,7 @@ class DrakeLCPSolver(STLSolver):
         self.mp.AddConstraint(eq(y, x_plus + x_minus))
         self.mp.AddConstraint(ge(x_plus, 0.0))
         self.mp.AddConstraint(ge(x_minus, 0.0))
-        self.mp.AddConstraint(x_plus.T@x_minus == 0)
+        self.mp.AddConstraint(x_plus.T@x_minus <= 0)
 
     def _encode_max(self, a, b, c):
         """
