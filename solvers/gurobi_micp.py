@@ -5,6 +5,8 @@ import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
 
+import time
+
 class GurobiMICPSolver(STLSolver):
     """
     Given an STLFormula (spec) and a system of the form 
@@ -52,6 +54,9 @@ class GurobiMICPSolver(STLSolver):
 
         # Set up the optimization problem
         self.model = gp.Model("STL_MICP")
+        
+        print("Setting up optimization problem...")
+        st = time.time()  # for computing setup time
 
         # Create optimization variables
         self.xu = self.model.addMVar((self.n+self.m, self.T), lb=-float('inf'), name='xu')
@@ -63,6 +68,8 @@ class GurobiMICPSolver(STLSolver):
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
         self.AddRobustnessCost()
+        
+        print(f"Setup complete in {time.time()-st} seconds.")
 
     def Solve(self, verbose=False, presolve=True):
         """
@@ -74,7 +81,11 @@ class GurobiMICPSolver(STLSolver):
             print("\nOptimal Solution Found!\n")
             x = self.x.X
             u = self.u.X
-            # TODO: report optimal cost and robustness
+
+            # Report optimal cost and robustness
+            print("Solve time: ", self.model.Runtime)
+            print("Optimal robustness: ", self.rho.X[0])
+            print("")
         else:
             print(f"\nOptimization failed with status {self.model.status}.\n")
             x = None
