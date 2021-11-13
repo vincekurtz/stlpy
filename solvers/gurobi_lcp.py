@@ -60,7 +60,7 @@ class GurobiLCPSolver(GurobiMICPSolver):
 
         self.model.addConstr(x == x_plus - x_minus)
         self.model.addConstr(y == x_plus + x_minus)
-        self.model.addConstr(x_plus@x_minus == 0)
+        self.model.addConstr(x_plus@x_minus == 0.0)
 
     def _encode_max(self, a, b, c):
         """
