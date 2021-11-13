@@ -35,7 +35,7 @@ class GurobiMICPSolver(STLSolver):
         IEEE Trans. Autom. Control. 2019
     """
 
-    def __init__(self, spec, A, B, x0, T, M, relaxed=False):
+    def __init__(self, spec, A, B, x0, T, M):
         """
         Initialize the solver.
 
@@ -45,8 +45,6 @@ class GurobiMICPSolver(STLSolver):
         @param x0       The initial state of the system.
         @param T        An integer specifiying the number of timesteps.
         @param M        A large positive scalar, used for the "big-M" method
-        @param relaxed  (optional) A boolean indicating whether to solve
-                        a convex relaxation of the problem. Default to False.
         """
         assert M > 0, "M should be a (large) positive scalar"
         super().__init__(spec, A, B, x0, T)
