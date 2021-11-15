@@ -13,12 +13,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.reach_avoid import reach_avoid_specification, plot_reach_avoid_scenario
 from solvers import (MICPSolver, GradientSolver, PerspectiveMICPSolver, 
-        GurobiMICPSolver, GurobiLCPSolver, DrakeLCPSolver)
+        GurobiMICPSolver, GurobiLCPSolver, DrakeLCPSolver, KnitroLCPSolver)
 
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
-T = 20
+T = 10
 
 # The "big-M" constant used for mixed-integer encoding
 M = 1000
@@ -48,7 +48,8 @@ x0 = np.array([1.0,2.0,0,0])
 #solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
 #solver = GurobiMICPSolver(spec, A, B, x0, T, M)
 #solver = GurobiLCPSolver(spec, A, B, x0, T)
-solver = DrakeLCPSolver(spec, A, B, x0, T)
+#solver = DrakeLCPSolver(spec, A, B, x0, T)
+solver = KnitroLCPSolver(spec, A, B, x0, T)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
 #solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
 x, u = solver.Solve()

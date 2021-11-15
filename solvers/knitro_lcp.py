@@ -2,15 +2,11 @@ from solvers.solver_base import STLSolver
 from STL import STLPredicate
 import numpy as np
 
-from pydrake.all import MathematicalProgram, eq, le, ge
-from pydrake.solvers.all import (IpoptSolver, SnoptSolver, OsqpSolver,
-                                 GurobiSolver, MosekSolver)
-from pydrake.solvers.nlopt import NloptSolver
-from pydrake.solvers.scs import ScsSolver
+from knitro import *
 
 import time
 
-class DrakeLCPSolver(STLSolver):
+class KnitroLCPSolver(STLSolver):
     """
     Given an STLFormula (spec) and a system of the form 
 
@@ -25,8 +21,9 @@ class DrakeLCPSolver(STLSolver):
              x0 fixed
              rho(x,u) is the STL robustness measure
 
-    using the Drake interface, which allows us to try a variety
-    of different solvers.
+    using the Artelys Knitro solver, which finds a locally optimal
+    solution, but has some (seemingly secret) methods of handling
+    complementarity constraints.
 
     This is nearly identical to the standard MICP encoding, but instead
     of encoding the min/max operators using mixed-integer constraints,
@@ -47,27 +44,23 @@ class DrakeLCPSolver(STLSolver):
         self.M = 1000
 
         # Set up the optimization problem
-        self.mp = MathematicalProgram()
-
-        # Choose a solver
-        self.solver = SnoptSolver()
-
-        # Set some solver options
-        #self.mp.SetSolverOption(self.solver.solver_id(), "OutputFlag", 1)
-        #self.mp.SetSolverOption(self.solver.solver_id(), "LogToConsole", 1)
-        #self.mp.SetSolverOption(self.solver.solver_id(), "NonConvex", 2)
+        self.kc = KN_new()
 
         print("Setting up optimization problem...")
         st = time.time()  # for computing setup time
 
-        # Create optimization variables
-        self.x = self.mp.NewContinuousVariables(self.n, self.T, 'x')
-        self.u = self.mp.NewContinuousVariables(self.m, self.T, 'u')
-        self.rho = self.mp.NewContinuousVariables(1,'rho')
+        # Create primary optimization variables
+        self.x_idx = np.empty((self.n, self.T), dtype=int)  # Knitro references variables by index rather
+        self.u_idx = np.empty((self.m, self.T), dtype=int)  # than some custom class
+        for i in range(self.n):
+            self.x_idx[i,:] = KN_add_vars(self.kc,self.T)
+        for i in range(self.m):
+            self.u_idx[i,:] = KN_add_vars(self.kc,self.T)
+        self.rho_idx = KN_add_vars(self.kc, 1)[0]
 
         # Add cost and constraints to the optimization problem
-        self.AddDynamicsConstraints()
-        self.AddSTLConstraints()
+        #self.AddDynamicsConstraints()
+        #self.AddSTLConstraints()
         #self.AddRobustnessCost()
         #self.AddControlBoundConstraints()
         
@@ -77,18 +70,27 @@ class DrakeLCPSolver(STLSolver):
         """
         Solve the optimization problem and return the optimal values of (x,u).
         """
-        # Local solvers tend to be sensitive to the initial guess
-        np.random.seed(0)
-        initial_guess = np.random.normal(size=self.mp.initial_guess().shape)
 
         st = time.time()
-        res = self.solver.Solve(self.mp, initial_guess=initial_guess)
+        status = KN_solve(self.kc)
         solve_time = time.time() - st
 
-        if res.is_success():
+        if status == KN_RC_OPTIMAL_OR_SATISFACTORY:
             print("\nOptimal Solution Found!\n")
-            x = res.GetSolution(self.x)
-            u = res.GetSolution(self.u)
+
+            _, obj, vals, _ = KN_get_solution(self.kc)
+
+            # Extract the solution
+            x = np.empty(self.x_idx.shape)
+            u = np.empty(self.u_idx.shape)
+            for i in range(self.x_idx.shape[0]):
+                for j in range(self.x_idx.shape[1]):
+                    idx = self.x_idx[i,j]
+                    x[i,j] = vals[idx]
+            for i in range(self.u_idx.shape[0]):
+                for j in range(self.u_idx.shape[1]):
+                    idx = self.u_idx[i,j]
+                    u[i,j] = vals[idx]
 
             # Report solve time and robustness
             y = np.vstack([x,u])
@@ -97,7 +99,7 @@ class DrakeLCPSolver(STLSolver):
             print("Optimal robustness: ", rho[0])
 
         else:
-            print("\nNo solution found.\n")
+            print(f"\nFailed with status code {status}\n")
             x = None
             u = None
 
@@ -121,26 +123,13 @@ class DrakeLCPSolver(STLSolver):
                 self.x[:,t+1], self.A@self.x[:,t] + self.B@self.u[:,t]
             ))
 
-    def AddControlBoundConstraints(self, u_max=1.0):
-        """
-        Add the constraints
-
-            -u_max <= u_t <= u_max
-
-        to the optimization problem
-        """
-        u = self.u.flatten()
-        N = len(u)
-        lb = -u_max*np.ones(N)
-        ub = u_max*np.ones(N)
-        self.mp.AddLinearConstraint(A=np.eye(N), lb=lb, ub=ub, vars=u)
-
     def AddRobustnessCost(self):
         """
         Set the cost of the optimization problem to maximize
         the overall robustness measure.
         """
-        self.mp.AddCost(-self.rho[0])
+        pass
+        # TODO
 
     def AddSTLConstraints(self):
         """
