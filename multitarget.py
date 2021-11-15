@@ -11,11 +11,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.random_multitarget import * 
-from solvers import MICPSolver, GradientSolver, PerspectiveMICPSolver, GurobiMICPSolver
+from solvers import (MICPSolver, GradientSolver, PerspectiveMICPSolver, GurobiMICPSolver,
+        KnitroLCPSolver)
 
 # Specification Parameters
-num_obstacles = 2
-num_groups = 2
+num_obstacles = 5
+num_groups = 5
 targets_per_group = 2
 T = 20
 
@@ -46,10 +47,11 @@ x0 = np.array([2.0,2.0,0,0])
 
 # Solve for the system trajectory
 #solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
-solver = GurobiMICPSolver(spec, A, B, x0, T, M)
+#solver = GurobiMICPSolver(spec, A, B, x0, T, M)
+solver = KnitroLCPSolver(spec, A, B, x0, T)
 #solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
-x, u = solver.Solve(verbose=True)
+x, u = solver.Solve()
 
 if x is not None:
     # Plot the solution

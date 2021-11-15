@@ -18,7 +18,7 @@ from solvers import (MICPSolver, GradientSolver, PerspectiveMICPSolver,
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
-T = 20
+T = 30
 
 # The "big-M" constant used for mixed-integer encoding
 M = 1000

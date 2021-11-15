@@ -67,7 +67,7 @@ class KnitroLCPSolver(STLSolver):
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
-        #self.AddRobustnessCost()
+        self.AddRobustnessCost()
         
         print(f"Setup complete in {time.time()-st} seconds.")
 
@@ -80,8 +80,8 @@ class KnitroLCPSolver(STLSolver):
         status = KN_solve(self.kc)
         solve_time = time.time() - st
 
-        if status == KN_RC_OPTIMAL_OR_SATISFACTORY:
-            print("\nOptimal Solution Found!\n")
+        if status > -200:  # feasible return codes, see https://www.artelys.com/docs/knitro/3_referenceManual/returnCodes.html
+            print("\nFeasible Solution Found!\n")
 
             _, obj, vals, _ = KN_get_solution(self.kc)
 
