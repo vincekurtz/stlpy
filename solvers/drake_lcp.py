@@ -189,27 +189,19 @@ class DrakeLCPSolver(STLSolver):
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
         else:
+            rho_subs = []
+            for i, subformula in enumerate(formula.subformula_list):
+                rho_sub = self.mp.NewContinuousVariables(1)
+                t_sub = formula.timesteps[i]   # the timestep at which this formula 
+                                               # should hold
+                self.AddSubformulaConstraints(subformula, rho_sub, t+t_sub)
+                rho_subs.append(rho_sub)
+
             if formula.combination_type == "and":
-                rho_subs = []
-                for i, subformula in enumerate(formula.subformula_list):
-                    rho_sub = self.mp.NewContinuousVariables(1)
-                    t_sub = formula.timesteps[i]   # the timestep at which this formula 
-                                                   # should hold
-                    self.AddSubformulaConstraints(subformula, rho_sub, t+t_sub)
-                    rho_subs.append(rho_sub)
-             
                 # rho = min(rho_subs)
                 self._add_min_constraint(rho, rho_subs)
 
             else:  # combination_type == "or":
-                rho_subs = []
-                for i, subformula in enumerate(formula.subformula_list):
-                    rho_sub = self.mp.NewContinuousVariables(1)
-                    t_sub = formula.timesteps[i]   # the timestep at which this formula 
-                                                   # should hold
-                    self.AddSubformulaConstraints(subformula, rho_sub, t+t_sub)
-                    rho_subs.append(rho_sub)
-               
                 # rho = max(rho_subs)
                 self._add_max_constraint(rho, rho_subs)
 
