@@ -180,7 +180,7 @@ class DrakeLCPSolver(STLSolver):
 
         if the subformulas are combined with disjuction.
         """
-        # We're at the bottom of the tree, so add the big-M constraints
+        # We're at the bottom of the tree, so add the predicate constraints
         if isinstance(formula, STLPredicate):
             # rho = A[x;u] - b
             xu = np.hstack([self.x[:,t],self.u[:,t]])

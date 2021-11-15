@@ -60,7 +60,7 @@ class KnitroLCPSolver(STLSolver):
 
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
-        #self.AddSTLConstraints()
+        self.AddSTLConstraints()
         #self.AddRobustnessCost()
         
         print(f"Setup complete in {time.time()-st} seconds.")
@@ -153,15 +153,24 @@ class KnitroLCPSolver(STLSolver):
         of binary variables for all subformulas in the specification.
         """
         # Constraint the overall formula robustness to be positive
-        self.mp.AddConstraint(self.rho[0] >= 0)
+        KN_set_var_lobnds(self.kc, self.rho_idx, 0.0)
+
+        # Set up lists of variable indices that make up all the complementarity
+        # constraints. This is necessary because Knitro (for some reason) only
+        # allows adding ALL the complementarity contraints once. 
+        self.comp_cons = ([],[])
 
         # Recursively traverse the tree defined by the specification
         # to add constraints that define the STL robustness score
-        self.AddSubformulaConstraints(self.spec, self.rho, 0)
+        self.AddSubformulaConstraints(self.spec, self.rho_idx, 0)
 
-    def AddSubformulaConstraints(self, formula, rho, t):
+        # Add the complementarity constraints to the optimization problem
+        cc_type = [KN_CCTYPE_VARVAR]*len(self.comp_cons[0])
+        KN_set_compcons(self.kc, cc_type, self.comp_cons[0], self.comp_cons[1])
+
+    def AddSubformulaConstraints(self, formula, rho_idx, t):
         """
-        Given an STLFormula (formula) and a continuous variable (rho),
+        Given an STLFormula (formula) and a continuous variable idex (rho_idx),
         add constraints to the optimization problem such that rho is
         the robustness score for that formula.
 
@@ -181,38 +190,33 @@ class KnitroLCPSolver(STLSolver):
 
         if the subformulas are combined with disjuction.
         """
-        # We're at the bottom of the tree, so add the big-M constraints
+        # We're at the bottom of the tree, so add the predicate constraints
+        #   rho = A[x;u] - b
         if isinstance(formula, STLPredicate):
-            # rho = A[x;u] - b
-            xu = np.hstack([self.x[:,t],self.u[:,t]])
-            self.mp.AddConstraint(eq( formula.A@xu - formula.b, rho ))
+            # reformulate as M*x = b
+            x_idx = np.hstack([self.x_idx[:,t],self.u_idx[:,t],rho_idx])
+            M = np.hstack([formula.A, -np.eye(1)])
+            b = formula.b
+            add_linear_eq_cons(self.kc, M, x_idx, b)
         
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
         else:
-            if formula.combination_type == "and":
-                rho_subs = []
-                for i, subformula in enumerate(formula.subformula_list):
-                    rho_sub = self.mp.NewContinuousVariables(1)
-                    t_sub = formula.timesteps[i]   # the timestep at which this formula 
-                                                   # should hold
-                    self.AddSubformulaConstraints(subformula, rho_sub, t+t_sub)
-                    rho_subs.append(rho_sub)
+            rho_subs = []
+            for i, subformula in enumerate(formula.subformula_list):
+                rho_sub_idx = KN_add_vars(self.kc, 1)[0]
+                t_sub = formula.timesteps[i]   # the timestep at which this formula 
+                                               # should hold
+                self.AddSubformulaConstraints(subformula, rho_sub_idx, t+t_sub)
+                rho_subs.append(rho_sub_idx)
              
+            if formula.combination_type == "and":
                 # rho = min(rho_subs)
-                self._add_min_constraint(rho, rho_subs)
+                self._add_min_constraint(rho_idx, rho_subs)
 
             else:  # combination_type == "or":
-                rho_subs = []
-                for i, subformula in enumerate(formula.subformula_list):
-                    rho_sub = self.mp.NewContinuousVariables(1)
-                    t_sub = formula.timesteps[i]   # the timestep at which this formula 
-                                                   # should hold
-                    self.AddSubformulaConstraints(subformula, rho_sub, t+t_sub)
-                    rho_subs.append(rho_sub)
-               
                 # rho = max(rho_subs)
-                self._add_max_constraint(rho, rho_subs)
+                self._add_max_constraint(rho_idx, rho_subs)
 
     def _add_max_constraint(self, a, b_lst):
         """
@@ -225,9 +229,10 @@ class KnitroLCPSolver(STLSolver):
         if len(b_lst) == 2:
             self._encode_max(a, b_lst[0], b_lst[1])
         elif len(b_lst) == 1:
-            self.mp.AddConstraint(eq( a, b_lst[0] ))
+            # a = b_lst[0]
+            add_linear_eq_cons(self.kc, np.array([[1,-1]]),np.array([a,b_lst[0]]), np.array([0]))
         else:
-            c = self.mp.NewContinuousVariables(1)
+            c = KN_add_vars(self.kc, 1)
             self._add_max_constraint(c, b_lst[1:])
             self._encode_max(a, b_lst[0], c)
     
@@ -242,13 +247,14 @@ class KnitroLCPSolver(STLSolver):
         if len(b_lst) == 2:
             self._encode_min(a, b_lst[0], b_lst[1])
         elif len(b_lst) == 1:
-            self.mp.AddConstraint(eq(a, b_lst[0]))
+            # a = b_lst[0]
+            add_linear_eq_cons(self.kc, np.array([[1,-1]]),np.array([a,b_lst[0]]), np.array([0]))
         else:
-            c = self.mp.NewContinuousVariables(1)
+            c = KN_add_vars(self.kc, 1)
             self._add_min_constraint(c, b_lst[1:])
             self._encode_min(a, b_lst[0], c)
     
-    def _add_absolute_value_constraint(self, x, y):
+    def _add_absolute_value_constraint(self, x_idx, y_idx):
         """
         Add an absolute vlaue constraint 
 
@@ -262,33 +268,22 @@ class KnitroLCPSolver(STLSolver):
             x- >= 0
             x+x- = 0
         """
-        x_plus = self.mp.NewContinuousVariables(1)
-        x_minus = self.mp.NewContinuousVariables(1)
+        # Define x+ and x-
+        x_plus_idx = KN_add_vars(self.kc, 1)
+        x_minus_idx = KN_add_vars(self.kc, 1)
+        KN_set_var_lobnds(self.kc, [x_plus_idx[0], x_minus_idx[0]], [0,0])
 
-        self.mp.AddConstraint(eq(x, x_plus - x_minus))
-        self.mp.AddConstraint(eq(y, x_plus + x_minus))
+        # Constraint x = x+ - x-, y = x+ + x-
+        Aeq = np.array([[-1,0,1,-1],[0,-1,1,1]])
+        xeq_idx = np.hstack([x_idx, y_idx, x_plus_idx, x_minus_idx])
+        beq = np.zeros(2)
+        add_linear_eq_cons(self.kc, Aeq, xeq_idx, beq)
 
-        # Standard LCP constraint (SNOPT only)
-        #M = np.array([[0.,1.],[0.,0.]])
-        #q = np.array([0.,0.])
-        #x = np.hstack([x_plus,x_minus])
-        #self.mp.AddLinearComplementarityConstraint(M,q,x)
-        
-        # LCP constraint as nonconvex quadratic constraint
-        #self.mp.AddConstraint(ge(x_plus, 0.0))
-        #self.mp.AddConstraint(ge(x_minus, 0.0))
-        #self.mp.AddConstraint(x_plus.T@x_minus <= 0.1)
+        # Add x+ and x- to the list of complementary variables so that a single
+        # complementarity constraint with all the variables can be added later.
+        self.comp_cons[0].append(x_plus_idx[0])
+        self.comp_cons[1].append(x_minus_idx[0])
 
-        # LCP constraint as nonconvex quadratic cost
-        #self.mp.AddConstraint(ge(x_plus, 0.0))
-        #self.mp.AddConstraint(ge(x_minus, 0.0))
-        #self.mp.AddCost(x_plus.T@x_minus)
-        
-        # LCP constraint as constraint on the Fischer function
-        # where phi = 0 iff (0 <= x_plus) complements (x_minus >= 0)
-        #phi = np.sqrt(x_plus**2 + x_minus**2) - x_plus - x_minus
-        #self.mp.AddConstraint(eq( phi, 0 ))
-        
     def _encode_max(self, a, b, c):
         """
         This very important method takes three Gurobi decision variables 
@@ -303,9 +298,25 @@ class KnitroLCPSolver(STLSolver):
 
         and that absolute value can be encoded with an LCP constraint.
         """
-        abs_b_minus_c = self.mp.NewContinuousVariables(1)
-        self.mp.AddConstraint(eq( a , 0.5*(b + c) + 0.5*abs_b_minus_c ))
-        self._add_absolute_value_constraint(b-c, abs_b_minus_c)
+        # Create new variable for |b-c|
+        abs_idx = KN_add_vars(self.kc,1)
+
+        # Create new variable for b-c
+        diff_idx = KN_add_vars(self.kc,1)
+
+        # Add a linear constraint 1/2(b+c) + 1/2|b-c| = a
+        Aeq = np.array([[-1,0.5,0.5,0.5]])
+        x_idx = np.hstack([a, b, c, abs_idx])
+        beq = np.zeros(1)
+        add_linear_eq_cons(self.kc, Aeq, x_idx, beq)
+
+        # Add a linear constraint diff = b-c
+        Aeq = np.array([[1,-1,-1]])
+        x_idx = np.hstack([b,c,diff_idx])
+        beq = np.zeros(1)
+        add_linear_eq_cons(self.kc, Aeq, x_idx, beq)
+
+        self._add_absolute_value_constraint(diff_idx, abs_idx)
     
     def _encode_min(self, a, b, c):
         """
@@ -321,9 +332,25 @@ class KnitroLCPSolver(STLSolver):
 
         and that absolute value can be encoded with an LCP constraint.
         """
-        abs_b_minus_c = self.mp.NewContinuousVariables(1)
-        self.mp.AddConstraint(eq( a , 0.5*(b + c) - 0.5*abs_b_minus_c ))
-        self._add_absolute_value_constraint(b-c, abs_b_minus_c)
+        # Create new variable for |b-c|
+        abs_idx = KN_add_vars(self.kc,1)
+
+        # Create new variable for b-c
+        diff_idx = KN_add_vars(self.kc,1)
+
+        # Add a linear constraint 1/2(b+c) - 1/2|b-c| = a
+        Aeq = np.array([[-1,0.5,0.5,-0.5]])
+        x_idx = np.hstack([a, b, c, abs_idx])
+        beq = np.zeros(1)
+        add_linear_eq_cons(self.kc, Aeq, x_idx, beq)
+
+        # Add a linear constraint diff = b-c
+        Aeq = np.array([[1,-1,-1]])
+        x_idx = np.hstack([b,c,diff_idx])
+        beq = np.zeros(1)
+        add_linear_eq_cons(self.kc, Aeq, x_idx, beq)
+
+        self._add_absolute_value_constraint(diff_idx, abs_idx)
 
 def add_linear_eq_cons(kc, A, x_idx, b):
     """
