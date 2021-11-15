@@ -46,6 +46,12 @@ class KnitroLCPSolver(STLSolver):
         # Set up the optimization problem
         self.kc = KN_new()
 
+        # Set some parameters
+        KN_set_int_param(self.kc, "par_numthreads", 4)  # enable parallelism
+        KN_set_int_param(self.kc, "ms_enable", 1)       # multistart
+        KN_set_int_param(self.kc, "ms_terminate",       # stop when a feasible
+                KN_MSTERMINATE_FEASIBLE)                # solution is found
+
         print("Setting up optimization problem...")
         st = time.time()  # for computing setup time
 
@@ -140,8 +146,7 @@ class KnitroLCPSolver(STLSolver):
         Set the cost of the optimization problem to maximize
         the overall robustness measure.
         """
-        pass
-        # TODO
+        KN_add_obj_linear_struct(self.kc, self.rho_idx, -1.0)
 
     def AddSTLConstraints(self):
         """
