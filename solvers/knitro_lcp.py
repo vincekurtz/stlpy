@@ -59,10 +59,9 @@ class KnitroLCPSolver(STLSolver):
         self.rho_idx = KN_add_vars(self.kc, 1)[0]
 
         # Add cost and constraints to the optimization problem
-        #self.AddDynamicsConstraints()
+        self.AddDynamicsConstraints()
         #self.AddSTLConstraints()
         #self.AddRobustnessCost()
-        #self.AddControlBoundConstraints()
         
         print(f"Setup complete in {time.time()-st} seconds.")
 
@@ -115,13 +114,26 @@ class KnitroLCPSolver(STLSolver):
         to the optimization problem. 
         """
         # Initial condition
-        self.mp.AddConstraint(eq( self.x[:,0], self.x0 ))
+        #
+        #   self.x[:,0] = self.x0
+        #
+        for i in range(len(self.x0)):
+            idx = self.x_idx[i,0]
+            val = self.x0[i]
+            KN_set_var_fxbnds(self.kc, idx, val)
 
         # Dynamics
+        #
+        #   self.x[:,t+1] = self.A*self.x[:,t] + self.B*self.u[:,t]
+        #
         for t in range(self.T-1):
-            self.mp.AddConstraint(eq(
-                self.x[:,t+1], self.A@self.x[:,t] + self.B@self.u[:,t]
-            ))
+            # Formulate as M*x = b, where
+            # M = [-I, A, B], x = [x_{t+1},x_t,u_t], b = 0
+            M = np.hstack([-np.eye(self.n), self.A, self.B])
+            x_idx = np.hstack([self.x_idx[:,t+1],self.x_idx[:,t],self.u_idx[:,t]])
+            b = np.zeros(x_idx.shape)
+
+            add_linear_eq_cons(self.kc, M, x_idx, b)
 
     def AddRobustnessCost(self):
         """
@@ -312,3 +324,37 @@ class KnitroLCPSolver(STLSolver):
         abs_b_minus_c = self.mp.NewContinuousVariables(1)
         self.mp.AddConstraint(eq( a , 0.5*(b + c) - 0.5*abs_b_minus_c ))
         self._add_absolute_value_constraint(b-c, abs_b_minus_c)
+
+def add_linear_eq_cons(kc, A, x_idx, b):
+    """
+    Helper function for adding the linear equality constriant
+
+        A*x = b
+
+    to the given knitro problem instance, where
+
+        A \in (m,n)
+        x \in (n)
+        b \in (m)
+
+    @param kc       Knitro problem instance
+    @param A        Numpy array for the linear map
+    @param x_idx    List or numpy array of Knitro indices of the decision variables
+    @param b        Numpy array for the coefficient vector, shape 
+    """
+    m = A.shape[0]
+    n = A.shape[1]
+
+    # Add a (yet-to-be-defined) constraint for each row and get constraint index list
+    con_idx = KN_add_cons(kc, m)
+
+    for i in range(m):
+        # Define the linear structure of a constraint for each row
+        constraint_indices = [con_idx[i] for j in range(n)]
+        variable_indices = x_idx
+        coefficients = A[i,:]
+        KN_add_con_linear_struct(kc, constraint_indices, variable_indices, coefficients)
+
+        # Set the equality bounds of this constraint
+        KN_set_con_eqbnds(kc, con_idx[i], cEqBnds=b[i])
+            
