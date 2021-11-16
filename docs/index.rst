@@ -3,16 +3,20 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to pySTL's documentation!
-=================================
+Welcome to the documentation for the **pySTL** package! **pySTL** is a python library
+for control from Signal Temporal Logic (STL) specifications. 
+
+Contents
+========
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
-.. automodule:: STL.formula.STLFormulaBase
-
-.. automodule:: STL.STLFormula
+   overview
+   getting_started
+   stl
+   solvers
+   benchmarks
 
 
 Indices and tables
