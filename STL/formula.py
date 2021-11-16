@@ -139,6 +139,7 @@ class STLFormulaBase(ABC):
         @param t2   An integer representing the end of the interval
 
         @returns new    An STLFormula representing (self)U_[t1,t2](other)
+
         """
         # For every candidate swiching time (t_prime), construct a subformula 
         # representing 'self' holding until t_prime, at which point 'other' holds.
