@@ -11,8 +11,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.either_or import either_or_specification, plot_either_or_scenario
-from solvers import (MICPSolver, GradientSolver, PerspectiveMICPSolver, GurobiMICPSolver,
-        KnitroLCPSolver)
+from solvers import *
 
 # Specification Parameters
 goal = (7,8,8,9)     # (xmin, xmax, ymin, ymax)

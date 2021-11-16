@@ -68,13 +68,13 @@ class KnitroLCPSolver(STLSolver):
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
-        #self.AddRobustnessCost()
+        self.AddRobustnessCost()
 
         # DEBUG
-        Q = 1e-1*np.diag([0,0,1,1]) 
-        R = 1e-1*np.eye(2)
+        #Q = 1e-1*np.diag([0,0,1,1]) 
+        #R = 1e-1*np.eye(2)
 
-        self.AddRunningCost(Q,R)
+        #self.AddRunningCost(Q,R)
         
         print(f"Setup complete in {time.time()-st} seconds.")
 

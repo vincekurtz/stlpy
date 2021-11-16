@@ -61,7 +61,7 @@ class STLSolver(ABC):
 
         self.Q = Q
         self.R = R
-        
+
     @abstractmethod
     def Solve(self):
         """

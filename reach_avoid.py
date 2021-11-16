@@ -12,13 +12,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.reach_avoid import reach_avoid_specification, plot_reach_avoid_scenario
-from solvers import (MICPSolver, GradientSolver, PerspectiveMICPSolver, 
-        GurobiMICPSolver, GurobiLCPSolver, DrakeLCPSolver, KnitroLCPSolver)
+from solvers import *
 
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
-T = 20
+T = 10
 
 # The "big-M" constant used for mixed-integer encoding
 M = 1000

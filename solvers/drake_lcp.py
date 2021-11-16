@@ -68,7 +68,7 @@ class DrakeLCPSolver(STLSolver):
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
-        #self.AddRobustnessCost()
+        self.AddRobustnessCost()
         #self.AddControlBoundConstraints()
         
         print(f"Setup complete in {time.time()-st} seconds.")
