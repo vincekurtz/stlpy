@@ -47,10 +47,11 @@ class KnitroLCPSolver(STLSolver):
         self.kc = KN_new()
 
         # Set some parameters
-        KN_set_int_param(self.kc, "par_numthreads", 4)  # enable parallelism
-        KN_set_int_param(self.kc, "ms_enable", 1)       # multistart
-        KN_set_int_param(self.kc, "ms_terminate",       # stop when a feasible
+        KN_set_int_param(self.kc, "par_numthreads", 4)  # Enable parallelism
+        KN_set_int_param(self.kc, "ms_enable", 1)       # Enable multistart
+        KN_set_int_param(self.kc, "ms_terminate",       # Stop when a feasible
                 KN_MSTERMINATE_FEASIBLE)                # solution is found
+        KN_set_int_param(self.kc, "algorithm", 0)       # Choose algorithm automatically
 
         print("Setting up optimization problem...")
         st = time.time()  # for computing setup time
@@ -67,7 +68,13 @@ class KnitroLCPSolver(STLSolver):
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
-        self.AddRobustnessCost()
+        #self.AddRobustnessCost()
+
+        # DEBUG
+        Q = 1e-1*np.diag([0,0,1,1]) 
+        R = 1e-1*np.eye(2)
+
+        self.AddRunningCost(Q,R)
         
         print(f"Setup complete in {time.time()-st} seconds.")
 
@@ -147,6 +154,28 @@ class KnitroLCPSolver(STLSolver):
         the overall robustness measure.
         """
         KN_add_obj_linear_struct(self.kc, self.rho_idx, -1.0)
+
+    def AddRunningCost(self, Q, R):
+        """
+        Add a running cost
+
+            \sum_t x'Qx + u'Ru
+
+        to the optimization problem. 
+        """
+        # Check that off-diagonal elements of Q and R are zero
+        Q_bar = Q*(1-np.eye(Q.shape[0]))
+        R_bar = R*(1-np.eye(R.shape[0]))
+        if not np.all(Q_bar == 0) or not np.all(R_bar == 0):
+            raise ValueError("Only diagonal Q/R are supported at this time")
+
+        q = np.diag(Q)
+        r = np.diag(R)
+        for t in range(self.T):
+            for i in range(self.n):
+                KN_add_obj_quadratic_struct(self.kc, self.x_idx[i,t], self.x_idx[i,t], q[i])
+            for i in range(self.m):
+                KN_add_obj_quadratic_struct(self.kc, self.u_idx[i,t], self.u_idx[i,t], r[i])
 
     def AddSTLConstraints(self):
         """

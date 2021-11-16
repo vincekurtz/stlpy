@@ -11,7 +11,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.either_or import either_or_specification, plot_either_or_scenario
-from solvers import MICPSolver, GradientSolver, PerspectiveMICPSolver, GurobiMICPSolver
+from solvers import (MICPSolver, GradientSolver, PerspectiveMICPSolver, GurobiMICPSolver,
+        KnitroLCPSolver)
 
 # Specification Parameters
 goal = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
@@ -46,7 +47,8 @@ x0 = np.array([1.0,1.0,0,0])
 
 # Solve for the system trajectory
 #solver = MICPSolver(spec, A, B, Q, R, x0, T, M, relaxed=False)
-solver = GurobiMICPSolver(spec, A, B, x0, T, M)
+#solver = GurobiMICPSolver(spec, A, B, x0, T, M)
+solver = KnitroLCPSolver(spec, A, B, x0, T)
 #solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
 #solver = GradientSolver(spec, A, B, Q, R, x0, T)
 x, u = solver.Solve()
