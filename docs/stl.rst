@@ -2,7 +2,7 @@
 Defining STL Formulas
 =====================
 
-As described here, STL formulas :math:`\varphi` are defined recursively accoring to the STL syntax:
+As described :ref:`here<Signal Temporal Logic>`, STL formulas :math:`\varphi` are defined recursively accoring to the STL syntax:
 
 .. math::
 

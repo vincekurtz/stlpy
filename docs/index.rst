@@ -15,6 +15,7 @@ Contents
    overview
    getting_started
    stl
+   systems
    solvers
    benchmarks
 
