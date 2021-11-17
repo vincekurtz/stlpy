@@ -25,6 +25,7 @@
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -81,10 +82,16 @@
             
             
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">About</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Defining STL Formulas</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Defining STL Formulas</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#stlformula">STLFormula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stltree">STLTree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stlpredicate">STLPredicate</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="solvers.html">Solving Control Problems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="benchmarks.html">Benchmarks</a></li>
 </ul>
 
             
@@ -151,10 +158,414 @@
             
   <div class="section" id="defining-stl-formulas">
 <h1>Defining STL Formulas<a class="headerlink" href="#defining-stl-formulas" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li>Basic overview</li>
-<li>Documentation for STLFormula and STLPredicate</li>
+<p>As described here, STL formulas <span class="math notranslate nohighlight">\(\varphi\)</span> are defined recursively accoring to the STL syntax:</p>
+<div class="math notranslate nohighlight">
+\[\varphi = \pi \mid \lnot \varphi \mid \varphi_1 \land \varphi_2 \mid \varphi_1 \lor \varphi_2 \mid
+G_{[t_1,t_2]}\varphi \mid F_{[t_1,t_2]}\varphi \mid \varphi_1 U_{[t_1,t_2]} \varphi_2\]</div>
+<p>We represent STL formulas <span class="math notranslate nohighlight">\(\varphi\)</span> using the abstract base class <a class="reference internal" href="#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a>. This
+base class enables all of the basic STL operations like conjuction (<span class="math notranslate nohighlight">\(\land\)</span>), disjuction
+(<span class="math notranslate nohighlight">\(\lor\)</span>), always (<span class="math notranslate nohighlight">\(G\)</span>), until (<span class="math notranslate nohighlight">\(U\)</span>), and so on.</p>
+<p>Internally, we represent predicates <span class="math notranslate nohighlight">\(\pi\)</span> using the <a class="reference internal" href="#STL.STLPredicate" title="STL.STLPredicate"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLPredicate</span></code></a> class and all
+other formulas using the class <a class="reference internal" href="#STL.STLTree" title="STL.STLTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLTree</span></code></a>.</p>
+<div class="section" id="stlformula">
+<h2>STLFormula<a class="headerlink" href="#stlformula" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="STL.STLFormula">
+<em class="property">class </em><code class="descclassname">STL.</code><code class="descname">STLFormula</code><a class="headerlink" href="#STL.STLFormula" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>An abstract class which encompasses represents all kinds of STL formulas <span class="math notranslate nohighlight">\(\varphi\)</span>, including
+predicates (the simplest possible formulas) and standard formulas (made up of logical operations over 
+predicates and other formulas).</p>
+<dl class="method">
+<dt id="STL.STLFormula.always">
+<code class="descname">always</code><span class="sig-paren">(</span><em>t1</em>, <em>t2</em><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.always" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new <a class="reference internal" href="#STL.STLTree" title="STL.STLTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLTree</span></code></a> <span class="math notranslate nohighlight">\(\varphi_{new}\)</span> which ensures that this 
+formula (<span class="math notranslate nohighlight">\(\varphi\)</span>) holds for all of the timesteps between 
+<span class="math notranslate nohighlight">\(t_1\)</span> and <span class="math notranslate nohighlight">\(t_2\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\varphi_{new} = G_{[t_1,t_2]}(\varphi)\]</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>t1</strong> – An integer representing the delay <span class="math notranslate nohighlight">\(t_1\)</span></li>
+<li><strong>t2</strong> – An integer representing the deadline <span class="math notranslate nohighlight">\(t_2\)</span></li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An <a class="reference internal" href="#STL.STLTree" title="STL.STLTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLTree</span></code></a> representing <span class="math notranslate nohighlight">\(\varphi_{new}\)</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLFormula.conjunction">
+<code class="descname">conjunction</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.conjunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new <a class="reference internal" href="#STL.STLTree" title="STL.STLTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLTree</span></code></a> <span class="math notranslate nohighlight">\(\varphi_{new}\)</span> which represents the conjunction 
+(and) of this formula (<span class="math notranslate nohighlight">\(\varphi\)</span>) and another one (<span class="math notranslate nohighlight">\(\varphi_{other}\)</span>):</p>
+<div class="math notranslate nohighlight">
+\[\varphi_{new} = \varphi \land \varphi_{other}\]</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>other</strong> – The <a class="reference internal" href="#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> <span class="math notranslate nohighlight">\(\varphi_{other}\)</span></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An <a class="reference internal" href="#STL.STLTree" title="STL.STLTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLTree</span></code></a> representing <span class="math notranslate nohighlight">\(\varphi_{new}\)</span></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Conjuction can also be represented with the <code class="docutils literal notranslate"><span class="pre">&amp;</span></code> operator, i.e.,</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">&amp;</span> <span class="n">b</span>
+</pre></div>
+</div>
+<p>is equivalent to</p>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">conjuction</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLFormula.disjunction">
+<code class="descname">disjunction</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.disjunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new <a class="reference internal" href="#STL.STLTree" title="STL.STLTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLTree</span></code></a> <span class="math notranslate nohighlight">\(\varphi_{new}\)</span> which represents the disjunction 
+(or) of this formula (<span class="math notranslate nohighlight">\(\varphi\)</span>) and another one (<span class="math notranslate nohighlight">\(\varphi_{other}\)</span>):</p>
+<div class="math notranslate nohighlight">
+\[\varphi_{new} = \varphi \lor \varphi_{other}\]</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>other</strong> – The <a class="reference internal" href="#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> <span class="math notranslate nohighlight">\(\varphi_{other}\)</span></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An <a class="reference internal" href="#STL.STLTree" title="STL.STLTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLTree</span></code></a> representing <span class="math notranslate nohighlight">\(\varphi_{new}\)</span></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Disjunction can also be represented with the <code class="docutils literal notranslate"><span class="pre">|</span></code> operator, i.e.,</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">|</span> <span class="n">b</span>
+</pre></div>
+</div>
+<p>is equivalent to</p>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">disjunction</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLFormula.eventually">
+<code class="descname">eventually</code><span class="sig-paren">(</span><em>t1</em>, <em>t2</em><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.eventually" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new <a class="reference internal" href="#STL.STLTree" title="STL.STLTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLTree</span></code></a> <span class="math notranslate nohighlight">\(\varphi_{new}\)</span> which ensures that this 
+formula (<span class="math notranslate nohighlight">\(\varphi\)</span>) holds for at least one timestep between 
+<span class="math notranslate nohighlight">\(t_1\)</span> and <span class="math notranslate nohighlight">\(t_2\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\varphi_{new} = F_{[t_1,t_2]}(\varphi)\]</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>t1</strong> – An integer representing the delay <span class="math notranslate nohighlight">\(t_1\)</span></li>
+<li><strong>t2</strong> – An integer representing the deadline <span class="math notranslate nohighlight">\(t_2\)</span></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An <a class="reference internal" href="#STL.STLTree" title="STL.STLTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLTree</span></code></a> representing <span class="math notranslate nohighlight">\(\varphi_{new}\)</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLFormula.is_conjunctive_state_formula">
+<code class="descname">is_conjunctive_state_formula</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.is_conjunctive_state_formula" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate whether this formula is a state formula defined by
+only conjunctions (and) over predicates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A boolean which is <code class="docutils literal notranslate"><span class="pre">True</span></code> only if this is a conjunctive state formula.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLFormula.is_disjunctive_state_formula">
+<code class="descname">is_disjunctive_state_formula</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.is_disjunctive_state_formula" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate whether this formula is a state formula defined by
+only disjunctions (or) over predicates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A boolean which is <code class="docutils literal notranslate"><span class="pre">True</span></code> only if this is a disjunctive state formula.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLFormula.is_state_formula">
+<code class="descname">is_state_formula</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.is_state_formula" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate whether this formula is a state formula, e.g.,
+a predicate or the result of boolean operations over 
+predicates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A boolean which is <code class="docutils literal notranslate"><span class="pre">True</span></code> only if this is a state formula.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLFormula.robustness">
+<code class="descname">robustness</code><span class="sig-paren">(</span><em>y</em>, <em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.robustness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the robustness measure <span class="math notranslate nohighlight">\(\rho^\varphi(y,t)\)</span> of this formula for the
+given signal <span class="math notranslate nohighlight">\(y = y_0,y_1,\dots,y_T\)</span>, evaluated at timestep <span class="math notranslate nohighlight">\(t\)</span>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> – A <code class="docutils literal notranslate"><span class="pre">(d,T)</span></code> numpy array representing the signal
+to evaluate, where <code class="docutils literal notranslate"><span class="pre">d</span></code> is the dimension of
+the signal and <code class="docutils literal notranslate"><span class="pre">T</span></code> is the number of timesteps</li>
+<li><strong>t</strong> – The timestep <span class="math notranslate nohighlight">\(t\)</span> to evaluate the signal at. This 
+is typically 0 for the full formula.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The robustness measure <span class="math notranslate nohighlight">\(\rho^\varphi(y,t)\)</span> which is positive only
+if the signal satisfies the specification.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLFormula.until">
+<code class="descname">until</code><span class="sig-paren">(</span><em>other</em>, <em>t1</em>, <em>t2</em><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.until" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new <a class="reference internal" href="#STL.STLTree" title="STL.STLTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLTree</span></code></a> <span class="math notranslate nohighlight">\(\varphi_{new}\)</span> which ensures that the
+given formula <span class="math notranslate nohighlight">\(\varphi_{other}\)</span> holds for at least one timestep between
+<span class="math notranslate nohighlight">\(t_1\)</span> and <span class="math notranslate nohighlight">\(t_2\)</span>, and that this formula (<span class="math notranslate nohighlight">\(\varphi\)</span>) holds
+at all timesteps until then:</p>
+<div class="math notranslate nohighlight">
+\[\varphi_{new} = \varphi U_{[t_1,t_2]}(\varphi_{other})\]</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>other</strong> – A <a class="reference internal" href="#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> representing <span class="math notranslate nohighlight">\(\varphi_{other\)</span></li>
+<li><strong>t1</strong> – An integer representing the delay <span class="math notranslate nohighlight">\(t_1\)</span></li>
+<li><strong>t2</strong> – An integer representing the deadline <span class="math notranslate nohighlight">\(t_2\)</span></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An <a class="reference internal" href="#STL.STLTree" title="STL.STLTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLTree</span></code></a> representing <span class="math notranslate nohighlight">\(\varphi_{new}\)</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="stltree">
+<h2>STLTree<a class="headerlink" href="#stltree" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="STL.STLTree">
+<em class="property">class </em><code class="descclassname">STL.</code><code class="descname">STLTree</code><span class="sig-paren">(</span><em>subformula_list</em>, <em>combination_type</em>, <em>timesteps</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLTree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">STL.formula.STLFormula</span></code></p>
+<p>An STL formula (in positive normal form) defined by 
+the following operations on STLPredicates and other STLTrees:</p>
+<blockquote>
+<div><ul class="simple">
+<li>conjunction (and)</li>
+<li>disjunction (or)</li>
+<li>always (globally)</li>
+<li>eventually (finally)</li>
+<li>until</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="STL.STLTree.is_conjunctive_state_formula">
+<code class="descname">is_conjunctive_state_formula</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLTree.is_conjunctive_state_formula" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate whether this formula is a state formula defined by
+only conjunctions (and) over predicates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A boolean which is <code class="docutils literal notranslate"><span class="pre">True</span></code> only if this is a conjunctive state formula.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLTree.is_disjunctive_state_formula">
+<code class="descname">is_disjunctive_state_formula</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLTree.is_disjunctive_state_formula" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate whether this formula is a state formula defined by
+only disjunctions (or) over predicates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A boolean which is <code class="docutils literal notranslate"><span class="pre">True</span></code> only if this is a disjunctive state formula.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLTree.is_state_formula">
+<code class="descname">is_state_formula</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLTree.is_state_formula" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate whether this formula is a state formula, e.g.,
+a predicate or the result of boolean operations over 
+predicates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A boolean which is <code class="docutils literal notranslate"><span class="pre">True</span></code> only if this is a state formula.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLTree.robustness">
+<code class="descname">robustness</code><span class="sig-paren">(</span><em>y</em>, <em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLTree.robustness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the robustness measure <span class="math notranslate nohighlight">\(\rho^\varphi(y,t)\)</span> of this formula for the
+given signal <span class="math notranslate nohighlight">\(y = y_0,y_1,\dots,y_T\)</span>, evaluated at timestep <span class="math notranslate nohighlight">\(t\)</span>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> – A <code class="docutils literal notranslate"><span class="pre">(d,T)</span></code> numpy array representing the signal
+to evaluate, where <code class="docutils literal notranslate"><span class="pre">d</span></code> is the dimension of
+the signal and <code class="docutils literal notranslate"><span class="pre">T</span></code> is the number of timesteps</li>
+<li><strong>t</strong> – The timestep <span class="math notranslate nohighlight">\(t\)</span> to evaluate the signal at. This 
+is typically 0 for the full formula.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The robustness measure <span class="math notranslate nohighlight">\(\rho^\varphi(y,t)\)</span> which is positive only
+if the signal satisfies the specification.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="stlpredicate">
+<h2>STLPredicate<a class="headerlink" href="#stlpredicate" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="STL.STLPredicate">
+<em class="property">class </em><code class="descclassname">STL.</code><code class="descname">STLPredicate</code><span class="sig-paren">(</span><em>A</em>, <em>b</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLPredicate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">STL.formula.STLFormula</span></code></p>
+<p>A (linear) stl predicate defined by</p>
+<blockquote>
+<div>A*y_t - b &gt;= 0</div></blockquote>
+<p>where y_t is the value of the signal 
+at a given timestep t.</p>
+<dl class="method">
+<dt id="STL.STLPredicate.is_conjunctive_state_formula">
+<code class="descname">is_conjunctive_state_formula</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLPredicate.is_conjunctive_state_formula" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate whether this formula is a state formula defined by
+only conjunctions (and) over predicates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A boolean which is <code class="docutils literal notranslate"><span class="pre">True</span></code> only if this is a conjunctive state formula.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLPredicate.is_disjunctive_state_formula">
+<code class="descname">is_disjunctive_state_formula</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLPredicate.is_disjunctive_state_formula" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate whether this formula is a state formula defined by
+only disjunctions (or) over predicates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A boolean which is <code class="docutils literal notranslate"><span class="pre">True</span></code> only if this is a disjunctive state formula.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLPredicate.is_state_formula">
+<code class="descname">is_state_formula</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLPredicate.is_state_formula" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate whether this formula is a state formula, e.g.,
+a predicate or the result of boolean operations over 
+predicates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A boolean which is <code class="docutils literal notranslate"><span class="pre">True</span></code> only if this is a state formula.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLPredicate.robustness">
+<code class="descname">robustness</code><span class="sig-paren">(</span><em>y</em>, <em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLPredicate.robustness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the robustness measure <span class="math notranslate nohighlight">\(\rho^\varphi(y,t)\)</span> of this formula for the
+given signal <span class="math notranslate nohighlight">\(y = y_0,y_1,\dots,y_T\)</span>, evaluated at timestep <span class="math notranslate nohighlight">\(t\)</span>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y</strong> – A <code class="docutils literal notranslate"><span class="pre">(d,T)</span></code> numpy array representing the signal
+to evaluate, where <code class="docutils literal notranslate"><span class="pre">d</span></code> is the dimension of
+the signal and <code class="docutils literal notranslate"><span class="pre">T</span></code> is the number of timesteps</li>
+<li><strong>t</strong> – The timestep <span class="math notranslate nohighlight">\(t\)</span> to evaluate the signal at. This 
+is typically 0 for the full formula.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The robustness measure <span class="math notranslate nohighlight">\(\rho^\varphi(y,t)\)</span> which is positive only
+if the signal satisfies the specification.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 
 

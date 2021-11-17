@@ -5,7 +5,7 @@ About
 Signal Temporal Logic
 =====================
 
-Coming soon:
+*Coming soon:*
 
     - STL definition (syntax and semantics)
     - Control from STL specifications (synthesis)

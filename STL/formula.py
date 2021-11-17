@@ -1,27 +1,26 @@
 import numpy as np
 from abc import ABC, abstractmethod
 
-class STLFormulaBase(ABC):
+class STLFormula(ABC):
     """
-    An abstract class which describes an STL formula
-    (i.e. a specification made up of logical operations 
-    over predicates) or an STL predicate (i.e. the 
-    simplest possible formula).
+    An abstract class which encompasses represents all kinds of STL formulas :math:`\\varphi`, including
+    predicates (the simplest possible formulas) and standard formulas (made up of logical operations over 
+    predicates and other formulas). 
     """
     @abstractmethod
     def robustness(self, y, t):
         """
-        Return the robustness measure of this formula for the
-        given signal y[t], evaluated at timestep t. 
+        Compute the robustness measure :math:`\\rho^\\varphi(y,t)` of this formula for the
+        given signal :math:`y = y_0,y_1,\\dots,y_T`, evaluated at timestep :math:`t`. 
 
-        @param y    A dxT numpy array representing the signal
-                    to evaluate, where d is the dimension of
-                    the signal and T is the number of timesteps
-        @param t    The timestep to evaluate the signal at. This 
-                    is typically 0 for the full formula. 
+        :param y:    A ``(d,T)`` numpy array representing the signal
+                     to evaluate, where ``d`` is the dimension of
+                     the signal and ``T`` is the number of timesteps
+        :param t:    The timestep :math:`t` to evaluate the signal at. This 
+                     is typically 0 for the full formula. 
 
-        @returns rho    The robustness measure, which is positive only
-                        if the signal satisfies the specification
+        :return:    The robustness measure :math:`\\rho^\\varphi(y,t)` which is positive only
+                    if the signal satisfies the specification.
         """
         pass
 
@@ -32,7 +31,7 @@ class STLFormulaBase(ABC):
         a predicate or the result of boolean operations over 
         predicates. 
 
-        @returns status     A boolean, True only if self is a state formula.
+        :return:    A boolean which is ``True`` only if this is a state formula.
         """
         pass
     
@@ -42,32 +41,47 @@ class STLFormulaBase(ABC):
         Indicate whether this formula is a state formula defined by
         only disjunctions (or) over predicates. 
 
-        @returns status     A boolean, True only if self is a disjunctive state formula.
+        :return:     A boolean which is ``True`` only if this is a disjunctive state formula.
         """
         pass
 
     @abstractmethod
     def is_conjunctive_state_formula(self):
         """
-        Indicate whether this formula is a state formula, defined by
+        Indicate whether this formula is a state formula defined by
         only conjunctions (and) over predicates.
 
-        @returns status     A boolean, True only if self is a conjunctive state formula.
+        :return:     A boolean which is ``True`` only if this is a conjunctive state formula.
         """
         pass
 
     def conjunction(self, other):
         """
-        Return a new STLFormula which is the conjunction (and) of this
-        formula and another one. 
+        Return a new :class:`.STLTree` :math:`\\varphi_{new}` which represents the conjunction 
+        (and) of this formula (:math:`\\varphi`) and another one (:math:`\\varphi_{other}`):
 
-        @param self     This STLFormula or STLPredicate
-        @param other    The STLFormula or STLPredicate to combine
-                        with this one. 
+        .. math::
 
-        @returns new    An STLFormula representing (self) and (other)
+            \\varphi_{new} = \\varphi \land \\varphi_{other}
+
+        :param other:   The :class:`.STLFormula` :math:`\\varphi_{other}`
+
+        :return: An :class:`.STLTree` representing :math:`\\varphi_{new}`
+
+        .. note::
+            
+            Conjuction can also be represented with the ``&`` operator, i.e.,
+            ::
+
+                c = a & b
+
+            is equivalent to
+            ::
+
+                c = a.conjuction(b)
+
         """
-        return STLFormula([self,other],"and",[0,0])
+        return STLTree([self,other],"and",[0,0])
 
     def __and__(self, other):
         """
@@ -77,15 +91,31 @@ class STLFormulaBase(ABC):
     
     def disjunction(self, other):
         """
-        Return a new STLFormula which is the disjunction (or) of this
-        formula and another one. 
+        Return a new :class:`.STLTree` :math:`\\varphi_{new}` which represents the disjunction 
+        (or) of this formula (:math:`\\varphi`) and another one (:math:`\\varphi_{other}`):
 
-        @param other    The STLFormula or STLPredicate to combine
-                        with this one. 
+        .. math::
 
-        @returns new    An STLFormula representing (self) and (other)
+            \\varphi_{new} = \\varphi \lor \\varphi_{other}
+
+        :param other:   The :class:`.STLFormula` :math:`\\varphi_{other}`
+
+        :return: An :class:`.STLTree` representing :math:`\\varphi_{new}`
+
+        .. note::
+            
+            Disjunction can also be represented with the ``|`` operator, i.e.,
+            ::
+
+                c = a | b
+
+            is equivalent to
+            ::
+
+                c = a.disjunction(b)
+
         """
-        return STLFormula([self,other],"or",[0,0])
+        return STLTree([self,other],"or",[0,0])
 
     def __or__(self, other):
         """
@@ -95,51 +125,66 @@ class STLFormulaBase(ABC):
 
     def always(self, t1, t2):
         """
-        Return a new STLFormula which ensures that this formula holds
-        for all of the timesteps between t1 and t2. 
+        Return a new :class:`.STLTree` :math:`\\varphi_{new}` which ensures that this 
+        formula (:math:`\\varphi`) holds for all of the timesteps between 
+        :math:`t_1` and :math:`t_2`:
+       
+        .. math::
 
-        @param t1   An integer representing the start of the interval
-        @param t2   An integer representing the end of the interval
+            \\varphi_{new} = G_{[t_1,t_2]}(\\varphi)
+        
 
-        @returns new    An STLFormula representing G_[t1,t2](self)
+        :param t1:  An integer representing the delay :math:`t_1`
+        :param t2:  An integer representing the deadline :math:`t_2`
+
+        :return: An :class:`.STLTree` representing :math:`\\varphi_{new}`
         """
         time_interval = [t for t in range(t1,t2+1)]
         subformula_list = [self for t in time_interval]
-        formula = STLFormula(subformula_list, "and", time_interval) 
+        formula = STLTree(subformula_list, "and", time_interval) 
         if self.name is not None:
             formula.name = "always [%s,%s] %s" % (t1,t2,self.name)
         return formula
 
     def eventually(self, t1, t2):
         """
-        Return a new STLFormula which ensures that this formula holds
-        for at least one timestep between t1 and t2. 
+        Return a new :class:`.STLTree` :math:`\\varphi_{new}` which ensures that this 
+        formula (:math:`\\varphi`) holds for at least one timestep between 
+        :math:`t_1` and :math:`t_2`:
+       
+        .. math::
 
-        @param t1   An integer representing the start of the interval
-        @param t2   An integer representing the end of the interval
+            \\varphi_{new} = F_{[t_1,t_2]}(\\varphi)
+        
 
-        @returns new    An STLFormula representing F_[t1,t2](self)
+        :param t1:  An integer representing the delay :math:`t_1`
+        :param t2:  An integer representing the deadline :math:`t_2`
+
+        :return: An :class:`.STLTree` representing :math:`\\varphi_{new}`
         """
         time_interval = [t for t in range(t1,t2+1)]
         subformula_list = [self for t in time_interval]
-        formula = STLFormula(subformula_list, "or", time_interval) 
+        formula = STLTree(subformula_list, "or", time_interval) 
         if self.name is not None:
             formula.name = "eventually [%s,%s] %s" % (t1,t2,self.name)
         return formula
 
     def until(self, other, t1, t2):
         """
-        Return a new STLFormula which ensures that this formula holds
-        until some timestep between t1 and t2, at which point the
-        other STLFormula (or STLPredicate) holds. 
+        Return a new :class:`.STLTree` :math:`\\varphi_{new}` which ensures that the
+        given formula :math:`\\varphi_{other}` holds for at least one timestep between
+        :math:`t_1` and :math:`t_2`, and that this formula (:math:`\\varphi`) holds
+        at all timesteps until then:
+        
+        .. math::
 
-        @param other    The second STLFormula or STLPredicate that 
-                        must hold after this one
-        @param t1   An integer representing the start of the interval
-        @param t2   An integer representing the end of the interval
+            \\varphi_{new} = \\varphi U_{[t_1,t_2]}(\\varphi_{other})
+        
+        :param other:   A :class:`.STLFormula` representing :math:`\\varphi_{other`
+        :param t1:  An integer representing the delay :math:`t_1`
+        :param t2:  An integer representing the deadline :math:`t_2`
 
-        @returns new    An STLFormula representing (self)U_[t1,t2](other)
-
+        :return: An :class:`.STLTree` representing :math:`\\varphi_{new}`
         """
         # For every candidate swiching time (t_prime), construct a subformula 
         # representing 'self' holding until t_prime, at which point 'other' holds.
@@ -149,15 +194,15 @@ class STLFormulaBase(ABC):
             time_interval = [t for t in range(t1, t_prime+1)]
             subformula_list = [self for t in range(t1, t_prime)]
             subformula_list.append(other)
-            self_until_tprime.append(STLFormula(subformula_list, "and", time_interval))
+            self_until_tprime.append(STLTree(subformula_list, "and", time_interval))
 
         # Then we take the disjunction over each of these formulas
-        return STLFormula(self_until_tprime, "or", [0 for i in range(len(self_until_tprime))])
+        return STLTree(self_until_tprime, "or", [0 for i in range(len(self_until_tprime))])
 
-class STLFormula(STLFormulaBase):
+class STLTree(STLFormula):
     """
     An STL formula (in positive normal form) defined by 
-    the following operations on STLPredicates and other STLFormulas:
+    the following operations on STLPredicates and other STLTrees:
 
         - conjunction (and)
         - disjunction (or)
@@ -168,11 +213,11 @@ class STLFormula(STLFormulaBase):
     """
     def __init__(self, subformula_list, combination_type, timesteps, name=None):
         """
-        An STL formula is defined by a list of other STLFormulaBase objects
+        An STL formula is defined by a list of other STLFormula objects
         which are combined together using either conjunction (and) or 
         disjunction (or). 
 
-        @param subformula_list      A list of STLFormulaBase objects (formulas or
+        @param subformula_list      A list of STLFormula objects (formulas or
                                     predicates) that we'll use to construct this formula. 
         @param combination_type     A string representing the type of operation we'll use 
                                     to combine these objects. Must be either "and" or "or".
@@ -184,11 +229,11 @@ class STLFormula(STLFormulaBase):
 
         # Run some type check on the inputs
         assert (combination_type == "and") or (combination_type == "or"), "Invalid combination type"
-        assert isinstance(subformula_list, list), "subformula_list must be a list of STLFormula or STLPredicate objects"
+        assert isinstance(subformula_list, list), "subformula_list must be a list of STLTree or STLPredicate objects"
         assert isinstance(timesteps, list), "timesteps must be a list of integers"
         assert len(timesteps) == len(subformula_list), "a timestep must be provided for each subformula"
         for formula in subformula_list:
-            assert isinstance(formula, STLFormulaBase), "subformula_list must be a list of STLFormula or STLPredicate objects"
+            assert isinstance(formula, STLFormula), "subformula_list must be a list of STLTree or STLPredicate objects"
             assert formula.d == self.d, "all subformulas must be defined over same dimension of signal"
         for t in timesteps:
             assert isinstance(t, int), "each timestep must be an integer"

@@ -1,2 +1,2 @@
-from STL.formula import STLFormula, STLFormulaBase
+from STL.formula import STLTree, STLFormula
 from STL.predicate import STLPredicate

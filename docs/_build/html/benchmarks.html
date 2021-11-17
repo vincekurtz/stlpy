@@ -80,11 +80,25 @@
             
             
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">About</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stl.html">Defining STL Formulas</a></li>
 <li class="toctree-l1"><a class="reference internal" href="solvers.html">Solving Control Problems</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Benchmarks</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Benchmarks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#simple-scenarios">Simple Scenarios</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#reach-avoid">Reach-Avoid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#either-or">Either-Or</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#narrow-passage">Narrow Passage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#complex-scalable-scenarios">Complex/Scalable Scenarios</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#multi-target">Multi-Target</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#key-door">Key-Door</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#charge-and-monitor">Charge and monitor</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
             
@@ -153,7 +167,40 @@
 <h1>Benchmarks<a class="headerlink" href="#benchmarks" title="Permalink to this headline">¶</a></h1>
 <p>Benchmark scenarios for evaluating
 different control approaches.</p>
-<p>(Basically documents scenarios)</p>
+<div class="section" id="simple-scenarios">
+<h2>Simple Scenarios<a class="headerlink" href="#simple-scenarios" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="reach-avoid">
+<h3>Reach-Avoid<a class="headerlink" href="#reach-avoid" title="Permalink to this headline">¶</a></h3>
+<p>A robot needs to avoid and obstacle and reach a goal.</p>
+</div>
+<div class="section" id="either-or">
+<h3>Either-Or<a class="headerlink" href="#either-or" title="Permalink to this headline">¶</a></h3>
+<p>In addition to avoiding an obstacle and reaching a goal, the robot
+must visit one of two intermediate target regions.</p>
+</div>
+<div class="section" id="narrow-passage">
+<h3>Narrow Passage<a class="headerlink" href="#narrow-passage" title="Permalink to this headline">¶</a></h3>
+<p>A robot must avoid several obstacles and reach one of two
+goals, and the passageway between obstacles is narrow.</p>
+</div>
+</div>
+<div class="section" id="complex-scalable-scenarios">
+<h2>Complex/Scalable Scenarios<a class="headerlink" href="#complex-scalable-scenarios" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="multi-target">
+<h3>Multi-Target<a class="headerlink" href="#multi-target" title="Permalink to this headline">¶</a></h3>
+<p>A robot must avoid many obstacles and visit at least one target of various types.</p>
+</div>
+<div class="section" id="key-door">
+<h3>Key-Door<a class="headerlink" href="#key-door" title="Permalink to this headline">¶</a></h3>
+<p>The robot must visit several target regions (rooms), but before entering each room it must
+visit a different location to pick up a key.</p>
+</div>
+<div class="section" id="charge-and-monitor">
+<h3>Charge and monitor<a class="headerlink" href="#charge-and-monitor" title="Permalink to this headline">¶</a></h3>
+<p>A team of robots must ensure that at least one robot is monitoring several target areas
+at all times, but each robot must also return to a charging station at regular intervals.</p>
+</div>
+</div>
 </div>
 
 

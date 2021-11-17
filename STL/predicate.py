@@ -1,7 +1,7 @@
 import numpy as np
-from STL.formula import STLFormulaBase
+from STL.formula import STLFormula
 
-class STLPredicate(STLFormulaBase):
+class STLPredicate(STLFormula):
     """
     A (linear) stl predicate defined by
 
