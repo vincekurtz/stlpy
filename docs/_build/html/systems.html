@@ -157,24 +157,10 @@
 <h1>Modeling Control Systems<a class="headerlink" href="#modeling-control-systems" title="Permalink to this headline">¶</a></h1>
 <p>These tools are use to model simple linear and nonlinear discrete-time control systems.</p>
 <dl class="class">
-<dt id="systems.LinearSystem">
-<em class="property">class </em><code class="descclassname">systems.</code><code class="descname">LinearSystem</code><a class="headerlink" href="#systems.LinearSystem" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">systems.base.System</span></code></p>
-<p>A linear discrete-time system</p>
-</dd></dl>
-
-<dl class="class">
 <dt id="systems.NonlinearSystem">
-<em class="property">class </em><code class="descclassname">systems.</code><code class="descname">NonlinearSystem</code><a class="headerlink" href="#systems.NonlinearSystem" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">systems.base.System</span></code></p>
-<p>A non-linear discrete-time system</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="systems.System">
-<em class="property">class </em><code class="descclassname">systems.</code><code class="descname">System</code><a class="headerlink" href="#systems.System" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
-<p>An abstract class which represents some (possibly nonlinear)
+<em class="property">class </em><code class="descclassname">systems.</code><code class="descname">NonlinearSystem</code><span class="sig-paren">(</span><em>f</em>, <em>g</em><span class="sig-paren">)</span><a class="headerlink" href="#systems.NonlinearSystem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class which represents some (possibly nonlinear)
 discrete-time control system</p>
 <div class="math notranslate nohighlight">
 \[ \begin{align}\begin{aligned}x_{t+1} = f(x_t, u_t)\\y_t = g(x_t, u_t)\end{aligned}\end{align} \]</div>
@@ -186,9 +172,25 @@ discrete-time control system</p>
 <li><span class="math notranslate nohighlight">\(y_t \in \mathbb{R}^p\)</span> is a system output.</li>
 </ul>
 </div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>f</strong> – A function representing <span class="math notranslate nohighlight">\(f\)</span>, which takes two numpy 
+arrays (<span class="math notranslate nohighlight">\(x_t,u_t\)</span>) as input and returns another 
+numpy array (<span class="math notranslate nohighlight">\(x_{t+1}\)</span>)</li>
+<li><strong>g</strong> – A function representing <span class="math notranslate nohighlight">\(f\)</span>, which takes two numpy 
+arrays (<span class="math notranslate nohighlight">\(x_t,u_t\)</span>) as input and returns another 
+numpy array (<span class="math notranslate nohighlight">\(y_{t}\)</span>)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
-<dt id="systems.System.next_state">
-<code class="descname">next_state</code><span class="sig-paren">(</span><em>x</em>, <em>u</em><span class="sig-paren">)</span><a class="headerlink" href="#systems.System.next_state" title="Permalink to this definition">¶</a></dt>
+<dt id="systems.NonlinearSystem.next_state">
+<code class="descname">next_state</code><span class="sig-paren">(</span><em>x</em>, <em>u</em><span class="sig-paren">)</span><a class="headerlink" href="#systems.NonlinearSystem.next_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given state <span class="math notranslate nohighlight">\(x_t\)</span> and control <span class="math notranslate nohighlight">\(u_t\)</span>, compute
 the forward dynamics</p>
 <div class="math notranslate nohighlight">
@@ -211,8 +213,8 @@ the forward dynamics</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="systems.System.output">
-<code class="descname">output</code><span class="sig-paren">(</span><em>x</em>, <em>u</em><span class="sig-paren">)</span><a class="headerlink" href="#systems.System.output" title="Permalink to this definition">¶</a></dt>
+<dt id="systems.NonlinearSystem.output">
+<code class="descname">output</code><span class="sig-paren">(</span><em>x</em>, <em>u</em><span class="sig-paren">)</span><a class="headerlink" href="#systems.NonlinearSystem.output" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given state <span class="math notranslate nohighlight">\(x_t\)</span> and control <span class="math notranslate nohighlight">\(u_t\)</span>, compute
 the output</p>
 <div class="math notranslate nohighlight">
@@ -234,6 +236,37 @@ the output</p>
 </table>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="class">
+<dt id="systems.LinearSystem">
+<em class="property">class </em><code class="descclassname">systems.</code><code class="descname">LinearSystem</code><span class="sig-paren">(</span><em>A</em>, <em>B</em>, <em>C</em>, <em>D</em><span class="sig-paren">)</span><a class="headerlink" href="#systems.LinearSystem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">systems.nonlinear.NonlinearSystem</span></code></p>
+<p>A linear discrete-time system of the form</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}x_{t+1} = A x_t + B u_t\\y_t = C x_t + D u_t\end{aligned}\end{align} \]</div>
+<p>where</p>
+<blockquote>
+<div><ul class="simple">
+<li><span class="math notranslate nohighlight">\(x_t \in \mathbb{R}^n\)</span> is a system state,</li>
+<li><span class="math notranslate nohighlight">\(u_t \in \mathbb{R}^m\)</span> is a control input,</li>
+<li><span class="math notranslate nohighlight">\(y_t \in \mathbb{R}^p\)</span> is a system output.</li>
+</ul>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>A</strong> – A <code class="docutils literal notranslate"><span class="pre">(n,n)</span></code> numpy array representing the state transition matrix</li>
+<li><strong>B</strong> – A <code class="docutils literal notranslate"><span class="pre">(n,m)</span></code> numpy array representing the control input matrix</li>
+<li><strong>C</strong> – A <code class="docutils literal notranslate"><span class="pre">(p,n)</span></code> numpy array representing the state output matrix</li>
+<li><strong>D</strong> – A <code class="docutils literal notranslate"><span class="pre">(p,m)</span></code> numpy array representing the control output matrix</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
