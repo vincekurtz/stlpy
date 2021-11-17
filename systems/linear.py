@@ -39,6 +39,6 @@ class LinearSystem(NonlinearSystem):
         self.D = D
 
         # Dynamics functions
-        self.f = lambda x, u: A@x + B@u
-        self.g = lambda x, u: C@x + D@u
+        self.dynamics_fcn = lambda x, u: A@x + B@u
+        self.output_fcn = lambda x, u: C@x + D@u
         

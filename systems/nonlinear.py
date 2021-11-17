@@ -24,10 +24,10 @@ class NonlinearSystem:
     """
     def __init__(self, f, g):
         # TODO: do some checks on function signature
-        self.f = f
-        self.g = g
+        self.dynamics_fcn = f
+        self.output_fcn = g
     
-    def next_state(self, x, u):
+    def f(self, x, u):
         """
         Given state :math:`x_t` and control :math:`u_t`, compute
         the forward dynamics
@@ -41,9 +41,9 @@ class NonlinearSystem:
 
         :return:    The subsequent state :math:`x_{t+1}`
         """
-        return self.f(x, u)
+        return self.dynamics_fcn(x, u)
 
-    def output(self, x, u):
+    def g(self, x, u):
         """
         Given state :math:`x_t` and control :math:`u_t`, compute
         the output
@@ -57,4 +57,4 @@ class NonlinearSystem:
 
         :return:    The output :math:`y_t`
         """
-        return self.g(x,u)
+        return self.output_fcn(x,u)
