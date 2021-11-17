@@ -229,7 +229,7 @@ class KnitroLCPSolver(STLSolver):
         if isinstance(formula, STLPredicate):
             # reformulate as M*x = b
             x_idx = np.hstack([self.x_idx[:,t],self.u_idx[:,t],rho_idx])
-            M = np.hstack([formula.A, -np.eye(1)])
+            M = np.hstack([formula.a.T, -np.eye(1)])
             b = formula.b
             add_linear_eq_cons(self.kc, M, x_idx, b)
         

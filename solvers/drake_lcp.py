@@ -184,7 +184,7 @@ class DrakeLCPSolver(STLSolver):
         if isinstance(formula, STLPredicate):
             # rho = A[x;u] - b
             xu = np.hstack([self.x[:,t],self.u[:,t]])
-            self.mp.AddConstraint(eq( formula.A@xu - formula.b, rho ))
+            self.mp.AddConstraint(eq( formula.a.T@xu - formula.b, rho ))
         
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively

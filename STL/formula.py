@@ -201,29 +201,55 @@ class STLFormula(ABC):
 
 class STLTree(STLFormula):
     """
-    An STL formula (in positive normal form) defined by 
-    the following operations on STLPredicates and other STLTrees:
+    Describes an STL formula :math:`\\varphi` which is made up of 
+    operations over :class:`.STLFormula` objects. This defines a tree structure,
+    so that, for example, the specification
 
-        - conjunction (and)
-        - disjunction (or)
-        - always (globally)
-        - eventually (finally)
-        - until
+    .. math::
+
+        \\varphi = G_{[0,3]} \\pi_1 \land F_{[0,3]} \\pi_2
+
+    is represented by the tree
+
+    .. graphviz::
+
+        digraph tree {
+            root [label="phi"];
+            G [label="G"];
+            F [label="F"];
+            n1 [label="pi_1"];
+            n2 [label="pi_1"];
+            n3 [label="pi_1"];
+            n4 [label="pi_2"];
+            n5 [label="pi_2"];
+            n6 [label="pi_2"];
+
+            root -> G;
+            root -> F;
+            G -> n1;
+            G -> n2;
+            G -> n3;
+            F -> n4;
+            F -> n5;
+            F -> n6;
+        }
+
+    where each node is an :class:`.STLFormula` and the leaf nodes are :class:`.STLPredicate` objects.
+       
+
+    Each :class:`.STLTree` is defined by a list of :class:`.STLFormula` objects
+    (the child nodes in the tree) which are combined together using either conjunction or 
+    disjunction. 
+
+    :param subformula_list:     A list of :class:`.STLFormula` objects (formulas or
+                                predicates) that we'll use to construct this formula. 
+    :param combination_type:    A string representing the type of operation we'll use 
+                                to combine the child nodes. Must be either ``"and"`` or ``"or"``.
+    :param timesteps:           A list of timesteps that the subformulas must hold at.
+                                This is needed to define the temporal operators.
 
     """
     def __init__(self, subformula_list, combination_type, timesteps, name=None):
-        """
-        An STL formula is defined by a list of other STLFormula objects
-        which are combined together using either conjunction (and) or 
-        disjunction (or). 
-
-        @param subformula_list      A list of STLFormula objects (formulas or
-                                    predicates) that we'll use to construct this formula. 
-        @param combination_type     A string representing the type of operation we'll use 
-                                    to combine these objects. Must be either "and" or "or".
-        @param timesteps            A list of timesteps that the subformulas must hold at.
-                                    This is needed to define the temporal operators.
-        """
         # Record the dimension of the signal this formula is defined over
         self.d = subformula_list[0].d
 

@@ -198,10 +198,10 @@ class MICPSolver(DrakeSTLSolver):
         """
         # We're at the bottom of the tree, so add the big-M constraints
         if isinstance(formula, STLPredicate):
-            # A[x;u] - b + (1-z)*M >= rho
+            # a.T*[x;u] - b + (1-z)*M >= rho
             xu = np.hstack([self.x[:,t],self.u[:,t]])
             self.mp.AddLinearConstraint(ge(
-                formula.A@xu - formula.b + (1-z)*self.M, self.rho
+                formula.a.T@xu - formula.b + (1-z)*self.M, self.rho
             ))
         
         # We haven't reached the bottom of the tree, so keep adding

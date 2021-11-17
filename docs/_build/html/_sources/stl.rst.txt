@@ -27,13 +27,11 @@ STLTree
 ==========
 
 .. autoclass:: STL.STLTree
-    :members:
     :show-inheritance:
 
 STLPredicate
 ============
 
 .. autoclass:: STL.STLPredicate
-    :members:
     :show-inheritance:
 

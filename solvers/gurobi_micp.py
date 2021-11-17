@@ -152,8 +152,8 @@ class GurobiMICPSolver(STLSolver):
         """
         # We're at the bottom of the tree, so add the big-M constraints
         if isinstance(formula, STLPredicate):
-            # rho = A[x;u] - b
-            self.model.addConstr( formula.A@self.xu[:,t] - formula.b == rho )
+            # rho = a.T*[x;u] - b
+            self.model.addConstr( formula.a.T@self.xu[:,t] - formula.b == rho )
         
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
