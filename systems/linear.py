@@ -22,4 +22,23 @@ class LinearSystem(NonlinearSystem):
     :param D: A ``(p,m)`` numpy array representing the control output matrix
     """
     def __init__(self, A, B, C, D):
-        pass
+        self.n = A.shape[1]
+        self.m = B.shape[1]
+        self.p = C.shape[0]
+
+        # Sanity checks on matrix sizes
+        assert A.shape == (self.n, self.n), "A must be an (n,n) matrix"
+        assert B.shape == (self.n, self.m), "B must be an (n,m) matrix"
+        assert C.shape == (self.p, self.n), "C must be an (p,n) matrix"
+        assert D.shape == (self.p, self.m), "D must be an (p,m) matrix"
+
+        # Store dynamics parameters
+        self.A = A
+        self.B = B
+        self.C = C
+        self.D = D
+
+        # Dynamics functions
+        self.f = lambda x, u: A@x + B@u
+        self.g = lambda x, u: C@x + D@u
+        
