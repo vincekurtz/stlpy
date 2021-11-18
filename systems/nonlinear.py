@@ -17,15 +17,22 @@ class NonlinearSystem:
 
     :param f:   A function representing :math:`f`, which takes two numpy 
                 arrays (:math:`x_t,u_t`) as input and returns another 
-                numpy array (:math:`x_{t+1}`)
+                numpy array (:math:`x_{t+1}`).
     :param g:   A function representing :math:`f`, which takes two numpy 
                 arrays (:math:`x_t,u_t`) as input and returns another 
-                numpy array (:math:`y_{t}`)
+                numpy array (:math:`y_{t}`).
+    :param n:   Size of the state vector :math:`x_t`.
+    :param m:   Size of the control vector :math:`u_t`.
+    :param p:   Size of the output vector :math:`p_t`.
+
     """
-    def __init__(self, f, g):
+    def __init__(self, f, g, n, m, p):
         # TODO: do some checks on function signature
         self.dynamics_fcn = f
         self.output_fcn = g
+        self.n = n
+        self.m = m
+        self.p = p
     
     def f(self, x, u):
         """

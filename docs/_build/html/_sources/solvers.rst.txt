@@ -17,13 +17,18 @@ List (with links) of different solver approaches:
     - Non-smooth Local Optimization
         - Drake (SNOPT and IPOPT)
         - Knitro
-    
-Scipy Optimize
-=========================
 
 (for each solver type) List dependencies and link install instructions
 
 Then give class documentation.
+
+    
+Scipy Optimize
+=========================
+
+.. autoclass:: solvers.ScipyGradientSolver
+    :members: Solve
+    :show-inheritance:
 
 Gurobi
 =========================

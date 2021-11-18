@@ -12,6 +12,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.reach_avoid import reach_avoid_specification, plot_reach_avoid_scenario
+from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
@@ -25,7 +26,7 @@ M = 1000
 # Create the specification
 spec = reach_avoid_specification(goal_bounds, obstacle_bounds, T)
 
-# System parameters
+# Define the system
 A = np.block([[1,0,1,0],
               [0,1,0,1],
               [0,0,1,0],
@@ -34,6 +35,12 @@ B = np.block([[0,0],
               [0,0],
               [1,0],
               [0,1]])
+C = np.block([[np.eye(4)],
+              [np.zeros((2,4))]])
+D = np.block([[np.zeros((4,2))],
+              [np.eye(2)]])
+
+sys = LinearSystem(A,B,C,D)
 
 # Specify any additional running cost (this helps the numerics in 
 # a gradient-based method)
@@ -44,13 +51,7 @@ R = 1e-1*np.eye(2)
 x0 = np.array([1.0,2.0,0,0])
 
 # Solve for the system trajectory
-#solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
-#solver = GurobiMICPSolver(spec, A, B, x0, T, M)
-#solver = GurobiLCPSolver(spec, A, B, x0, T)
-#solver = DrakeLCPSolver(spec, A, B, x0, T)
-solver = KnitroLCPSolver(spec, A, B, x0, T)
-#solver = GradientSolver(spec, A, B, Q, R, x0, T)
-#solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
+solver = ScipyGradientSolver(spec, sys, Q, R, x0, T)
 x, u = solver.Solve()
 
 if x is not None:

@@ -158,7 +158,7 @@
 <p>These tools are use to model simple linear and nonlinear discrete-time control systems.</p>
 <dl class="class">
 <dt id="systems.NonlinearSystem">
-<em class="property">class </em><code class="descclassname">systems.</code><code class="descname">NonlinearSystem</code><span class="sig-paren">(</span><em>f</em>, <em>g</em><span class="sig-paren">)</span><a class="headerlink" href="#systems.NonlinearSystem" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">systems.</code><code class="descname">NonlinearSystem</code><span class="sig-paren">(</span><em>f</em>, <em>g</em>, <em>n</em>, <em>m</em>, <em>p</em><span class="sig-paren">)</span><a class="headerlink" href="#systems.NonlinearSystem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class which represents some (possibly nonlinear)
 discrete-time control system</p>
@@ -179,10 +179,13 @@ discrete-time control system</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>f</strong> – A function representing <span class="math notranslate nohighlight">\(f\)</span>, which takes two numpy 
 arrays (<span class="math notranslate nohighlight">\(x_t,u_t\)</span>) as input and returns another 
-numpy array (<span class="math notranslate nohighlight">\(x_{t+1}\)</span>)</li>
+numpy array (<span class="math notranslate nohighlight">\(x_{t+1}\)</span>).</li>
 <li><strong>g</strong> – A function representing <span class="math notranslate nohighlight">\(f\)</span>, which takes two numpy 
 arrays (<span class="math notranslate nohighlight">\(x_t,u_t\)</span>) as input and returns another 
-numpy array (<span class="math notranslate nohighlight">\(y_{t}\)</span>)</li>
+numpy array (<span class="math notranslate nohighlight">\(y_{t}\)</span>).</li>
+<li><strong>n</strong> – Size of the state vector <span class="math notranslate nohighlight">\(x_t\)</span>.</li>
+<li><strong>m</strong> – Size of the control vector <span class="math notranslate nohighlight">\(u_t\)</span>.</li>
+<li><strong>p</strong> – Size of the output vector <span class="math notranslate nohighlight">\(p_t\)</span>.</li>
 </ul>
 </td>
 </tr>
