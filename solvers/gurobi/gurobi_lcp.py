@@ -1,42 +1,44 @@
-from solvers.gurobi_micp import GurobiMICPSolver
+from solvers.gurobi.gurobi_micp import GurobiMICPSolver
 
 import gurobipy as gp
 from gurobipy import GRB
 
 class GurobiLCPSolver(GurobiMICPSolver):
     """
-    Given an STLFormula (spec) and a system of the form 
+    Given an :class:`.STLFormula` :math:`\\varphi` and a :class:`.LinearSystem`, 
+    solve the optimization problem
 
-        x_{t+1} = A*x_t + B*u_t,
-        y_t = [x_t;u_t],
+    .. math:: 
 
-    use a new Linear Complementarity Problem (LCP) approach to
-    find a maximally robust satisfying trajectory (x,u), i.e.,
+        \max & \\rho^{\\varphi}(y_0,y_1,\dots,y_T)
 
-        max rho
-        s.t. x_{t+1} = A*x_t + B*u_t
-             x0 fixed
-             rho(x,u) is the STL robustness measure
+        \\text{s.t. } & x_0 \\text{ fixed}
 
-    using Gurobi's python bindings. 
+        & x_{t+1} = f(x_t, u_t) 
 
-    This is nearly identical to the standard MICP encoding, but instead
-    of encoding the min/max operators using mixed-integer constraints,
-    we encode them using linear complementarity constraints. 
+        & y_{t} = g(x_t, u_t)
+
+        & \\rho^{\\varphi}(y_0,y_1,\dots,y_T) \geq 0
+
+    where :math:`\\rho^{\\varphi}` is defined using linear complementarity constraints
+    rather than mixed-integer constraints. Since this is a special case of a (nonconvex)
+    Quadratically Constrainted Quadratic Program (QCQP), Gurobi is able to find a
+    globally optimal solution, but this method may be computationally expensive for 
+    long and complex specifications.
+   
+    .. note::
+
+        This is nearly identical to the standard MICP encoding, but instead
+        of encoding the min/max operators using mixed-integer constraints,
+        we encode them using linear complementarity constraints. 
+
+    :param spec:    An :class:`.STLFormula` describing the specification.
+    :param sys:     A :class:`.LinearSystem` describing the system dynamics.
+    :param x0:      A ``(n,1)`` numpy matrix describing the initial state.
+    :param T:       A positive integer fixing the total number of timesteps :math:`T`.
     """
-    def __init__(self, spec, A, B, x0, T):
-        """
-        Initialize the solver.
-
-        @param spec     An STLFormula describing the specification
-        @param A        An (n,n) numpy matrix describing state dynamics
-        @param B        A (n,m) numpy matrix describing control input dynamics
-        @param x0       The initial state of the system.
-        @param T        An integer specifiying the number of timesteps.
-        @param relaxed  (optional) A boolean indicating whether to solve
-                        a convex relaxation of the problem. Default to False.
-        """
-        super().__init__(spec, A, B, x0, T, M=1000)  # M is just a placeholder here
+    def __init__(self, spec, sys, x0, T):
+        super().__init__(spec, sys, x0, T, M=1)  # M is just a placeholder here
 
         # Enable solving with nonconvex quadratic constraints
         self.model.params.NonConvex = 2

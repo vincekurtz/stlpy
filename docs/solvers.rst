@@ -43,7 +43,11 @@ optimizer that handles a variety of problem classes, including convex programs, 
 and non-convex quadratic programs with quadratic constraints. Free academic licenses are available. 
 
 .. autoclass:: solvers.GurobiMICPSolver
-    :members: Solve, _encode_min, _encode_max
+    :members: Solve
+    :show-inheritance:
+
+.. autoclass:: solvers.GurobiLCPSolver
+    :members: Solve
     :show-inheritance:
 
 Drake

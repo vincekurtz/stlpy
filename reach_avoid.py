@@ -52,7 +52,8 @@ x0 = np.array([1.0,2.0,0,0])
 
 # Solve for the system trajectory
 #solver = ScipyGradientSolver(spec, sys, Q, R, x0, T)
-solver = GurobiMICPSolver(spec, sys, x0, T, M)
+#solver = GurobiMICPSolver(spec, sys, x0, T, M)
+solver = GurobiLCPSolver(spec, sys, x0, T)
 x, u = solver.Solve()
 
 if x is not None:
