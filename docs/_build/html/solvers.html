@@ -38,7 +38,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Benchmarks" href="benchmarks.html" />
-    <link rel="prev" title="Defining STL Formulas" href="stl.html" /> 
+    <link rel="prev" title="Modeling Control Systems" href="systems.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -86,10 +86,12 @@
 <li class="toctree-l1"><a class="reference internal" href="overview.html">About</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stl.html">Defining STL Formulas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="systems.html">Modeling Control Systems</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Solving Control Problems</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#mixed-integer-programming">Mixed-Integer Programming</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#smooth-local-optimization">Smooth Local Optimization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#non-smooth-local-optimization">Non-smooth Local Optimization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scipy-optimize">Scipy Optimize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gurobi">Gurobi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#drake">Drake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#knitro">Knitro</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#write-your-own-solver">Write Your Own Solver</a></li>
 </ul>
 </li>
@@ -160,20 +162,227 @@
             
   <div class="section" id="solving-control-problems">
 <h1>Solving Control Problems<a class="headerlink" href="#solving-control-problems" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li>Overview</li>
+<p>Overview and approach</p>
+<p>List (with links) of different solver approaches:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="first docutils">
+<dt>Mixed-Integer Programming</dt>
+<dd><ul class="first last">
+<li>Gurobi</li>
+<li>Drake (Gurobi and Mosek)</li>
 </ul>
-<div class="section" id="mixed-integer-programming">
-<h2>Mixed-Integer Programming<a class="headerlink" href="#mixed-integer-programming" title="Permalink to this headline">¶</a></h2>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Smooth Local Optimization</dt>
+<dd><ul class="first last">
+<li>Scipy</li>
+<li>Drake (SNOPT and IPOPT)</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Complementarity Problems</dt>
+<dd><ul class="first last">
+<li>Gurobi</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Non-smooth Local Optimization</dt>
+<dd><ul class="first last">
+<li>Drake (SNOPT and IPOPT)</li>
+<li>Knitro</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<div class="section" id="scipy-optimize">
+<h2>Scipy Optimize<a class="headerlink" href="#scipy-optimize" title="Permalink to this headline">¶</a></h2>
+<p>(for each solver type) List dependencies and link install instructions</p>
+<p>Then give class documentation.</p>
 </div>
-<div class="section" id="smooth-local-optimization">
-<h2>Smooth Local Optimization<a class="headerlink" href="#smooth-local-optimization" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="gurobi">
+<h2>Gurobi<a class="headerlink" href="#gurobi" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="non-smooth-local-optimization">
-<h2>Non-smooth Local Optimization<a class="headerlink" href="#non-smooth-local-optimization" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="drake">
+<h2>Drake<a class="headerlink" href="#drake" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="knitro">
+<h2>Knitro<a class="headerlink" href="#knitro" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="write-your-own-solver">
 <h2>Write Your Own Solver<a class="headerlink" href="#write-your-own-solver" title="Permalink to this headline">¶</a></h2>
+<p>All the solvers described above inherit from the <a class="reference internal" href="#solvers.STLSolver" title="solvers.STLSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLSolver</span></code></a> class.
+To implement your own optimization-based solver, all you need to do is create
+a new class that inherits from <a class="reference internal" href="#solvers.STLSolver" title="solvers.STLSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLSolver</span></code></a>.</p>
+<dl class="class">
+<dt id="solvers.STLSolver">
+<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">STLSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.STLSolver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>A simple abstract base class defining a common solver interface
+for different optimization-based STL synthesis methods.</p>
+<p>This class considers variations on the trajectory synthesis problem</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\min &amp; \sum_{t=0}^T x_t^TQx_t + u_t^TRu_t\\\text{s.t. } &amp; x_0 \text{ fixed }\\&amp; x_{t+1} = f(x_t, u_t)\\&amp; y_t = g(x_t, u_t) \\&amp; \rho^{\varphi}(y_0,y_1,\dots,y_T) \geq 0\end{aligned}\end{align} \]</div>
+<p>where <span class="math notranslate nohighlight">\(Q \succeq 0\)</span> and <span class="math notranslate nohighlight">\(R \succeq 0\)</span> are cost weights, <span class="math notranslate nohighlight">\(f\)</span> and <span class="math notranslate nohighlight">\(g\)</span>
+define the system dynamics, and <span class="math notranslate nohighlight">\(\rho\)</span> is the robustness measure associated with
+a given STL specification <span class="math notranslate nohighlight">\(\varphi\)</span>.</p>
+<p>Possible variations include using the robustness measure <span class="math notranslate nohighlight">\(\rho^\varphi\)</span>
+as a cost, dropping the quadratic running cost, and removing the hard satisfaction 
+constriant <span class="math notranslate nohighlight">\(\rho^{\varphi}\geq 0\)</span>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>spec</strong> – An <a class="reference internal" href="stl.html#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> describing the specification.</li>
+<li><strong>sys</strong> – An <a class="reference internal" href="systems.html#systems.NonlinearSystem" title="systems.NonlinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">NonlinearSystem</span></code></a> characterizing the system dynamics.</li>
+<li><strong>x0</strong> – A <code class="docutils literal notranslate"><span class="pre">(n,1)</span></code> numpy array representing the initial state <span class="math notranslate nohighlight">\(x_0\)</span>.</li>
+<li><strong>T</strong> – A positive integer fixing the total number of timesteps <span class="math notranslate nohighlight">\(T\)</span>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="solvers.STLSolver.AddControlBounds">
+<code class="descname">AddControlBounds</code><span class="sig-paren">(</span><em>u_min</em>, <em>u_max</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.STLSolver.AddControlBounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add upper and lower bounds on the control inputs <span class="math notranslate nohighlight">\(u_t\)</span>
+to the optimization problem:</p>
+<div class="math notranslate nohighlight">
+\[u_{min} \leq u_t \leq u_{max} \quad \forall t\]</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>u_min</strong> – A <code class="docutils literal notranslate"><span class="pre">(m,1)</span></code> numpy array specifying the minimum control input</li>
+<li><strong>u_max</strong> – A <code class="docutils literal notranslate"><span class="pre">(m,1)</span></code> numpy array specifying the maximum control input</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solvers.STLSolver.AddDynamicsConstraints">
+<code class="descname">AddDynamicsConstraints</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.STLSolver.AddDynamicsConstraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the dynamics constraints</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}&amp; x_0 \text{ fixed }\\&amp; x_{t+1} = f(x_t, u_t)\\&amp; y_t = g(x_t, u_t) \end{aligned}\end{align} \]</div>
+<p>to the optimization problem.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="solvers.STLSolver.AddQuadraticCost">
+<code class="descname">AddQuadraticCost</code><span class="sig-paren">(</span><em>Q</em>, <em>R</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.STLSolver.AddQuadraticCost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a quadratic running cost to the optimization problem:</p>
+<div class="math notranslate nohighlight">
+\[\min \sum_{t=0}^T x_t^TQx_t + u_t^TRu_t\]</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>Q</strong> – A <code class="docutils literal notranslate"><span class="pre">(n,n)</span></code> numpy array representing the state penalty matrix <span class="math notranslate nohighlight">\(Q\)</span></li>
+<li><strong>R</strong> – A <code class="docutils literal notranslate"><span class="pre">(m,m)</span></code> numpy array representing the control penalty matrix <span class="math notranslate nohighlight">\(R\)</span></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solvers.STLSolver.AddRobustnessConstraint">
+<code class="descname">AddRobustnessConstraint</code><span class="sig-paren">(</span><em>rho_min=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.STLSolver.AddRobustnessConstraint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a constraint on the robustness measure to the
+optimization problem:</p>
+<div class="math notranslate nohighlight">
+\[\rho^{\varphi}(y_0,y_1,\dots,y_T) \geq \rho_{min}\]</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>rho_min</strong> – (optional) Minimum robustness measure <span class="math notranslate nohighlight">\(\rho_{min}\)</span>.
+Defaults to 0, which enforces STL satisfaction.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solvers.STLSolver.AddRobustnessCost">
+<code class="descname">AddRobustnessCost</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.STLSolver.AddRobustnessCost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the robustness measure as a (linear) cost
+to the optimization problem:</p>
+<div class="math notranslate nohighlight">
+\[\min -\rho^{\varphi}(y_0,y_1,\dots,y_T).\]</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="solvers.STLSolver.AddSTLConstraints">
+<code class="descname">AddSTLConstraints</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.STLSolver.AddSTLConstraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add constraints to the optimization problem to define
+the robustness measure</p>
+<div class="math notranslate nohighlight">
+\[\rho^{\varphi}(y_0,y_1,\dots,y_T).\]</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="solvers.STLSolver.AddStateBounds">
+<code class="descname">AddStateBounds</code><span class="sig-paren">(</span><em>x_min</em>, <em>x_max</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.STLSolver.AddStateBounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add upper and lower bounds on the state variables <span class="math notranslate nohighlight">\(x_t\)</span>
+to the optimization problem:</p>
+<div class="math notranslate nohighlight">
+\[x_{min} \leq x_t \leq x_{max} \quad \forall t\]</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>x_min</strong> – A <code class="docutils literal notranslate"><span class="pre">(m,1)</span></code> numpy array specifying <span class="math notranslate nohighlight">\(x_{min}\)</span></li>
+<li><strong>x_max</strong> – A <code class="docutils literal notranslate"><span class="pre">(m,1)</span></code> numpy array specifying <span class="math notranslate nohighlight">\(x_{max}\)</span></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solvers.STLSolver.Solve">
+<code class="descname">Solve</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.STLSolver.Solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve the STL syntheis optimization problem and return an optimal trajectory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return x:</th><td class="field-body">A <code class="docutils literal notranslate"><span class="pre">(n,T)</span></code> numpy array containing the optimal state <span class="math notranslate nohighlight">\(x_t\)</span>
+for each timestep</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return u:</th><td class="field-body">A <code class="docutils literal notranslate"><span class="pre">(m,T)</span></code> numpy array containing the optimal control <span class="math notranslate nohighlight">\(x_t\)</span>
+for each timestep</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">u</span></code> are returned as <code class="docutils literal notranslate"><span class="pre">None</span></code> if the optimization problem is
+infeasible or the solver is unable to find a solution.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 
@@ -188,7 +397,7 @@
         <a href="benchmarks.html" class="btn btn-neutral float-right" title="Benchmarks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="stl.html" class="btn btn-neutral float-left" title="Defining STL Formulas" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="systems.html" class="btn btn-neutral float-left" title="Modeling Control Systems" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
