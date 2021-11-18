@@ -18,13 +18,18 @@ List (with links) of different solver approaches:
         - Drake (SNOPT and IPOPT)
         - Knitro
 
-(for each solver type) List dependencies and link install instructions
-
-Then give class documentation.
-
-    
 Scipy Optimize
 =========================
+
+Solvers in this section are based on the (relatively simple)
+`scipy minimize <https://docs.scipy.org/doc/scipy/reference/reference/optimize.minimize-slsqp.html>`_
+optimizer, which can be installed with ``pip``:
+
+::
+
+    pip install scipy
+
+Alternative installation instructions can be found `here <https://scipy.org/install/>`_
 
 .. autoclass:: solvers.ScipyGradientSolver
     :members: Solve
@@ -32,6 +37,14 @@ Scipy Optimize
 
 Gurobi
 =========================
+
+Solvers in this section use the python bindings of `Gurobi <https://www.gurobi.com/>`_, a commercial
+optimizer that handles a variety of problem classes, including convex programs, mixed-integer programs,
+and non-convex quadratic programs with quadratic constraints. Free academic licenses are available. 
+
+.. autoclass:: solvers.GurobiMICPSolver
+    :members: Solve, _encode_min, _encode_max
+    :show-inheritance:
 
 Drake
 =============================

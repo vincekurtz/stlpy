@@ -107,8 +107,8 @@ class STLSolver(ABC):
 
             u_{min} \leq u_t \leq u_{max} \quad \\forall t
 
-        :param u_min:   A ``(m,1)`` numpy array specifying the minimum control input
-        :param u_max:   A ``(m,1)`` numpy array specifying the maximum control input
+        :param u_min:   A ``(m,)`` numpy array specifying the minimum control input
+        :param u_max:   A ``(m,)`` numpy array specifying the maximum control input
         """
         pass
     
@@ -122,8 +122,8 @@ class STLSolver(ABC):
 
             x_{min} \leq x_t \leq x_{max} \quad \\forall t
 
-        :param x_min:   A ``(m,1)`` numpy array specifying :math:`x_{min}`
-        :param x_max:   A ``(m,1)`` numpy array specifying :math:`x_{max}`
+        :param x_min:   A ``(n,)`` numpy array specifying :math:`x_{min}`
+        :param x_max:   A ``(n,)`` numpy array specifying :math:`x_{max}`
         """
         pass
 

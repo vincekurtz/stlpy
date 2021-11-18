@@ -203,10 +203,15 @@
 </li>
 </ul>
 </div></blockquote>
-<p>(for each solver type) List dependencies and link install instructions</p>
-<p>Then give class documentation.</p>
 <div class="section" id="scipy-optimize">
 <h2>Scipy Optimize<a class="headerlink" href="#scipy-optimize" title="Permalink to this headline">¶</a></h2>
+<p>Solvers in this section are based on the (relatively simple)
+<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/reference/optimize.minimize-slsqp.html">scipy minimize</a>
+optimizer, which can be installed with <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">scipy</span>
+</pre></div>
+</div>
+<p>Alternative installation instructions can be found <a class="reference external" href="https://scipy.org/install/">here</a></p>
 <dl class="class">
 <dt id="solvers.ScipyGradientSolver">
 <em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">ScipyGradientSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>Q</em>, <em>R</em>, <em>x0</em>, <em>T</em>, <em>method='slsqp'</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.ScipyGradientSolver" title="Permalink to this definition">¶</a></dt>
@@ -269,6 +274,94 @@ infeasible or the solver is unable to find a solution.</p>
 </div>
 <div class="section" id="gurobi">
 <h2>Gurobi<a class="headerlink" href="#gurobi" title="Permalink to this headline">¶</a></h2>
+<p>Solvers in this section use the python bindings of <a class="reference external" href="https://www.gurobi.com/">Gurobi</a>, a commercial
+optimizer that handles a variety of problem classes, including convex programs, mixed-integer programs,
+and non-convex quadratic programs with quadratic constraints. Free academic licenses are available.</p>
+<dl class="class">
+<dt id="solvers.GurobiMICPSolver">
+<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">GurobiMICPSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em>, <em>M</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.GurobiMICPSolver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">solvers.base.STLSolver</span></code></p>
+<p>Given an <a class="reference internal" href="stl.html#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> <span class="math notranslate nohighlight">\(\varphi\)</span> and a <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a>, 
+solve the optimization problem</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\max &amp; \rho^{\varphi}(y_0,y_1,\dots,y_T)\\\text{s.t. } &amp; x_0 \text{ fixed}\\&amp; x_{t+1} = f(x_t, u_t) \\&amp; y_{t} = g(x_t, u_t)\\&amp; \rho^{\varphi}(y_0,y_1,\dots,y_T) \geq 0\end{aligned}\end{align} \]</div>
+<p>with Gurobi using mixed-integer convex programming. This gives a globally optimal
+solution, but may be computationally expensive for long and complex specifications.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>For further details on this approach, see</p>
+<p>Raman V, et al. 
+<em>Model predictive control with signal temporal logic specifications</em>. 
+IEEE Conference on Decision and Control, 2014</p>
+<p class="last">Sadraddini S, Belta C. 
+<em>Formal synthesis of control strategies for positive monotone systems</em>. 
+IEEE Trans. Autom. Control. 2019</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>spec</strong> – An <a class="reference internal" href="stl.html#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> describing the specification.</li>
+<li><strong>sys</strong> – A <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a> describing the system dynamics.</li>
+<li><strong>x0</strong> – A <code class="docutils literal notranslate"><span class="pre">(n,1)</span></code> numpy matrix describing the initial state.</li>
+<li><strong>T</strong> – A positive integer fixing the total number of timesteps <span class="math notranslate nohighlight">\(T\)</span>.</li>
+<li><strong>M</strong> – A large positive scalar used to rewrite <code class="docutils literal notranslate"><span class="pre">min</span></code> and <code class="docutils literal notranslate"><span class="pre">max</span></code> as
+mixed-integer constraints.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="solvers.GurobiMICPSolver.Solve">
+<code class="descname">Solve</code><span class="sig-paren">(</span><em>verbose=False</em>, <em>presolve=True</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.GurobiMICPSolver.Solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve the STL syntheis optimization problem and return an optimal trajectory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return x:</th><td class="field-body">A <code class="docutils literal notranslate"><span class="pre">(n,T)</span></code> numpy array containing the optimal state <span class="math notranslate nohighlight">\(x_t\)</span>
+for each timestep</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return u:</th><td class="field-body">A <code class="docutils literal notranslate"><span class="pre">(m,T)</span></code> numpy array containing the optimal control <span class="math notranslate nohighlight">\(x_t\)</span>
+for each timestep</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">u</span></code> are returned as <code class="docutils literal notranslate"><span class="pre">None</span></code> if the optimization problem is
+infeasible or the solver is unable to find a solution.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="solvers.GurobiMICPSolver._encode_max">
+<code class="descname">_encode_max</code><span class="sig-paren">(</span><em>a</em>, <em>b</em>, <em>c</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.GurobiMICPSolver._encode_max" title="Permalink to this definition">¶</a></dt>
+<dd><p>This very important method converts a non-convex contraint</p>
+<div class="math notranslate nohighlight">
+\[a = max(b, c)\]</div>
+<p>into a mixed-integer convex constraint using the “big-M” method:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}&amp; a \geq b\\&amp; a \geq c\\&amp; a \leq b + Mz\\&amp; a \leq c + M(1-z)\\&amp; z \in \{0,1\}\end{aligned}\end{align} \]</div>
+<p>where <span class="math notranslate nohighlight">\(M\)</span> is a large integer.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="solvers.GurobiMICPSolver._encode_min">
+<code class="descname">_encode_min</code><span class="sig-paren">(</span><em>a</em>, <em>b</em>, <em>c</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.GurobiMICPSolver._encode_min" title="Permalink to this definition">¶</a></dt>
+<dd><p>This very important method converts a non-convex contraint</p>
+<div class="math notranslate nohighlight">
+\[a = min(b, c)\]</div>
+<p>into a mixed-integer convex constraint using the “big-M” method:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}&amp; a \leq b\\&amp; a \leq c\\&amp; a \geq b - Mz\\&amp; a \geq c - M(1-z)\\&amp; z \in \{0,1\}\end{aligned}\end{align} \]</div>
+<p>where <span class="math notranslate nohighlight">\(M\)</span> is a large integer.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="drake">
 <h2>Drake<a class="headerlink" href="#drake" title="Permalink to this headline">¶</a></h2>
@@ -322,8 +415,8 @@ to the optimization problem:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>u_min</strong> – A <code class="docutils literal notranslate"><span class="pre">(m,1)</span></code> numpy array specifying the minimum control input</li>
-<li><strong>u_max</strong> – A <code class="docutils literal notranslate"><span class="pre">(m,1)</span></code> numpy array specifying the maximum control input</li>
+<li><strong>u_min</strong> – A <code class="docutils literal notranslate"><span class="pre">(m,)</span></code> numpy array specifying the minimum control input</li>
+<li><strong>u_max</strong> – A <code class="docutils literal notranslate"><span class="pre">(m,)</span></code> numpy array specifying the maximum control input</li>
 </ul>
 </td>
 </tr>
@@ -408,8 +501,8 @@ to the optimization problem:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>x_min</strong> – A <code class="docutils literal notranslate"><span class="pre">(m,1)</span></code> numpy array specifying <span class="math notranslate nohighlight">\(x_{min}\)</span></li>
-<li><strong>x_max</strong> – A <code class="docutils literal notranslate"><span class="pre">(m,1)</span></code> numpy array specifying <span class="math notranslate nohighlight">\(x_{max}\)</span></li>
+<li><strong>x_min</strong> – A <code class="docutils literal notranslate"><span class="pre">(n,)</span></code> numpy array specifying <span class="math notranslate nohighlight">\(x_{min}\)</span></li>
+<li><strong>x_max</strong> – A <code class="docutils literal notranslate"><span class="pre">(n,)</span></code> numpy array specifying <span class="math notranslate nohighlight">\(x_{max}\)</span></li>
 </ul>
 </td>
 </tr>
