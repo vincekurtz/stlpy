@@ -6,12 +6,6 @@ class STLFormula(ABC):
     An abstract class which encompasses represents all kinds of STL formulas :math:`\\varphi`, including
     predicates (the simplest possible formulas) and standard formulas (made up of logical operations over 
     predicates and other formulas). 
-
-    .. note::
-
-        For now, only formulas in positive normal form are supported. That means that negation 
-        (:math:`\lnot`) can only be applied to predicates (:math:`\\pi`).
-
     """
     @abstractmethod
     def robustness(self, y, t):

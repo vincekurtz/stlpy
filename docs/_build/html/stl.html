@@ -169,6 +169,12 @@ base class enables all of the basic STL operations like conjuction (<span class=
 (<span class="math notranslate nohighlight">\(\lor\)</span>), always (<span class="math notranslate nohighlight">\(G\)</span>), until (<span class="math notranslate nohighlight">\(U\)</span>), and so on.</p>
 <p>Internally, we represent predicates <span class="math notranslate nohighlight">\(\pi\)</span> using the <a class="reference internal" href="#STL.STLPredicate" title="STL.STLPredicate"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLPredicate</span></code></a> class and all
 other formulas using the class <a class="reference internal" href="#STL.STLTree" title="STL.STLTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLTree</span></code></a>.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">For now, only formulas in positive normal form are supported. That means that negation
+(<span class="math notranslate nohighlight">\(\lnot\)</span>) can only be applied to predicates (<a class="reference internal" href="#STL.STLPredicate" title="STL.STLPredicate"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLPredicate</span></code></a>). Note that
+any STL formula can be re-written in positive normal form.</p>
+</div>
 <div class="section" id="stlformula">
 <h2>STLFormula<a class="headerlink" href="#stlformula" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -332,6 +338,28 @@ predicates.</p>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLFormula.negation">
+<code class="descname">negation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.negation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new <a class="reference internal" href="#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> <span class="math notranslate nohighlight">\(\varphi_{new}\)</span> which represents 
+the negation of this formula:</p>
+<div class="math notranslate nohighlight">
+\[\varphi_{new} = \lnot \varphi\]</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An <a class="reference internal" href="#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> representing <span class="math notranslate nohighlight">\(\varphi_{new}\)</span></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">For now, only formulas in positive normal form are supported. That means that negation 
+(<span class="math notranslate nohighlight">\(\lnot\)</span>) can only be applied to predicates (<span class="math notranslate nohighlight">\(\pi\)</span>).</p>
+</div>
 </dd></dl>
 
 <dl class="method">
