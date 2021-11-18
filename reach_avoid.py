@@ -56,12 +56,8 @@ x0 = np.array([1.0,2.0,0,0])
 #solver = GurobiLCPSolver(spec, sys, x0, T)
 #solver = KnitroLCPSolver(spec, sys, x0, T)
 #solver = DrakeMICPSolver(spec, sys, x0, T, M)
-solver = DrakeLCPSolver(spec, sys, x0, T)
-
-# DEBUG
-u_max = np.array([1,1])
-solver.AddControlBounds(-u_max, u_max)
-solver.AddQuadraticCost(Q,R)
+#solver = DrakeLCPSolver(spec, sys, x0, T)
+solver = DrakeSmoothSolver(spec, sys, x0, T)
 
 x, u = solver.Solve()
 

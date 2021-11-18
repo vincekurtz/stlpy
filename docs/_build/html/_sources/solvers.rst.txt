@@ -71,6 +71,10 @@ Installation instructions for Drake can be found `here <https://drake.mit.edu/in
     :members: Solve
     :show-inheritance:
 
+.. autoclass:: solvers.DrakeSmoothSolver
+    :members: Solve
+    :show-inheritance:
+
 Knitro
 =============================
 

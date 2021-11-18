@@ -499,7 +499,82 @@ nonlinear solvers availible in Drake to find a locally optimal solution.</p>
 <dl class="method">
 <dt id="solvers.DrakeLCPSolver.Solve">
 <code class="descname">Solve</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.DrakeLCPSolver.Solve" title="Permalink to this definition">¶</a></dt>
-<dd><p>Solve the optimization problem and return the optimal values of (x,u).</p>
+<dd><p>Solve the STL syntheis optimization problem and return an optimal trajectory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return x:</th><td class="field-body">A <code class="docutils literal notranslate"><span class="pre">(n,T)</span></code> numpy array containing the optimal state <span class="math notranslate nohighlight">\(x_t\)</span>
+for each timestep</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return u:</th><td class="field-body">A <code class="docutils literal notranslate"><span class="pre">(m,T)</span></code> numpy array containing the optimal control <span class="math notranslate nohighlight">\(x_t\)</span>
+for each timestep</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">u</span></code> are returned as <code class="docutils literal notranslate"><span class="pre">None</span></code> if the optimization problem is
+infeasible or the solver is unable to find a solution.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="solvers.DrakeSmoothSolver">
+<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">DrakeSmoothSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em>, <em>k=2.0</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.DrakeSmoothSolver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">solvers.drake.drake_lcp.DrakeLCPSolver</span></code></p>
+<p>Given an <a class="reference internal" href="stl.html#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> <span class="math notranslate nohighlight">\(\varphi\)</span> and a <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a>, 
+solve the optimization problem</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\max ~&amp; \rho^{\varphi}(y_0,y_1,\dots,y_T)\\\text{s.t. } &amp; x_0 \text{ fixed}\\&amp; x_{t+1} = f(x_t, u_t) \\&amp; y_{t} = g(x_t, u_t)\end{aligned}\end{align} \]</div>
+<p>where <span class="math notranslate nohighlight">\(\rho^{\varphi}\)</span> is defined using a smooth approximation
+of min and max. We then use one of the general nonlinear solvers availible 
+in Drake to find a locally optimal solution.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>This class implements the algorithm described in</p>
+<p class="last">Gilpin, Y, et al. <em>A Smooth Robustness Measure of Signal Temporal Logic for Symbolic Control</em>.
+IEEE Control Systems Letters, 2021.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>spec</strong> – An <a class="reference internal" href="stl.html#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> describing the specification.</li>
+<li><strong>sys</strong> – A <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a> describing the system dynamics.</li>
+<li><strong>x0</strong> – A <code class="docutils literal notranslate"><span class="pre">(n,1)</span></code> numpy matrix describing the initial state.</li>
+<li><strong>T</strong> – A positive integer fixing the total number of timesteps <span class="math notranslate nohighlight">\(T\)</span>.</li>
+<li><strong>k</strong> – (optional). A smoothing parameter characterizing the tightness of
+the smooth approximation. Larger values give a tighter approximation.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="solvers.DrakeSmoothSolver.Solve">
+<code class="descname">Solve</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#solvers.DrakeSmoothSolver.Solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve the STL syntheis optimization problem and return an optimal trajectory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return x:</th><td class="field-body">A <code class="docutils literal notranslate"><span class="pre">(n,T)</span></code> numpy array containing the optimal state <span class="math notranslate nohighlight">\(x_t\)</span>
+for each timestep</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return u:</th><td class="field-body">A <code class="docutils literal notranslate"><span class="pre">(m,T)</span></code> numpy array containing the optimal control <span class="math notranslate nohighlight">\(x_t\)</span>
+for each timestep</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">u</span></code> are returned as <code class="docutils literal notranslate"><span class="pre">None</span></code> if the optimization problem is
+infeasible or the solver is unable to find a solution.</p>
+</div>
 </dd></dl>
 
 </dd></dl>
