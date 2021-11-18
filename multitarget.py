@@ -11,6 +11,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.random_multitarget import * 
+from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
@@ -26,7 +27,7 @@ M = 1000
 spec, obstacles, targets = random_multitarget_specification(
         num_obstacles, num_groups, targets_per_group, T, seed=0)
 
-# System parameters
+# System dynamics
 A = np.block([[1,0,1,0],
               [0,1,0,1],
               [0,0,1,0],
@@ -35,6 +36,11 @@ B = np.block([[0,0],
               [0,0],
               [1,0],
               [0,1]])
+C = np.block([[np.eye(4)],
+              [np.zeros((2,4))]])
+D = np.block([[np.zeros((4,2))],
+              [np.eye(2)]])
+sys = LinearSystem(A,B,C,D)
 
 # Specify any additional running cost (this helps the numerics in 
 # a gradient-based method)
@@ -45,11 +51,7 @@ R = 1e-1*np.eye(2)
 x0 = np.array([2.0,2.0,0,0])
 
 # Solve for the system trajectory
-#solver = MICPSolver(spec, A, B, Q, R, x0, T, M)
-#solver = GurobiMICPSolver(spec, A, B, x0, T, M)
-solver = KnitroLCPSolver(spec, A, B, x0, T)
-#solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T)
-#solver = GradientSolver(spec, A, B, Q, R, x0, T)
+solver = KnitroLCPSolver(spec, sys, x0, T)
 x, u = solver.Solve()
 
 if x is not None:

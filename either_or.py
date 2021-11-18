@@ -11,6 +11,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.either_or import either_or_specification, plot_either_or_scenario
+from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
@@ -20,13 +21,10 @@ target_two = (7,8,4.5,5.5)
 obstacle = (3,5,4,6)
 T = 20
 
-# The "big-M" constant used for mixed-integer encoding
-M = 1000
-
 # Create the specification
 spec = either_or_specification(goal, target_one, target_two, obstacle, T)
 
-# System parameters
+# System dynamics
 A = np.block([[1,0,1,0],
               [0,1,0,1],
               [0,0,1,0],
@@ -35,9 +33,13 @@ B = np.block([[0,0],
               [0,0],
               [1,0],
               [0,1]])
+C = np.block([[np.eye(4)],
+              [np.zeros((2,4))]])
+D = np.block([[np.zeros((4,2))],
+              [np.eye(2)]])
+sys = LinearSystem(A,B,C,D)
 
-# Specify any additional running cost (this helps the numerics in 
-# a gradient-based method)
+# Specify any additional running cost
 Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities
 R = 1e-1*np.eye(2)
 
@@ -45,11 +47,9 @@ R = 1e-1*np.eye(2)
 x0 = np.array([1.0,1.0,0,0])
 
 # Solve for the system trajectory
-#solver = MICPSolver(spec, A, B, Q, R, x0, T, M, relaxed=False)
-#solver = GurobiMICPSolver(spec, A, B, x0, T, M)
-solver = KnitroLCPSolver(spec, A, B, x0, T)
-#solver = PerspectiveMICPSolver(spec, A, B, Q, R, x0, T, relaxed=False)
-#solver = GradientSolver(spec, A, B, Q, R, x0, T)
+solver = KnitroLCPSolver(spec, sys, x0, T)
+#solver = GurobiMICPSolver(spec, sys, x0, T, M=1000)
+solver.AddQuadraticCost(Q,R)
 x, u = solver.Solve()
 
 if x is not None:

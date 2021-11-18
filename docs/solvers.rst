@@ -56,6 +56,17 @@ Drake
 Knitro
 =============================
 
+Solvers in this section use the commercial `Artelys Knitro <https://www.artelys.com/solvers/knitro/>`_ solver. 
+Knitro is a commercial solver which aims to find high-quality locally optimal solutions to nonconvex
+problems. It tends to perform particularly well on problems with complementarity constraints. 
+
+More information on how to install Knitro, the algorithms they use, and how to obtain a license
+can be found `here <https://www.artelys.com/docs/knitro/1_introduction.html>`__.
+
+.. autoclass:: solvers.KnitroLCPSolver
+    :members: Solve
+    :show-inheritance:
+
 Write Your Own Solver
 =====================
 
