@@ -289,13 +289,13 @@ solve the optimization problem</p>
 solution, but may be computationally expensive for long and complex specifications.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p>For further details on this approach, see</p>
+<p>This class implements a slight variation of the method described in</p>
 <p>Raman V, et al. 
 <em>Model predictive control with signal temporal logic specifications</em>. 
 IEEE Conference on Decision and Control, 2014</p>
-<p class="last">Sadraddini S, Belta C. 
-<em>Formal synthesis of control strategies for positive monotone systems</em>. 
-IEEE Trans. Autom. Control. 2019</p>
+<p class="last">where we enforce constraint satisfaction using subformula robustness 
+values <span class="math notranslate nohighlight">\(\rho^{\varphi_i}\)</span> directly rather using the binary variables
+<span class="math notranslate nohighlight">\(z^{\varphi_i}\)</span>.</p>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -399,6 +399,78 @@ infeasible or the solver is unable to find a solution.</p>
 </div>
 <div class="section" id="drake">
 <h2>Drake<a class="headerlink" href="#drake" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://drake.mit.edu/">Drake</a> is a modeling, simulation, and control toolbox for robotic
+systems. It includes a convienient interface for fomulating and solving optimization problems
+and provides bindings to numberous specialized solvers, including Gurobi, Mosek, SNOPT, Ipopt,
+and many others.</p>
+<p>A complete list of supported solvers and the types of optimization problems they address can
+be found <a class="reference external" href="https://drake.mit.edu/doxygen_cxx/group__solvers.html">here</a>.</p>
+<p>Installation instructions for Drake can be found <a class="reference external" href="https://drake.mit.edu/installation.html">here</a>.</p>
+<dl class="class">
+<dt id="solvers.DrakeMICPSolver">
+<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">DrakeMICPSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em>, <em>M</em>, <em>relaxed=False</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.DrakeMICPSolver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">solvers.drake.drake_base.DrakeSTLSolver</span></code></p>
+<p>Given an <a class="reference internal" href="stl.html#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> <span class="math notranslate nohighlight">\(\varphi\)</span> and a <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a>, 
+solve the optimization problem</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\max ~&amp; \rho^{\varphi}(y_0,y_1,\dots,y_T)\\\text{s.t. } &amp; x_0 \text{ fixed}\\&amp; x_{t+1} = f(x_t, u_t) \\&amp; y_{t} = g(x_t, u_t)\\&amp; y_0,y_1,\dots,y_T \vDash \varphi\end{aligned}\end{align} \]</div>
+<p>using mixed-integer convex programming. This gives a globally optimal
+solution, but may be computationally expensive for long and complex specifications.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>This class implements the algorithm described in</p>
+<p class="last">Raman V, et al. 
+<em>Model predictive control with signal temporal logic specifications</em>. 
+IEEE Conference on Decision and Control, 2014</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Drake must be compiled from source to support Gurobi and Mosek MICP solvers.
+See <a class="reference external" href="https://drake.mit.edu/from_source.html">https://drake.mit.edu/from_source.html</a> for more details.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>spec</strong> – An <a class="reference internal" href="stl.html#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> describing the specification.</li>
+<li><strong>sys</strong> – A <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a> describing the system dynamics.</li>
+<li><strong>x0</strong> – A <code class="docutils literal notranslate"><span class="pre">(n,1)</span></code> numpy matrix describing the initial state.</li>
+<li><strong>T</strong> – A positive integer fixing the total number of timesteps <span class="math notranslate nohighlight">\(T\)</span>.</li>
+<li><strong>M</strong> – A large positive scalar used to rewrite <code class="docutils literal notranslate"><span class="pre">min</span></code> and <code class="docutils literal notranslate"><span class="pre">max</span></code> as
+mixed-integer constraints.</li>
+<li><strong>relaxed</strong> – (optional) A boolean indicating whether to solve
+a convex relaxation of the problem. Default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="solvers.DrakeMICPSolver.Solve">
+<code class="descname">Solve</code><span class="sig-paren">(</span><em>verbose=False</em>, <em>presolve=True</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.DrakeMICPSolver.Solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve the STL syntheis optimization problem and return an optimal trajectory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return x:</th><td class="field-body">A <code class="docutils literal notranslate"><span class="pre">(n,T)</span></code> numpy array containing the optimal state <span class="math notranslate nohighlight">\(x_t\)</span>
+for each timestep</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return u:</th><td class="field-body">A <code class="docutils literal notranslate"><span class="pre">(m,T)</span></code> numpy array containing the optimal control <span class="math notranslate nohighlight">\(x_t\)</span>
+for each timestep</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">u</span></code> are returned as <code class="docutils literal notranslate"><span class="pre">None</span></code> if the optimization problem is
+infeasible or the solver is unable to find a solution.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="knitro">
 <h2>Knitro<a class="headerlink" href="#knitro" title="Permalink to this headline">¶</a></h2>

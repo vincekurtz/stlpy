@@ -53,6 +53,20 @@ and non-convex quadratic programs with quadratic constraints. Free academic lice
 Drake
 =============================
 
+`Drake <https://drake.mit.edu/>`_ is a modeling, simulation, and control toolbox for robotic
+systems. It includes a convienient interface for fomulating and solving optimization problems
+and provides bindings to numberous specialized solvers, including Gurobi, Mosek, SNOPT, Ipopt,
+and many others.
+
+A complete list of supported solvers and the types of optimization problems they address can
+be found `here <https://drake.mit.edu/doxygen_cxx/group__solvers.html>`__.
+
+Installation instructions for Drake can be found `here <https://drake.mit.edu/installation.html>`__.
+
+.. autoclass:: solvers.DrakeMICPSolver
+    :members: Solve
+    :show-inheritance:
+
 Knitro
 =============================
 

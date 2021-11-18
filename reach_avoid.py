@@ -54,8 +54,13 @@ x0 = np.array([1.0,2.0,0,0])
 #solver = ScipyGradientSolver(spec, sys, Q, R, x0, T)
 #solver = GurobiMICPSolver(spec, sys, x0, T, M)
 #solver = GurobiLCPSolver(spec, sys, x0, T)
-solver = KnitroLCPSolver(spec, sys, x0, T)
-solver.AddQuadraticCost(Q,R)
+#solver = KnitroLCPSolver(spec, sys, x0, T)
+solver = DrakeMICPSolver(spec, sys, x0, T, M)
+
+# DEBUG
+u_max = np.array([1,1])
+solver.AddControlBounds(-u_max, u_max)
+#solver.AddQuadraticCost(Q,R)
 
 x, u = solver.Solve()
 

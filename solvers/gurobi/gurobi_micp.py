@@ -29,15 +29,16 @@ class GurobiMICPSolver(STLSolver):
    
     .. note::
 
-        For further details on this approach, see
+        This class implements a slight variation of the method described in
 
         Raman V, et al. 
         *Model predictive control with signal temporal logic specifications*. 
         IEEE Conference on Decision and Control, 2014
 
-        Sadraddini S, Belta C. 
-        *Formal synthesis of control strategies for positive monotone systems*. 
-        IEEE Trans. Autom. Control. 2019
+        where we enforce constraint satisfaction using subformula robustness 
+        values :math:`\\rho^{\\varphi_i}` directly rather using the binary variables
+        :math:`z^{\\varphi_i}`.
+
 
     :param spec:    An :class:`.STLFormula` describing the specification.
     :param sys:     A :class:`.LinearSystem` describing the system dynamics.
