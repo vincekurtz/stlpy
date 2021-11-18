@@ -57,12 +57,6 @@ class DrakeMICPSolver(DrakeSTLSolver):
         #self.solver = GurobiSolver()
         self.solver = MosekSolver()
 
-        # Create optimization variables
-        self.y = self.mp.NewContinuousVariables(self.sys.p, self.T, 'y')
-        self.x = self.mp.NewContinuousVariables(self.sys.n, self.T, 'x')
-        self.u = self.mp.NewContinuousVariables(self.sys.m, self.T, 'u')
-        self.rho = self.mp.NewContinuousVariables(1,'rho')[0]
-
         # Flag for whether to use a convex relaxation
         self.convex_relaxation = relaxed
 
@@ -71,31 +65,6 @@ class DrakeMICPSolver(DrakeSTLSolver):
         self.AddRobustnessCost()
         self.AddSTLConstraints()
         self.AddRobustnessConstraint()
-
-    def AddControlBounds(self, u_min, u_max):
-        for t in range(self.T):
-            self.mp.AddConstraint(le(
-                self.u[:,t], u_max
-            ))
-            self.mp.AddConstraint(ge(
-                self.u[:,t], u_min
-            ))
-    
-    def AddStateBounds(self, x_min, x_max):
-        for t in range(self.T):
-            self.mp.AddConstraint(le(
-                self.x[:,t], x_max
-            ))
-            self.mp.AddConstraint(ge(
-                self.x[:,t], x_min
-            ))
-    
-    def AddQuadraticCost(self, Q, R):
-        for t in range(self.T):
-            self.mp.AddCost( self.x[:,t].T@Q@self.x[:,t] + self.u[:,t].T@R@self.u[:,t] )
-    
-    def AddRobustnessConstraint(self, rho_min=0.0):
-        self.mp.AddConstraint( self.rho >= rho_min )
 
     def Solve(self, verbose=False, presolve=True):
         # Print out some solver data
@@ -152,16 +121,6 @@ class DrakeMICPSolver(DrakeSTLSolver):
         self.mp.AddConstraint(eq(
             self.y[:,self.T-1], self.sys.C@self.x[:,self.T-1] + self.sys.D@self.u[:,self.T-1]
         ))
-
-    def AddRobustnessCost(self):
-        """
-        Add the STL Robustness cost
-
-            min -rho(y)
-
-        to the optimization problem.
-        """
-        self.mp.AddCost(-self.rho)
 
     def AddSTLConstraints(self):
         """

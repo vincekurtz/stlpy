@@ -1,82 +1,76 @@
-from solvers.solver_base import STLSolver
+from solvers.drake.drake_base import DrakeSTLSolver
 from STL import STLPredicate
 import numpy as np
 
 from pydrake.all import MathematicalProgram, eq, le, ge
-from pydrake.solvers.all import (IpoptSolver, SnoptSolver, OsqpSolver,
-                                 GurobiSolver, MosekSolver)
+from pydrake.solvers.all import IpoptSolver, SnoptSolver
 from pydrake.solvers.nlopt import NloptSolver
-from pydrake.solvers.scs import ScsSolver
 
 import time
 
-class DrakeLCPSolver(STLSolver):
+class DrakeLCPSolver(DrakeSTLSolver):
     """
-    Given an STLFormula (spec) and a system of the form 
+    Given an :class:`.STLFormula` :math:`\\varphi` and a :class:`.LinearSystem`, 
+    solve the optimization problem
 
-        x_{t+1} = A*x_t + B*u_t,
-        y_t = [x_t;u_t],
+    .. math:: 
 
-    use a new Linear Complementarity Problem (LCP) approach
-    to find a maximally robust satisfying trajectory (x,u), i.e.,
+        \max ~& \\rho^{\\varphi}(y_0,y_1,\dots,y_T)
 
-        max  rho
-        s.t. x_{t+1} = A*x_t + B*u_t
-             x0 fixed
-             rho(x,u) is the STL robustness measure
+        \\text{s.t. } & x_0 \\text{ fixed}
 
-    using the Drake interface, which allows us to try a variety
-    of different solvers.
+        & x_{t+1} = f(x_t, u_t) 
 
-    This is nearly identical to the standard MICP encoding, but instead
-    of encoding the min/max operators using mixed-integer constraints,
-    we encode them using linear complementarity constraints. 
+        & y_{t} = g(x_t, u_t)
+
+        & \\rho^{\\varphi}(y_0,y_1,\dots,y_T) \geq 0
+
+    where :math:`\\rho^{\\varphi}` is defined using linear complementarity constraints
+    rather than mixed-integer constraints. We then use one of the general
+    nonlinear solvers availible in Drake to find a locally optimal solution. 
+
+    :param spec:    An :class:`.STLFormula` describing the specification.
+    :param sys:     A :class:`.LinearSystem` describing the system dynamics.
+    :param x0:      A ``(n,1)`` numpy matrix describing the initial state.
+    :param T:       A positive integer fixing the total number of timesteps :math:`T`.
     """
 
-    def __init__(self, spec, A, B, x0, T):
-        """
-        Initialize the solver.
-
-        @param spec     An STLFormula describing the specification
-        @param A        An (n,n) numpy matrix describing state dynamics
-        @param B        A (n,m) numpy matrix describing control input dynamics
-        @param x0       The initial state of the system.
-        @param T        An integer specifiying the number of timesteps.
-        """
-        super().__init__(spec, A, B, x0, T)
-        self.M = 1000
-
-        # Set up the optimization problem
-        self.mp = MathematicalProgram()
-
-        # Choose a solver
-        self.solver = SnoptSolver()
-
-        # Set some solver options
-        #self.mp.SetSolverOption(self.solver.solver_id(), "OutputFlag", 1)
-        #self.mp.SetSolverOption(self.solver.solver_id(), "LogToConsole", 1)
-        #self.mp.SetSolverOption(self.solver.solver_id(), "NonConvex", 2)
-
+    def __init__(self, spec, sys, x0, T):
         print("Setting up optimization problem...")
         st = time.time()  # for computing setup time
+        
+        super().__init__(spec, sys, x0, T)
 
-        # Create optimization variables
-        self.x = self.mp.NewContinuousVariables(self.n, self.T, 'x')
-        self.u = self.mp.NewContinuousVariables(self.m, self.T, 'u')
-        self.rho = self.mp.NewContinuousVariables(1,'rho')
+        # Choose a solver
+        #self.solver = IpoptSolver()
+        self.solver = SnoptSolver()
 
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
+        #self.AddRobustnessConstraint()
         self.AddRobustnessCost()
-        #self.AddControlBoundConstraints()
         
         print(f"Setup complete in {time.time()-st} seconds.")
+    
+    def AddDynamicsConstraints(self):
+        # Initial condition
+        self.mp.AddConstraint(eq( self.x[:,0], self.x0 ))
+
+        # Dynamics
+        for t in range(self.T-1):
+            self.mp.AddConstraint(eq(
+                self.x[:,t+1], self.sys.A@self.x[:,t] + self.sys.B@self.u[:,t]
+            ))
+            self.mp.AddConstraint(eq(
+                self.y[:,t], self.sys.C@self.x[:,t] + self.sys.D@self.u[:,t]
+            ))
+        self.mp.AddConstraint(eq(
+            self.y[:,self.T-1], self.sys.C@self.x[:,self.T-1] + self.sys.D@self.u[:,self.T-1]
+        ))
+
 
     def Solve(self):
-        """
-        Solve the optimization problem and return the optimal values of (x,u).
-        """
         # Local solvers tend to be sensitive to the initial guess
         np.random.seed(0)
         initial_guess = np.random.normal(size=self.mp.initial_guess().shape)
@@ -103,45 +97,6 @@ class DrakeLCPSolver(STLSolver):
 
         return (x,u)
 
-    def AddDynamicsConstraints(self):
-        """
-        Add the constraints
-
-            x_{t+1} = A@x_t + B@u_t
-            x_0 = x0
-
-        to the optimization problem. 
-        """
-        # Initial condition
-        self.mp.AddConstraint(eq( self.x[:,0], self.x0 ))
-
-        # Dynamics
-        for t in range(self.T-1):
-            self.mp.AddConstraint(eq(
-                self.x[:,t+1], self.A@self.x[:,t] + self.B@self.u[:,t]
-            ))
-
-    def AddControlBoundConstraints(self, u_max=1.0):
-        """
-        Add the constraints
-
-            -u_max <= u_t <= u_max
-
-        to the optimization problem
-        """
-        u = self.u.flatten()
-        N = len(u)
-        lb = -u_max*np.ones(N)
-        ub = u_max*np.ones(N)
-        self.mp.AddLinearConstraint(A=np.eye(N), lb=lb, ub=ub, vars=u)
-
-    def AddRobustnessCost(self):
-        """
-        Set the cost of the optimization problem to maximize
-        the overall robustness measure.
-        """
-        self.mp.AddCost(-self.rho[0])
-
     def AddSTLConstraints(self):
         """
         Add the STL constraints
@@ -151,9 +106,6 @@ class DrakeLCPSolver(STLSolver):
         to the optimization problem, via the recursive introduction
         of binary variables for all subformulas in the specification.
         """
-        # Constraint the overall formula robustness to be positive
-        self.mp.AddConstraint(self.rho[0] >= 0)
-
         # Recursively traverse the tree defined by the specification
         # to add constraints that define the STL robustness score
         self.AddSubformulaConstraints(self.spec, self.rho, 0)
@@ -182,9 +134,9 @@ class DrakeLCPSolver(STLSolver):
         """
         # We're at the bottom of the tree, so add the predicate constraints
         if isinstance(formula, STLPredicate):
-            # rho = A[x;u] - b
-            xu = np.hstack([self.x[:,t],self.u[:,t]])
-            self.mp.AddConstraint(eq( formula.a.T@xu - formula.b, rho ))
+            # rho = a'y - b
+            y = self.y[:,t]
+            self.mp.AddConstraint(eq( formula.a.T@y - formula.b, rho ))
         
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
@@ -259,26 +211,10 @@ class DrakeLCPSolver(STLSolver):
         self.mp.AddConstraint(eq(x, x_plus - x_minus))
         self.mp.AddConstraint(eq(y, x_plus + x_minus))
 
-        # Standard LCP constraint (SNOPT only)
-        #M = np.array([[0.,1.],[0.,0.]])
-        #q = np.array([0.,0.])
-        #x = np.hstack([x_plus,x_minus])
-        #self.mp.AddLinearComplementarityConstraint(M,q,x)
-        
         # LCP constraint as nonconvex quadratic constraint
-        #self.mp.AddConstraint(ge(x_plus, 0.0))
-        #self.mp.AddConstraint(ge(x_minus, 0.0))
-        #self.mp.AddConstraint(x_plus.T@x_minus <= 0.1)
-
-        # LCP constraint as nonconvex quadratic cost
-        #self.mp.AddConstraint(ge(x_plus, 0.0))
-        #self.mp.AddConstraint(ge(x_minus, 0.0))
-        #self.mp.AddCost(x_plus.T@x_minus)
-        
-        # LCP constraint as constraint on the Fischer function
-        # where phi = 0 iff (0 <= x_plus) complements (x_minus >= 0)
-        #phi = np.sqrt(x_plus**2 + x_minus**2) - x_plus - x_minus
-        #self.mp.AddConstraint(eq( phi, 0 ))
+        self.mp.AddConstraint(ge(x_plus, 0.0))
+        self.mp.AddConstraint(ge(x_minus, 0.0))
+        self.mp.AddConstraint(x_plus.T@x_minus <= 0.0)  # could relax here
         
     def _encode_max(self, a, b, c):
         """
