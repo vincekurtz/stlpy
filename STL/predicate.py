@@ -31,6 +31,13 @@ class STLPredicate(STLFormula):
         # A unique string describing this predicate
         self.name = name
 
+    def negation(self):
+        if self.name is None:
+            newname = None
+        else:
+            newname = "not " + self.name
+        return STLPredicate(-self.a, -self.b, name=newname)
+
     def robustness(self, y, t):
         assert isinstance(y, np.ndarray), "y must be a numpy array"
         assert isinstance(t, int), "timestep t must be an integer"

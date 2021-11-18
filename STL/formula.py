@@ -6,6 +6,12 @@ class STLFormula(ABC):
     An abstract class which encompasses represents all kinds of STL formulas :math:`\\varphi`, including
     predicates (the simplest possible formulas) and standard formulas (made up of logical operations over 
     predicates and other formulas). 
+
+    .. note::
+
+        For now, only formulas in positive normal form are supported. That means that negation 
+        (:math:`\lnot`) can only be applied to predicates (:math:`\\pi`).
+
     """
     @abstractmethod
     def robustness(self, y, t):
@@ -54,6 +60,27 @@ class STLFormula(ABC):
         :return:     A boolean which is ``True`` only if this is a conjunctive state formula.
         """
         pass
+
+    @abstractmethod
+    def negation(self):
+        """
+        Return a new :class:`.STLFormula` :math:`\\varphi_{new}` which represents 
+        the negation of this formula:
+
+        .. math::
+
+            \\varphi_{new} = \lnot \\varphi
+        
+        :return: An :class:`.STLFormula` representing :math:`\\varphi_{new}`
+    
+        .. note::
+
+            For now, only formulas in positive normal form are supported. That means that negation 
+            (:math:`\lnot`) can only be applied to predicates (:math:`\\pi`).
+
+        """
+        pass
+
 
     def conjunction(self, other):
         """
@@ -247,7 +274,6 @@ class STLTree(STLFormula):
                                 to combine the child nodes. Must be either ``"and"`` or ``"or"``.
     :param timesteps:           A list of timesteps that the subformulas must hold at.
                                 This is needed to define the temporal operators.
-
     """
     def __init__(self, subformula_list, combination_type, timesteps, name=None):
         # Record the dimension of the signal this formula is defined over
@@ -272,6 +298,9 @@ class STLTree(STLFormula):
 
         # Save the given name for pretty printing
         self.name=name
+
+    def negation(self):
+        raise NotImplementedError("Only formulas in positive normal form are supported at this time")
 
     def robustness(self, y, t):
         if self.combination_type == "and":
