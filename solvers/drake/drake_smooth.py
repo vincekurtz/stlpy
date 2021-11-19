@@ -53,6 +53,7 @@ class DrakeSmoothSolver(DrakeLCPSolver):
         # Choose a solver
         #self.solver = IpoptSolver()
         self.solver = SnoptSolver()
+        #self.solver = NloptSolver()
 
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
@@ -202,5 +203,4 @@ class DrakeSmoothSolver(DrakeLCPSolver):
             self.mp.AddConstraint(eq( 
                 a , -1./float(self.k) * np.log(np.sum(np.exp(-self.k*x))) 
             ))
-
 

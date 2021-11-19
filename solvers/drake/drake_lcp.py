@@ -6,6 +6,8 @@ from pydrake.all import MathematicalProgram, eq, le, ge
 from pydrake.solvers.all import IpoptSolver, SnoptSolver
 from pydrake.solvers.nlopt import NloptSolver
 
+from pydrake.all import SolverOptions, CommonSolverOption, SolverType
+
 import time
 
 class DrakeLCPSolver(DrakeSTLSolver):
@@ -45,10 +47,19 @@ class DrakeLCPSolver(DrakeSTLSolver):
         #self.solver = IpoptSolver()
         self.solver = SnoptSolver()
 
+        # Set some solver options
+        options = SolverOptions()
+        options.SetOption(CommonSolverOption.kPrintToConsole, 1)  # SNOPT doesn't support this
+        #options.SetOption(CommonSolverOption.kPrintFileName, "snopt_out.txt")
+        options.SetOption(SnoptSolver().solver_id(), "Elastic weight", 1e4)  # activates elastic
+                                                                             # mode, which is
+                                                                             # apparently critical
+        self.mp.SetSolverOptions(options)
+
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
-        #self.AddRobustnessConstraint()
+        self.AddRobustnessConstraint()
         self.AddRobustnessCost()
         
         print(f"Setup complete in {time.time()-st} seconds.")
@@ -214,7 +225,7 @@ class DrakeLCPSolver(DrakeSTLSolver):
         # LCP constraint as nonconvex quadratic constraint
         self.mp.AddConstraint(ge(x_plus, 0.0))
         self.mp.AddConstraint(ge(x_minus, 0.0))
-        self.mp.AddConstraint(x_plus.T@x_minus <= 0.0)  # could relax here
+        self.mp.AddConstraint(x_plus.T@x_minus == 0.0)  # could relax here
         
     def _encode_max(self, a, b, c):
         """

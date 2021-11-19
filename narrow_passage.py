@@ -47,6 +47,7 @@ x0 = np.array([2.0,2.0,0,0])
 
 # Solve for the system trajectory
 solver = KnitroLCPSolver(spec, sys, x0, T)
+#solver = DrakeSmoothSolver(spec, sys, x0, T)
 #solver = GurobiMICPSolver(spec, sys, x0, T, M=1000)
 x, u = solver.Solve()
 

@@ -56,8 +56,8 @@ x0 = np.array([1.0,2.0,0,0])
 #solver = GurobiLCPSolver(spec, sys, x0, T)
 #solver = KnitroLCPSolver(spec, sys, x0, T)
 #solver = DrakeMICPSolver(spec, sys, x0, T, M)
-#solver = DrakeLCPSolver(spec, sys, x0, T)
-solver = DrakeSmoothSolver(spec, sys, x0, T)
+solver = DrakeLCPSolver(spec, sys, x0, T)
+#solver = DrakeSmoothSolver(spec, sys, x0, T)
 
 x, u = solver.Solve()
 

@@ -49,7 +49,7 @@ x0 = np.array([1.0,1.0,0,0])
 # Solve for the system trajectory
 solver = KnitroLCPSolver(spec, sys, x0, T)
 #solver = GurobiMICPSolver(spec, sys, x0, T, M=1000)
-solver.AddQuadraticCost(Q,R)
+#solver.AddQuadraticCost(Q,R)
 x, u = solver.Solve()
 
 if x is not None:
