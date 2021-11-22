@@ -15,8 +15,8 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-num_obstacles = 2
-num_groups = 2
+num_obstacles = 5
+num_groups = 5
 targets_per_group = 2
 T = 20
 
@@ -53,8 +53,8 @@ x0 = np.array([2.0,2.0,0,0])
 # Solve for the system trajectory
 #solver = GurobiMICPSolver(spec, sys, x0, T, M)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
-#solver = KnitroLCPSolver(spec, sys, x0, T)
-solver = DrakeLCPSolver(spec, sys, x0, T)
+solver = KnitroLCPSolver(spec, sys, x0, T)
+#solver = DrakeLCPSolver(spec, sys, x0, T)
 #solver.AddQuadraticCost(Q,R)
 
 x, u = solver.Solve()
