@@ -83,6 +83,12 @@ class KnitroLCPSolver(STLSolver):
                 KN_set_var_lobnds(self.kc, self.x_idx[i,t], x_min[i])
                 KN_set_var_upbnds(self.kc, self.x_idx[i,t], x_max[i])
     
+    def AddOutputBounds(self, y_min, y_max):
+        for t in range(1,self.T):         # putting contraint on initial state would
+            for i in range(self.sys.n):   # reset the initial condition constraint
+                KN_set_var_lobnds(self.kc, self.y_idx[i,t], y_min[i])
+                KN_set_var_upbnds(self.kc, self.y_idx[i,t], y_max[i])
+    
     def AddQuadraticCost(self, Q, R):
         # Check that off-diagonal elements of Q and R are zero
         Q_bar = Q*(1-np.eye(Q.shape[0]))

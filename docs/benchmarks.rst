@@ -13,6 +13,10 @@ Reach-Avoid
 
 A robot needs to avoid and obstacle and reach a goal.
 
+.. autofunction::
+    scenarios.reach_avoid.reach_avoid_specification
+    
+
 Either-Or
 ---------
 
@@ -45,3 +49,5 @@ Charge and monitor
 A team of robots must ensure that at least one robot is monitoring several target areas
 at all times, but each robot must also return to a charging station at regular intervals. 
 
+Helper functions
+==========================

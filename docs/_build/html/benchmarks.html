@@ -85,6 +85,7 @@
 <li class="toctree-l1"><a class="reference internal" href="overview.html">About</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stl.html">Defining STL Formulas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="systems.html">Modeling Control Systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="solvers.html">Solving Control Problems</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Benchmarks</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#simple-scenarios">Simple Scenarios</a><ul>
@@ -99,6 +100,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#charge-and-monitor">Charge and monitor</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#helper-functions">Helper functions</a></li>
 </ul>
 </li>
 </ul>
@@ -174,6 +176,18 @@ different control approaches.</p>
 <div class="section" id="reach-avoid">
 <h3>Reach-Avoid<a class="headerlink" href="#reach-avoid" title="Permalink to this headline">¶</a></h3>
 <p>A robot needs to avoid and obstacle and reach a goal.</p>
+<dl class="function">
+<dt id="scenarios.reach_avoid.reach_avoid_specification">
+<code class="descclassname">scenarios.reach_avoid.</code><code class="descname">reach_avoid_specification</code><span class="sig-paren">(</span><em>goal_bounds</em>, <em>obstacle_bounds</em>, <em>T</em><span class="sig-paren">)</span><a class="headerlink" href="#scenarios.reach_avoid.reach_avoid_specification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an STLFormula that describes this scenario, where goal_bounds
+and obstacle_bounds are tuples containing (xmin, xmax, ymin, ymax)
+for the rectangular regions of interest.</p>
+<p>We’ll assume that the robot has double integrator dynamics, i.e.,</p>
+<blockquote>
+<div>x = [px,py,pdx,pdy], u = [pddx, pddy]</div></blockquote>
+<p>and that the output signal is given by y = [x;u].</p>
+</dd></dl>
+
 </div>
 <div class="section" id="either-or">
 <h3>Either-Or<a class="headerlink" href="#either-or" title="Permalink to this headline">¶</a></h3>
@@ -202,6 +216,9 @@ visit a different location to pick up a key.</p>
 <p>A team of robots must ensure that at least one robot is monitoring several target areas
 at all times, but each robot must also return to a charging station at regular intervals.</p>
 </div>
+</div>
+<div class="section" id="helper-functions">
+<h2>Helper functions<a class="headerlink" href="#helper-functions" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
