@@ -32,13 +32,15 @@ class GurobiLCPSolver(GurobiMICPSolver):
         of encoding the min/max operators using mixed-integer constraints,
         we encode them using linear complementarity constraints. 
 
-    :param spec:    An :class:`.STLFormula` describing the specification.
-    :param sys:     A :class:`.LinearSystem` describing the system dynamics.
-    :param x0:      A ``(n,1)`` numpy matrix describing the initial state.
-    :param T:       A positive integer fixing the total number of timesteps :math:`T`.
+    :param spec:            An :class:`.STLFormula` describing the specification.
+    :param sys:             A :class:`.LinearSystem` describing the system dynamics.
+    :param x0:              A ``(n,1)`` numpy matrix describing the initial state.
+    :param T:               A positive integer fixing the total number of timesteps :math:`T`.
+    :param robustness_cost: (optional) Boolean flag for adding a linear cost to maximize
+                            the robustness measure. Default is ``True``.
     """
-    def __init__(self, spec, sys, x0, T):
-        super().__init__(spec, sys, x0, T, M=1)  # M is just a placeholder here
+    def __init__(self, spec, sys, x0, T, robustness_cost=True):
+        super().__init__(spec, sys, x0, T, M=1, robustness_cost=robustness_cost)  # M is just a placeholder
 
         # Enable solving with nonconvex quadratic constraints
         self.model.params.NonConvex = 2

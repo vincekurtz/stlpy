@@ -39,16 +39,18 @@ class DrakeMICPSolver(DrakeSTLSolver):
         Drake must be compiled from source to support Gurobi and Mosek MICP solvers.
         See `<https://drake.mit.edu/from_source.html>`_ for more details.
 
-    :param spec:    An :class:`.STLFormula` describing the specification.
-    :param sys:     A :class:`.LinearSystem` describing the system dynamics.
-    :param x0:      A ``(n,1)`` numpy matrix describing the initial state.
-    :param T:       A positive integer fixing the total number of timesteps :math:`T`.
-    :param M:       A large positive scalar used to rewrite ``min`` and ``max`` as
-                    mixed-integer constraints.
-    :param relaxed: (optional) A boolean indicating whether to solve
-                    a convex relaxation of the problem. Default is ``False``.
+    :param spec:            An :class:`.STLFormula` describing the specification.
+    :param sys:             A :class:`.LinearSystem` describing the system dynamics.
+    :param x0:              A ``(n,1)`` numpy matrix describing the initial state.
+    :param T:               A positive integer fixing the total number of timesteps :math:`T`.
+    :param M:               A large positive scalar used to rewrite ``min`` and ``max`` as
+                            mixed-integer constraints.
+    :param relaxed:         (optional) A boolean indicating whether to solve
+                            a convex relaxation of the problem. Default is ``False``.
+    :param robustness_cost: (optional) Boolean flag for adding a linear cost to maximize
+                            the robustness measure. Default is ``True``.
     """
-    def __init__(self, spec, sys, x0, T, M, relaxed=False):
+    def __init__(self, spec, sys, x0, T, M, relaxed=False, robustness_cost=True):
         assert M > 0, "M should be a (large) positive scalar"
         super().__init__(spec, sys, x0, T)
         self.M = M
@@ -62,9 +64,10 @@ class DrakeMICPSolver(DrakeSTLSolver):
 
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
-        self.AddRobustnessCost()
         self.AddSTLConstraints()
         self.AddRobustnessConstraint()
+        if robustness_cost:
+            self.AddRobustnessCost()
 
     def Solve(self, verbose=False, presolve=True):
         # Print out some solver data

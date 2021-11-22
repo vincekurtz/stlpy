@@ -40,15 +40,17 @@ class GurobiMICPSolver(STLSolver):
         :math:`z^{\\varphi_i}`.
 
 
-    :param spec:    An :class:`.STLFormula` describing the specification.
-    :param sys:     A :class:`.LinearSystem` describing the system dynamics.
-    :param x0:      A ``(n,1)`` numpy matrix describing the initial state.
-    :param T:       A positive integer fixing the total number of timesteps :math:`T`.
-    :param M:       A large positive scalar used to rewrite ``min`` and ``max`` as
-                    mixed-integer constraints.
+    :param spec:            An :class:`.STLFormula` describing the specification.
+    :param sys:             A :class:`.LinearSystem` describing the system dynamics.
+    :param x0:              A ``(n,1)`` numpy matrix describing the initial state.
+    :param T:               A positive integer fixing the total number of timesteps :math:`T`.
+    :param M:               A large positive scalar used to rewrite ``min`` and ``max`` as
+                            mixed-integer constraints.
+    :param robustness_cost: (optional) Boolean flag for adding a linear cost to maximize
+                            the robustness measure. Default is ``True``.
     """
 
-    def __init__(self, spec, sys, x0, T, M):
+    def __init__(self, spec, sys, x0, T, M, robustness_cost=True):
         assert M > 0, "M should be a (large) positive scalar"
         super().__init__(spec, sys, x0, T)
         self.M = float(M)
@@ -68,8 +70,9 @@ class GurobiMICPSolver(STLSolver):
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
-        #self.AddRobustnessCost()
         self.AddRobustnessConstraint()
+        if robustness_cost:
+            self.AddRobustnessCost()
         
         print(f"Setup complete in {time.time()-st} seconds.")
 

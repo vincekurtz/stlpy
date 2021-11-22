@@ -27,12 +27,14 @@ class KnitroLCPSolver(STLSolver):
     rather than mixed-integer constraints. The knitro solver is able to exploit the
     structure of these LCP constraints to find high-quality locally optimal solutions.
 
-    :param spec:    An :class:`.STLFormula` describing the specification.
-    :param sys:     A :class:`.LinearSystem` describing the system dynamics.
-    :param x0:      A ``(n,1)`` numpy matrix describing the initial state.
-    :param T:       A positive integer fixing the total number of timesteps :math:`T`.
+    :param spec:            An :class:`.STLFormula` describing the specification.
+    :param sys:             A :class:`.LinearSystem` describing the system dynamics.
+    :param x0:              A ``(n,1)`` numpy matrix describing the initial state.
+    :param T:               A positive integer fixing the total number of timesteps :math:`T`.
+    :param robustness_cost: (optional) Boolean flag for adding a linear cost to maximize
+                            the robustness measure. Default is ``True``.
     """
-    def __init__(self, spec, sys, x0, T):
+    def __init__(self, spec, sys, x0, T, robustness_cost=True):
         super().__init__(spec, sys, x0, T)
 
         # Set up the optimization problem
@@ -64,7 +66,8 @@ class KnitroLCPSolver(STLSolver):
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
         self.AddRobustnessConstraint()
-        self.AddRobustnessCost()
+        if robustness_cost:
+            self.AddRobustnessCost()
 
         print(f"Setup complete in {time.time()-st} seconds.")
 

@@ -279,7 +279,7 @@ optimizer that handles a variety of problem classes, including convex programs, 
 and non-convex quadratic programs with quadratic constraints. Free academic licenses are available.</p>
 <dl class="class">
 <dt id="solvers.GurobiMICPSolver">
-<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">GurobiMICPSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em>, <em>M</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.GurobiMICPSolver" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">GurobiMICPSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em>, <em>M</em>, <em>robustness_cost=True</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.GurobiMICPSolver" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">solvers.base.STLSolver</span></code></p>
 <p>Given an <a class="reference internal" href="stl.html#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> <span class="math notranslate nohighlight">\(\varphi\)</span> and a <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a>, 
 solve the optimization problem</p>
@@ -308,6 +308,8 @@ values <span class="math notranslate nohighlight">\(\rho^{\varphi_i}\)</span> di
 <li><strong>T</strong> – A positive integer fixing the total number of timesteps <span class="math notranslate nohighlight">\(T\)</span>.</li>
 <li><strong>M</strong> – A large positive scalar used to rewrite <code class="docutils literal notranslate"><span class="pre">min</span></code> and <code class="docutils literal notranslate"><span class="pre">max</span></code> as
 mixed-integer constraints.</li>
+<li><strong>robustness_cost</strong> – (optional) Boolean flag for adding a linear cost to maximize
+the robustness measure. Default is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</li>
 </ul>
 </td>
 </tr>
@@ -340,7 +342,7 @@ infeasible or the solver is unable to find a solution.</p>
 
 <dl class="class">
 <dt id="solvers.GurobiLCPSolver">
-<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">GurobiLCPSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.GurobiLCPSolver" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">GurobiLCPSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em>, <em>robustness_cost=True</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.GurobiLCPSolver" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">solvers.gurobi.gurobi_micp.GurobiMICPSolver</span></code></p>
 <p>Given an <a class="reference internal" href="stl.html#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> <span class="math notranslate nohighlight">\(\varphi\)</span> and a <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a>, 
 solve the optimization problem</p>
@@ -366,6 +368,8 @@ we encode them using linear complementarity constraints.</p>
 <li><strong>sys</strong> – A <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a> describing the system dynamics.</li>
 <li><strong>x0</strong> – A <code class="docutils literal notranslate"><span class="pre">(n,1)</span></code> numpy matrix describing the initial state.</li>
 <li><strong>T</strong> – A positive integer fixing the total number of timesteps <span class="math notranslate nohighlight">\(T\)</span>.</li>
+<li><strong>robustness_cost</strong> – (optional) Boolean flag for adding a linear cost to maximize
+the robustness measure. Default is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</li>
 </ul>
 </td>
 </tr>
@@ -408,7 +412,7 @@ be found <a class="reference external" href="https://drake.mit.edu/doxygen_cxx/g
 <p>Installation instructions for Drake can be found <a class="reference external" href="https://drake.mit.edu/installation.html">here</a>.</p>
 <dl class="class">
 <dt id="solvers.DrakeMICPSolver">
-<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">DrakeMICPSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em>, <em>M</em>, <em>relaxed=False</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.DrakeMICPSolver" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">DrakeMICPSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em>, <em>M</em>, <em>relaxed=False</em>, <em>robustness_cost=True</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.DrakeMICPSolver" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">solvers.drake.drake_base.DrakeSTLSolver</span></code></p>
 <p>Given an <a class="reference internal" href="stl.html#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> <span class="math notranslate nohighlight">\(\varphi\)</span> and a <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a>, 
 solve the optimization problem</p>
@@ -441,6 +445,8 @@ See <a class="reference external" href="https://drake.mit.edu/from_source.html">
 mixed-integer constraints.</li>
 <li><strong>relaxed</strong> – (optional) A boolean indicating whether to solve
 a convex relaxation of the problem. Default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</li>
+<li><strong>robustness_cost</strong> – (optional) Boolean flag for adding a linear cost to maximize
+the robustness measure. Default is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</li>
 </ul>
 </td>
 </tr>
@@ -473,7 +479,7 @@ infeasible or the solver is unable to find a solution.</p>
 
 <dl class="class">
 <dt id="solvers.DrakeLCPSolver">
-<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">DrakeLCPSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.DrakeLCPSolver" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">DrakeLCPSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em>, <em>robustness_cost=True</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.DrakeLCPSolver" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">solvers.drake.drake_base.DrakeSTLSolver</span></code></p>
 <p>Given an <a class="reference internal" href="stl.html#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> <span class="math notranslate nohighlight">\(\varphi\)</span> and a <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a>, 
 solve the optimization problem</p>
@@ -491,6 +497,8 @@ nonlinear solvers availible in Drake to find a locally optimal solution.</p>
 <li><strong>sys</strong> – A <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a> describing the system dynamics.</li>
 <li><strong>x0</strong> – A <code class="docutils literal notranslate"><span class="pre">(n,1)</span></code> numpy matrix describing the initial state.</li>
 <li><strong>T</strong> – A positive integer fixing the total number of timesteps <span class="math notranslate nohighlight">\(T\)</span>.</li>
+<li><strong>robustness_cost</strong> – (optional) Boolean flag for adding a linear cost to maximize
+the robustness measure. Default is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</li>
 </ul>
 </td>
 </tr>
@@ -589,7 +597,7 @@ problems. It tends to perform particularly well on problems with complementarity
 can be found <a class="reference external" href="https://www.artelys.com/docs/knitro/1_introduction.html">here</a>.</p>
 <dl class="class">
 <dt id="solvers.KnitroLCPSolver">
-<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">KnitroLCPSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.KnitroLCPSolver" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">solvers.</code><code class="descname">KnitroLCPSolver</code><span class="sig-paren">(</span><em>spec</em>, <em>sys</em>, <em>x0</em>, <em>T</em>, <em>robustness_cost=True</em><span class="sig-paren">)</span><a class="headerlink" href="#solvers.KnitroLCPSolver" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">solvers.base.STLSolver</span></code></p>
 <p>Given an <a class="reference internal" href="stl.html#STL.STLFormula" title="STL.STLFormula"><code class="xref py py-class docutils literal notranslate"><span class="pre">STLFormula</span></code></a> <span class="math notranslate nohighlight">\(\varphi\)</span> and a <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a>, 
 solve the optimization problem</p>
@@ -607,6 +615,8 @@ structure of these LCP constraints to find high-quality locally optimal solution
 <li><strong>sys</strong> – A <a class="reference internal" href="systems.html#systems.LinearSystem" title="systems.LinearSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSystem</span></code></a> describing the system dynamics.</li>
 <li><strong>x0</strong> – A <code class="docutils literal notranslate"><span class="pre">(n,1)</span></code> numpy matrix describing the initial state.</li>
 <li><strong>T</strong> – A positive integer fixing the total number of timesteps <span class="math notranslate nohighlight">\(T\)</span>.</li>
+<li><strong>robustness_cost</strong> – (optional) Boolean flag for adding a linear cost to maximize
+the robustness measure. Default is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</li>
 </ul>
 </td>
 </tr>

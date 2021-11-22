@@ -31,13 +31,14 @@ class DrakeLCPSolver(DrakeSTLSolver):
     rather than mixed-integer constraints. We then use one of the general
     nonlinear solvers availible in Drake to find a locally optimal solution. 
 
-    :param spec:    An :class:`.STLFormula` describing the specification.
-    :param sys:     A :class:`.LinearSystem` describing the system dynamics.
-    :param x0:      A ``(n,1)`` numpy matrix describing the initial state.
-    :param T:       A positive integer fixing the total number of timesteps :math:`T`.
+    :param spec:            An :class:`.STLFormula` describing the specification.
+    :param sys:             A :class:`.LinearSystem` describing the system dynamics.
+    :param x0:              A ``(n,1)`` numpy matrix describing the initial state.
+    :param T:               A positive integer fixing the total number of timesteps :math:`T`.
+    :param robustness_cost: (optional) Boolean flag for adding a linear cost to maximize
+                            the robustness measure. Default is ``True``.
     """
-
-    def __init__(self, spec, sys, x0, T):
+    def __init__(self, spec, sys, x0, T, robustness_cost=True):
         print("Setting up optimization problem...")
         st = time.time()  # for computing setup time
         
@@ -60,7 +61,8 @@ class DrakeLCPSolver(DrakeSTLSolver):
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
         self.AddRobustnessConstraint()
-        self.AddRobustnessCost()
+        if robustness_cost:
+            self.AddRobustnessCost()
         
         print(f"Setup complete in {time.time()-st} seconds.")
     
