@@ -46,6 +46,8 @@ class KnitroLCPSolver(STLSolver):
         KN_set_int_param(self.kc, "ms_terminate",       # Stop when a feasible
                 KN_MSTERMINATE_FEASIBLE)                # solution is found
         KN_set_int_param(self.kc, "algorithm", 0)       # Choose algorithm automatically
+        KN_set_double_param(self.kc, "maxtime_real",    # Max runtime in seconds
+                30*60)
 
         print("Setting up optimization problem...")
         st = time.time()  # for computing setup time
