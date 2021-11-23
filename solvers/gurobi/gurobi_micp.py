@@ -57,6 +57,9 @@ class GurobiMICPSolver(STLSolver):
 
         # Set up the optimization problem
         self.model = gp.Model("STL_MICP")
+
+        # Set timeout (in seconds)
+        self.model.setParam('TimeLimit', 30*60)
         
         print("Setting up optimization problem...")
         st = time.time()  # for computing setup time
