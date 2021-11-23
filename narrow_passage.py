@@ -15,7 +15,7 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-T = 20
+T = 15
 
 # Create the specification
 spec = narrow_passage_specification(T)
@@ -46,9 +46,12 @@ R = 1e-1*np.eye(2)
 x0 = np.array([2.0,2.0,0,0])
 
 # Solve for the system trajectory
-solver = KnitroLCPSolver(spec, sys, x0, T)
+#solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=False)
+#solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
+solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
-#solver = GurobiMICPSolver(spec, sys, x0, T, M=1000)
+#solver.AddQuadraticCost(Q,R)
+
 x, u, _, _ = solver.Solve()
 
 if x is not None:

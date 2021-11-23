@@ -16,12 +16,10 @@ from solvers import *
 
 # Specification Parameters
 T = 30
-
-# The "big-M" constant used for mixed-integer encoding
-M = 1000
+N_pairs = 2
 
 # Create the specification
-spec = door_puzzle_specification(T)
+spec = door_puzzle_specification(T, N_pairs)
 
 # Define the system
 A = np.block([[1,0,1,0],
@@ -48,27 +46,17 @@ R = 1e-1*np.eye(2)
 x0 = np.array([3.0,3.0,0,0])
 
 # Solve for the system trajectory
-#solver = ScipyGradientSolver(spec, sys, Q, R, x0, T)
-#solver = GurobiMICPSolver(spec, sys, x0, T, M, robustness_cost=False)
-#solver = GurobiLCPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeMICPSolver(spec, sys, x0, T, M, robustness_cost=False)
+solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=False)
+#solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
 
-#x_min = np.array([0,0,-1,-1])
-#x_max = np.array([15,10,1,1])
-#u_max = np.array([0.5,0.5])
-#y_min = np.hstack([x_min,-u_max])
-#y_max = np.hstack([x_max,u_max])
-#solver.AddStateBounds(x_min, x_max)
-#solver.AddControlBounds(-u_max, u_max)
-#solver.AddOutputBounds(y_min, y_max)
+#solver.AddQuadraticCost(Q,R)
 
 x, u, _, _ = solver.Solve()
 
 if x is not None:
     # Plot the solution
-    plot_door_puzzle_scenario()
+    plot_door_puzzle_scenario(N_pairs)
     plt.scatter(*x[:2,:])
     plt.show()

@@ -11,6 +11,7 @@ import numpy as np
 from scenarios.random_multitarget import *
 from systems import LinearSystem
 from solvers import *
+import csv
 
 def get_solution(solver, n_obs, n_group, tpg, T, linear_cost=True, quadratic_cost=False, seed=0):
     """
@@ -57,13 +58,16 @@ def get_solution(solver, n_obs, n_group, tpg, T, linear_cost=True, quadratic_cos
     x0 = np.array([2.0,2.0,0,0])
 
     # Solver setup
-    s = solver(spec, sys, x0, T, robustness_cost=linear_cost)
+    if solver.__name__=="DrakeSmoothSolver":
+        s = solver(spec, sys, x0, T)
+    else:
+        s = solver(spec, sys, x0, T, robustness_cost=linear_cost)
    
     if quadratic_cost:
         # Specify the (optional) quadratic running cost ( x'Qx + u'Ru )
         Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities
         R = 1e-1*np.eye(2)
-        s.AddQuadraticRunningCost(Q,R)
+        s.AddQuadraticCost(Q,R)
 
     # Get a solution
     x, u, rho, solve_time = s.Solve()
@@ -71,14 +75,49 @@ def get_solution(solver, n_obs, n_group, tpg, T, linear_cost=True, quadratic_cos
 
     return (success, rho, solve_time)
 
-if __name__=="__main__":
-    solver = GurobiMICPSolver
+def run_timestep_tests(fname):
+    """
+    Run a sequence of tests for different solvers with different
+    numbers of timesteps (on the same scenario) and save the results
+    to a CSV file. 
 
+    :param fname:   File name to save the results to.
+    """
+    f = open(fname,'w')
+    writer = csv.writer(f,delimiter=',')
+
+    data = ["Solver", "T", "n_obs", "n_group", "tpg", 
+            "linear_cost", "quadratic_cost", "rho", "solve_time"]
+    writer.writerow(data)
+
+    solvers = [GurobiMICPSolver, KnitroLCPSolver, DrakeLCPSolver, DrakeSmoothSolver]
+    Ts = [10,15,20,25,30,40,50,70,100]
     n_obs = 2
     n_group = 2
     tpg = 2
-    T = 20
+    linear_costs = [False, True]
+    quadratic_costs = [False, True]
+    for solver in solvers:
+        for T in Ts:
+            for linear_cost in linear_costs:
+                for quadratic_cost in quadratic_costs:
 
-    success, rho, solve_time = get_solution(solver, n_obs, n_group, tpg, T)
+                    if solver.__name__ == "DrakeSmoothSolver" and linear_cost == False:
+                        # Smooth solver requires linear cost
+                        pass
 
-    print(success, rho, solve_time)
+                    else:
+                        # Run the experiment and write to the CSV file
+                        success, rho, solve_time = get_solution(solver, n_obs, n_group, tpg, T, 
+                                linear_cost=linear_cost, quadratic_cost=quadratic_cost)
+
+                        data = [solver.__name__, T, n_obs, n_group, tpg, 
+                                linear_cost, quadratic_cost, rho, solve_time]
+
+                        writer.writerow(data)
+
+    f.close()
+
+
+if __name__=="__main__":
+    run_timestep_tests("timestep_tests.csv")

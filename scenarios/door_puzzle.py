@@ -14,7 +14,7 @@ from matplotlib.patches import Rectangle
 #
 ##
 
-def door_puzzle_specification(T):
+def door_puzzle_specification(T, N_pairs):
     """
     Return an STLFormula that describes this scenario. We'll assume that 
     the robot has double integrator dynamics, i.e.,
@@ -23,6 +23,7 @@ def door_puzzle_specification(T):
     
     and that the output signal is given by y = [x;u].
     """
+    assert N_pairs >= 1 and N_pairs <= 4, "number of pairs must be between 1 and 4"
     goal_bounds = (14.1,14.9,4.1,5.9)
 
     obs1_bounds = (8,15.01,-0.01,4)
@@ -78,7 +79,16 @@ def door_puzzle_specification(T):
     key4 = inside_rectangle_formula(key4_bounds, 0, 1, 6)
     k4d4 = no_door4.until(key4, 0, T)
 
-    key_constraints = k1d1 & k2d2 & k3d3 & k4d4
+    if N_pairs == 1:
+        key_constraints = k1d1
+    elif N_pairs == 2:
+        key_constraints = k1d1 & k2d2
+    elif N_pairs == 3:
+        key_constraints = k1d1 & k2d2 & k3d3
+    elif N_pairs == 4:
+        key_constraints = k1d1 & k2d2 & k3d3 & k4d4
+    else:
+        raise ValueError("Invalid number of key-door pairs: %s" % N_pairs)
 
     # Put all of the constraints together in one specification
     specification = control_bounded.always(0,T) & \
@@ -90,7 +100,7 @@ def door_puzzle_specification(T):
 
     return specification
 
-def plot_door_puzzle_scenario():
+def plot_door_puzzle_scenario(N_pairs):
     goal_bounds = (14.1,14.9,4.1,5.9)
 
     obs1_bounds = (8,15.01,-0.01,4)
@@ -123,15 +133,23 @@ def plot_door_puzzle_scenario():
 
     ax.add_patch(obs1)
     ax.add_patch(obs2)
-    ax.add_patch(door1)
-    ax.add_patch(door2)
-    ax.add_patch(door3)
-    ax.add_patch(door4)
-    ax.add_patch(key1)
-    ax.add_patch(key2)
-    ax.add_patch(key3)
-    ax.add_patch(key4)
     ax.add_patch(goal)
+
+    if N_pairs >= 1:
+        ax.add_patch(door1)
+        ax.add_patch(key1)
+
+    if N_pairs >= 2:
+        ax.add_patch(door2)
+        ax.add_patch(key2)
+
+    if N_pairs >= 3:
+        ax.add_patch(door3)
+        ax.add_patch(key3)
+
+    if N_pairs >= 4:
+        ax.add_patch(door4)
+        ax.add_patch(key4)
 
     # set the field of view
     ax.set_xlim((0,15))
