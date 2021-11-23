@@ -72,7 +72,7 @@ def get_solution(solver, n_obs, n_group, tpg, T, linear_cost=True, quadratic_cos
     return (success, rho, solve_time)
 
 if __name__=="__main__":
-    solver = KnitroLCPSolver
+    solver = GurobiMICPSolver
 
     n_obs = 2
     n_group = 2
@@ -80,3 +80,5 @@ if __name__=="__main__":
     T = 20
 
     success, rho, solve_time = get_solution(solver, n_obs, n_group, tpg, T)
+
+    print(success, rho, solve_time)

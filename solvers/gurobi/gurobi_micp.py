@@ -44,13 +44,13 @@ class GurobiMICPSolver(STLSolver):
     :param sys:             A :class:`.LinearSystem` describing the system dynamics.
     :param x0:              A ``(n,1)`` numpy matrix describing the initial state.
     :param T:               A positive integer fixing the total number of timesteps :math:`T`.
-    :param M:               A large positive scalar used to rewrite ``min`` and ``max`` as
-                            mixed-integer constraints.
+    :param M:               (optional) A large positive scalar used to rewrite ``min`` and ``max`` as
+                            mixed-integer constraints. Default is ``1000``.
     :param robustness_cost: (optional) Boolean flag for adding a linear cost to maximize
                             the robustness measure. Default is ``True``.
     """
 
-    def __init__(self, spec, sys, x0, T, M, robustness_cost=True):
+    def __init__(self, spec, sys, x0, T, M=1000, robustness_cost=True):
         assert M > 0, "M should be a (large) positive scalar"
         super().__init__(spec, sys, x0, T)
         self.M = float(M)
