@@ -43,11 +43,5 @@ Key-Door
 The robot must visit several target regions (rooms), but before entering each room it must
 visit a different location to pick up a key. 
 
-Charge and monitor
-------------------
-
-A team of robots must ensure that at least one robot is monitoring several target areas
-at all times, but each robot must also return to a charging station at regular intervals. 
-
 Helper functions
 ==========================

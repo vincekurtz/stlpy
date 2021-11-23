@@ -65,7 +65,7 @@ solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver.AddControlBounds(-u_max, u_max)
 #solver.AddOutputBounds(y_min, y_max)
 
-x, u = solver.Solve()
+x, u, _, _ = solver.Solve()
 
 if x is not None:
     # Plot the solution

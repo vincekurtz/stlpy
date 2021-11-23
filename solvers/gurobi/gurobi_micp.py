@@ -103,17 +103,19 @@ class GurobiMICPSolver(STLSolver):
             print("\nOptimal Solution Found!\n")
             x = self.x.X
             u = self.u.X
-
+            rho = self.rho.X[0]
+            
             # Report optimal cost and robustness
             print("Solve time: ", self.model.Runtime)
-            print("Optimal robustness: ", self.rho.X[0])
+            print("Optimal robustness: ", rho)
             print("")
         else:
             print(f"\nOptimization failed with status {self.model.status}.\n")
             x = None
             u = None
+            rho = -np.inf
 
-        return (x,u)
+        return (x,u,rho,self.model.Runtime)
 
     def AddDynamicsConstraints(self):
         # Initial condition

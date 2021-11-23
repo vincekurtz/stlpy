@@ -71,7 +71,7 @@ class ScipyGradientSolver(STLSolver):
         # Run scipy's minimize
         start_time = time.time()
         res = minimize(self.cost, u_guess.flatten(),
-                method="slsqp")
+                method=self.method)
         solve_time = time.time() - start_time
 
         print(res.message)
@@ -81,13 +81,14 @@ class ScipyGradientSolver(STLSolver):
             u = res.x.reshape((self.sys.m,self.T))
             x, y = self.forward_rollout(u)
             
-            rho = self.spec.robustness(y, 0)
-            print("Optimal robustness: ", rho[0])
+            rho = self.spec.robustness(y, 0)[0]
+            print("Optimal robustness: ", rho)
         else:
             x = None
             u = None
+            rho = -np.inf
 
-        return (x,u)
+        return (x,u,rho,solve_time)
 
     def forward_rollout(self, u):
         """

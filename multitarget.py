@@ -57,7 +57,7 @@ solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeLCPSolver(spec, sys, x0, T)
 #solver.AddQuadraticCost(Q,R)
 
-x, u = solver.Solve()
+x, u, _, _ = solver.Solve()
 
 if x is not None:
     # Plot the solution

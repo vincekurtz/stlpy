@@ -146,10 +146,12 @@ class STLSolver(ABC):
         """
         Solve the STL syntheis optimization problem and return an optimal trajectory. 
 
-        :return x:  A ``(n,T)`` numpy array containing the optimal state :math:`x_t`
-                    for each timestep
-        :return u:  A ``(m,T)`` numpy array containing the optimal control :math:`x_t`
-                    for each timestep
+        :return x:          A ``(n,T)`` numpy array containing the optimal state :math:`x_t`
+                            for each timestep.
+        :return u:          A ``(m,T)`` numpy array containing the optimal control :math:`x_t`
+                            for each timestep.
+        :return rho:        A scalar indicating the optimal robustness value.
+        :return solve_time: The time it took the solver to find a solution, in seconds.
 
         .. note::
 

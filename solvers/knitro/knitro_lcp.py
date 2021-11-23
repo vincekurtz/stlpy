@@ -131,16 +131,17 @@ class KnitroLCPSolver(STLSolver):
 
             # Report solve time and robustness
             y = np.vstack([x,u])
-            rho = self.spec.robustness(y,0)
+            rho = self.spec.robustness(y,0)[0]
             print("Solve time: ", solve_time)
-            print("Optimal robustness: ", rho[0])
+            print("Optimal robustness: ", rho)
 
         else:
             print(f"\nFailed with status code {status}\n")
             x = None
             u = None
+            rho = -np.inf
 
-        return (x,u)
+        return (x,u,rho,solve_time)
 
     def AddDynamicsConstraints(self):
         """
