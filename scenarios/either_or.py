@@ -51,7 +51,7 @@ def plot_either_or_scenario(goal, target_one, target_two, obstacle):
     ax = plt.gca()
 
     # Make and add rectangular patches
-    ax.add_patch(make_rectangle_patch(*obstacle, color='red', alpha=0.5))
+    ax.add_patch(make_rectangle_patch(*obstacle, color='k', alpha=0.5))
     ax.add_patch(make_rectangle_patch(*target_one, color='blue', alpha=0.5))
     ax.add_patch(make_rectangle_patch(*target_two, color='blue', alpha=0.5))
     ax.add_patch(make_rectangle_patch(*goal, color='green', alpha=0.5))

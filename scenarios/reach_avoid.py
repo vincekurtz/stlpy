@@ -54,7 +54,7 @@ def plot_reach_avoid_scenario(goal_bounds, obstacle_bounds):
     ax = plt.gca()
 
     # Make and add rectangular patches
-    obstacle = make_rectangle_patch(*obstacle_bounds, color='red', alpha=0.5)
+    obstacle = make_rectangle_patch(*obstacle_bounds, color='k', alpha=0.5)
     goal = make_rectangle_patch(*goal_bounds, color='green', alpha=0.5)
     ax.add_patch(obstacle)
     ax.add_patch(goal)

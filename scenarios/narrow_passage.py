@@ -81,7 +81,7 @@ def plot_narrow_passage_scenario():
 
     # Make and add rectangular patches
     for obstacle in obstacles:
-        ax.add_patch(make_rectangle_patch(*obstacle, color='red', alpha=0.5))
+        ax.add_patch(make_rectangle_patch(*obstacle, color='k', alpha=0.5))
     for goal in goals:
         ax.add_patch(make_rectangle_patch(*goal, color='green', alpha=0.5))
 

@@ -96,7 +96,7 @@ def plot_random_multitarget_scenario(obstacles, targets):
 
     # Add red rectangles for the obstacles
     for obstacle in obstacles:
-        ax.add_patch(make_rectangle_patch(*obstacle, color='k', alpha=0.7, zorder=-1))
+        ax.add_patch(make_rectangle_patch(*obstacle, color='k', alpha=0.5, zorder=-1))
 
     # Use the color cycle to choose the colors of each target group
     # (note that this won't work for more than 10 target groups)

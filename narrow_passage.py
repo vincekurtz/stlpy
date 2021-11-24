@@ -47,8 +47,8 @@ x0 = np.array([2.0,2.0,0,0])
 
 # Solve for the system trajectory
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
+solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
 #solver.AddQuadraticCost(Q,R)
 
