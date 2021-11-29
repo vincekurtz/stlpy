@@ -272,30 +272,25 @@ class GurobiMICPSolver(STLSolver):
     
     def _encode_min(self, a, b, c):
         """
-        This very important method converts a non-convex contraint
-
-        .. math::
-
-            a = \min(b, c)
-
-        into a mixed-integer convex constraint using the "big-M" method:
-
+        Add constraints
+        
         .. math::
 
             & a \leq b
 
             & a \leq c
 
-            & a \geq b - Mz
+        to the optimization problem to enforce
 
-            & a \geq c - M(1-z)
+        .. math::
 
-            & z \in \{0,1\}
+            a = \min(b, c)
 
-        where :math:`M` is a large integer.
+        .. note::
+
+            This approach is only valid if the specification is in positive
+            normal form (PNF).
+
         """
-        z = self.model.addMVar(1,vtype=GRB.BINARY)  
         self.model.addConstr( a <= b )
         self.model.addConstr( a <= c )
-        self.model.addConstr( a >= b - self.M*z )
-        self.model.addConstr( a >= c - self.M*(1-z) )
