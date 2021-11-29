@@ -15,10 +15,10 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-num_obstacles = 5
-num_groups = 5
+num_obstacles = 2
+num_groups = 2
 targets_per_group = 2
-T = 20
+T = 10
 
 # Create the specification
 spec, obstacles, targets = random_multitarget_specification(
@@ -48,9 +48,9 @@ R = 1e-1*np.eye(2)
 x0 = np.array([2.0,2.0,0,0])
 
 # Solve for the system trajectory
-solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
+#solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=False)
+#solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
+solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
 #solver.AddQuadraticCost(Q,R)
 

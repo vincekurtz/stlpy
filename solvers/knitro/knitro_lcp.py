@@ -361,96 +361,65 @@ class KnitroLCPSolver(STLSolver):
 
             a = max(b, c).
 
-        using complementarity constraints
+        using the fact that
 
-            0 <= a - b <= s1
-            0 <= a - c <= s2
-            
-            (0 <= s1) propto (s2 > 0)
+            max(b,c) = 1/2(b + c) + 1/2|b-c|
 
+        and that absolute value can be encoded with an LCP constraint.
         """
-        if isinstance(a,list):
-            if len(a) == 1:
-                a = a[0]
-            else:
-                raise ValueError("a should be a single variable coefficient")
-        if isinstance(c,list):
-            if len(c) == 1:
-                c = c[0]
-            else:
-                raise ValueError("c should be a single variable coefficient")
+        # Create new variable for |b-c|
+        abs_idx = KN_add_vars(self.kc,1)
 
-        # Create new variable for s1, s2
-        s = KN_add_vars(self.kc, 2)
+        # Create new variable for b-c
+        diff_idx = KN_add_vars(self.kc,1)
 
-        # Add constraints
-        #    0 <= a - b
-        #    0 <= a - c
-        c_idx = KN_add_cons(self.kc,2)
-        cons = [c_idx[0],c_idx[0],c_idx[1],c_idx[1]]
-        var = [a,b,a,c]
-        coeff = [1,-1,1,-1]
-        KN_add_con_linear_struct(self.kc, cons, var, coeff)
-        KN_set_con_lobnds(self.kc, c_idx, cLoBnds=[0,0])
+        # Add a linear constraint 1/2(b+c) + 1/2|b-c| = a
+        Aeq = np.array([[-1,0.5,0.5,0.5]])
+        x_idx = np.hstack([a, b, c, abs_idx])
+        beq = np.zeros(1)
+        add_linear_eq_cons(self.kc, Aeq, x_idx, beq)
 
-        # Add constraints
-        #   a - b - s1 <= 0
-        #   a - c - s2 <= 0
-        c_idx = KN_add_cons(self.kc,2)
-        cons = [c_idx[0],c_idx[0],c_idx[0],
-                c_idx[1],c_idx[1],c_idx[1]]
-        var = [a,b,s[0],
-               a,c,s[1]]
-        coeff = [1,-1,-1,
-                1,-1,-1]
-        KN_add_con_linear_struct(self.kc, cons, var, coeff)
-        KN_set_con_upbnds(self.kc, c_idx, cUpBnds=[0,0])
-        
-        # Add s1 and s2 to the list of complementary variables so that a single
-        # complementarity constraint with all the variables can be added later.
-        self.comp_cons[0].append(s[0])
-        self.comp_cons[1].append(s[1])
+        # Add a linear constraint diff = b-c
+        Aeq = np.array([[1,-1,-1]])
+        x_idx = np.hstack([b,c,diff_idx])
+        beq = np.zeros(1)
+        add_linear_eq_cons(self.kc, Aeq, x_idx, beq)
 
+        self._add_absolute_value_constraint(diff_idx, abs_idx)
+    
     def _encode_min(self, a, b, c):
         """
-        Add constraints
-        
-        .. math::
+        This very important method takes three Gurobi decision variables 
+        (a,b,c) and adds constraints on the optimization problem such
+        that
 
-            & a \leq b
+            a = min(b, c).
 
-            & a \leq c
+        using the fact that
+            
+            min(b,c) = 1/2(b + c) - 1/2|b-c|
 
-        to the optimization problem to enforce
-
-        .. math::
-
-            a = \min(b, c)
-
-        .. note::
-
-            This approach is only valid if the specification is in positive
-            normal form (PNF).
-
+        and that absolute value can be encoded with an LCP constraint.
         """
-        if isinstance(a,list):
-            if len(a) == 1:
-                a = a[0]
-            else:
-                raise ValueError("a should be a single variable coefficient")
-        if isinstance(c,list):
-            if len(c) == 1:
-                c = c[0]
-            else:
-                raise ValueError("c should be a single variable coefficient")
+        # Create new variable for |b-c|
+        abs_idx = KN_add_vars(self.kc,1)
 
-        c_idx = KN_add_cons(self.kc,2)
-        cons = [c_idx[0],c_idx[0],c_idx[1],c_idx[1]]
-        var = [a,b,a,c]
-        coeff = [1,-1,1,-1]
-        KN_add_con_linear_struct(self.kc, cons, var, coeff)
-        KN_set_con_upbnds(self.kc, c_idx, cUpBnds=[0,0])
+        # Create new variable for b-c
+        diff_idx = KN_add_vars(self.kc,1)
 
+        # Add a linear constraint 1/2(b+c) - 1/2|b-c| = a
+        Aeq = np.array([[-1,0.5,0.5,-0.5]])
+        x_idx = np.hstack([a, b, c, abs_idx])
+        beq = np.zeros(1)
+        add_linear_eq_cons(self.kc, Aeq, x_idx, beq)
+
+        # Add a linear constraint diff = b-c
+        Aeq = np.array([[1,-1,-1]])
+        x_idx = np.hstack([b,c,diff_idx])
+        beq = np.zeros(1)
+        add_linear_eq_cons(self.kc, Aeq, x_idx, beq)
+
+        self._add_absolute_value_constraint(diff_idx, abs_idx)
 
 def add_linear_eq_cons(kc, A, x_idx, b):
     """
