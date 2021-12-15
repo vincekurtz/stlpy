@@ -18,7 +18,7 @@ from solvers import *
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
-T = 20
+T = 10
 
 # The "big-M" constant used for mixed-integer encoding
 M = 1000
@@ -52,7 +52,7 @@ x0 = np.array([1.0,2.0,0,0])
 
 # Solve for the system trajectory
 #solver = ScipyGradientSolver(spec, sys, Q, R, x0, T, method="powell")
-#solver = GurobiMICPSolver(spec, sys, x0, T, M, robustness_cost=True)
+#solver = GurobiMICPSolver(spec, sys, x0, T, M, robustness_cost=False)
 #solver = GurobiLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeMICPSolver(spec, sys, x0, T, M, robustness_cost=False)

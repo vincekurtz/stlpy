@@ -111,8 +111,8 @@ class AdmmSolver(STLSolver):
         # Recursively traverse the tree defined by the specification
         # to add binary variables and constraints that ensure that
         # rho is the robustness value
-        z_spec = cp.Variable(1,boolean=True)  
-        #z_spec = nc.Boolean(1)
+        #z_spec = cp.Variable(1,boolean=True)  
+        z_spec = nc.Boolean(1)
         self.AddSubformulaConstraints(self.spec, z_spec, 0)
         self.constraints.append( z_spec == 1 )
 
@@ -155,7 +155,8 @@ class AdmmSolver(STLSolver):
         else:
             if formula.combination_type == "and":
                 for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = cp.Variable(1,boolean=True)  
+                    #z_sub = cp.Variable(1,boolean=True)  
+                    z_sub = nc.Boolean(1)  
                     t_sub = formula.timesteps[i]   # the timestep at which this formula 
                                                    # should hold
                     self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
@@ -164,7 +165,8 @@ class AdmmSolver(STLSolver):
             else:  # combination_type == "or":
                 z_subs = []
                 for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = cp.Variable(1,boolean=True)  
+                    #z_sub = cp.Variable(1,boolean=True)  
+                    z_sub = nc.Boolean(1)  
                     t_sub = formula.timesteps[i]
                     z_subs.append(z_sub)
                     self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
@@ -174,8 +176,9 @@ class AdmmSolver(STLSolver):
     def Solve(self):
         prob = cp.Problem(self.objective, self.constraints)
         st = time.time()
-        #result = prob.solve(method="NC-ADMM", verbose=True)
-        result = prob.solve(solver='GUROBI', verbose=True)
+        result = prob.solve(method="NC-ADMM", verbose=True)
+        #result = prob.solve(method="relax-round-polish", verbose=True)
+        #result = prob.solve(solver='GUROBI', verbose=True)
         solve_time = time.time() - st
 
         x = self.x.value
