@@ -56,8 +56,8 @@ class DrakeMICPSolver(DrakeSTLSolver):
         self.M = M
 
         # Choose which solver to use
-        #self.solver = GurobiSolver()
-        self.solver = MosekSolver()
+        self.solver = GurobiSolver()
+        #self.solver = MosekSolver()
 
         # Flag for whether to use a convex relaxation
         self.convex_relaxation = relaxed

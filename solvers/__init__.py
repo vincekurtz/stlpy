@@ -6,3 +6,4 @@ from solvers.knitro.knitro_lcp import KnitroLCPSolver
 from solvers.drake.drake_micp import DrakeMICPSolver
 from solvers.drake.drake_lcp import DrakeLCPSolver
 from solvers.drake.drake_smooth import DrakeSmoothSolver
+from solvers.ncvx.admm import AdmmSolver

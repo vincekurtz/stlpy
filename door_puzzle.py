@@ -16,7 +16,7 @@ from solvers import *
 
 # Specification Parameters
 T = 30
-N_pairs = 2
+N_pairs = 4
 
 # Create the specification
 spec = door_puzzle_specification(T, N_pairs)
@@ -47,7 +47,8 @@ x0 = np.array([3.0,3.0,0,0])
 
 # Solve for the system trajectory
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
+solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+#solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
 
