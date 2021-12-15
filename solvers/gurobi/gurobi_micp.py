@@ -99,7 +99,7 @@ class GurobiMICPSolver(STLSolver):
     def AddRobustnessConstraint(self, rho_min=0.0):
         self.model.addConstr( self.rho >= rho_min )
     
-    def Solve(self, verbose=False, presolve=True):
+    def Solve(self):
         self.model.optimize()
 
         if self.model.status == GRB.OPTIMAL:

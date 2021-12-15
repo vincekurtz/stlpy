@@ -2,8 +2,8 @@ from solvers.drake.drake_base import DrakeSTLSolver
 from STL import STLPredicate
 import numpy as np
 from pydrake.all import (MathematicalProgram, 
-                         GurobiSolver, 
-                         MosekSolver, 
+                         GurobiSolver, MosekSolver, 
+                         SolverOptions, CommonSolverOption,
                          eq, le, ge)
 
 class DrakeMICPSolver(DrakeSTLSolver):
@@ -69,17 +69,11 @@ class DrakeMICPSolver(DrakeSTLSolver):
         if robustness_cost:
             self.AddRobustnessCost()
 
-    def Solve(self, verbose=False, presolve=True):
-        # Print out some solver data
-        num_continuous_variables, num_binary_variables = self.GetVariableData()
-        print("Solving MICP with")
-        print("    %s binary variables" % num_binary_variables)
-        print("    %s continuous variables" % num_continuous_variables)
-
-        #if verbose:
-        #    self.mp.SetSolverOption(solver.solver_id(), "OutputFlag", 1)
-        #if not presolve:
-        #    self.mp.SetSolverOption(solver.solver_id(), "Presolve", 0)
+    def Solve(self):
+        # Set verbose output
+        options = SolverOptions()
+        options.SetOption(CommonSolverOption.kPrintToConsole,1)
+        self.mp.SetSolverOptions(options)
 
         res = self.solver.Solve(self.mp)
 
@@ -92,7 +86,6 @@ class DrakeMICPSolver(DrakeSTLSolver):
 
             y = np.vstack([x,u])
             rho = self.spec.robustness(y,0)[0]
-            print("Optimal Cost: ", res.get_optimal_cost())
             print("Optimal robustness: ", rho)
         else:
             print("No solution found")
