@@ -29,15 +29,11 @@ class GurobiMICPSolver(STLSolver):
    
     .. note::
 
-        This class implements a slight variation of the method described in
+        This class implements the method described in
 
         Raman V, et al. 
         *Model predictive control with signal temporal logic specifications*. 
         IEEE Conference on Decision and Control, 2014
-
-        where we enforce constraint satisfaction using subformula robustness 
-        values :math:`\\rho^{\\varphi_i}` directly rather using the binary variables
-        :math:`z^{\\varphi_i}`.
 
 
     :param spec:            An :class:`.STLFormula` describing the specification.
@@ -149,153 +145,61 @@ class GurobiMICPSolver(STLSolver):
         of binary variables for all subformulas in the specification.
         """
         # Recursively traverse the tree defined by the specification
-        # to add constraints that define the STL robustness score
-        self.AddSubformulaConstraints(self.spec, self.rho, 0)
+        # to add binary variables and constraints that ensure that
+        # rho is the robustness value
+        z_spec = self.model.addMVar(1,vtype=GRB.BINARY)  
+        self.AddSubformulaConstraints(self.spec, z_spec, 0)
+        self.model.addConstr( z_spec == 1 )
 
-    def AddSubformulaConstraints(self, formula, rho, t):
+    def AddSubformulaConstraints(self, formula, z, t):
         """
-        Given an STLFormula (formula) and a continuous variable (rho),
-        add constraints to the optimization problem such that rho is
-        the robustness score for that formula.
+        Given an STLFormula (formula) and a binary variable (z),
+        add constraints to the optimization problem such that z
+        takes value 1 only if the formula is satisfied (at time t). 
 
-        If the formula is a predicate (a'y-b>=0), this means that
+        If the formula is a predicate, this constraint uses the "big-M" 
+        formulation
 
-            rho = a'y(t) - b.
+            A[x(t);u(t)] - b + (1-z)M >= 0,
+
+        which enforces A[x;u] - b >= 0 if z=1, where (A,b) are the 
+        linear constraints associated with this predicate. 
 
         If the formula is not a predicate, we recursively traverse the
-        subformulas associated with this formula, adding new subformula
-        robustness scores rho_i for each subformula and defining
+        subformulas associated with this formula, adding new binary 
+        variables z_i for each subformula and constraining
 
-            rho = min_i{ rho_i }
+            z <= z_i  for all i
 
-        if the subformulas are combined with conjunction and
+        if the subformulas are combined with conjunction (i.e. all 
+        subformulas must hold), or otherwise constraining
 
-            rho = max_i{ rho_i }
+            z <= sum(z_i)
 
-        if the subformulas are combined with disjuction.
+        if the subformulas are combined with disjuction (at least one
+        subformula must hold). 
         """
         # We're at the bottom of the tree, so add the big-M constraints
         if isinstance(formula, STLPredicate):
-            # rho = a.T*[x;u] - b
-            self.model.addConstr( formula.a.T@self.y[:,t] - formula.b == rho )
+            # a.T*y - b + (1-z)*M >= rho
+            self.model.addConstr( formula.a.T@self.y[:,t] - formula.b + (1-z)*self.M  >= self.rho )
         
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
         else:
             if formula.combination_type == "and":
-                rho_subs = []
                 for i, subformula in enumerate(formula.subformula_list):
-                    rho_sub = self.model.addMVar(1, lb=-float('inf'))
+                    z_sub = self.model.addMVar(1,vtype=GRB.BINARY)  
                     t_sub = formula.timesteps[i]   # the timestep at which this formula 
                                                    # should hold
-                    self.AddSubformulaConstraints(subformula, rho_sub, t+t_sub)
-                    rho_subs.append(rho_sub)
-             
-                # rho = min(rho_subs)
-                self._add_min_constraint(rho, rho_subs)
+                    self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
+                    self.model.addConstr( z <= z_sub )
 
             else:  # combination_type == "or":
-                rho_subs = []
+                z_subs = []
                 for i, subformula in enumerate(formula.subformula_list):
-                    rho_sub = self.model.addMVar(1, lb=-float('inf'))
-                    t_sub = formula.timesteps[i]   # the timestep at which this formula 
-                                                   # should hold
-                    self.AddSubformulaConstraints(subformula, rho_sub, t+t_sub)
-                    rho_subs.append(rho_sub)
-               
-                # rho = max(rho_subs)
-                self._add_max_constraint(rho, rho_subs)
-
-    def _add_max_constraint(self, a, b_lst):
-        """
-        Add constraints to the optimization problem such that
-
-            a = max(b_1,b_2,...,b_N)
-
-        where b_lst = [b_1,b_2,...,b_N]
-        """
-        if len(b_lst) == 2:
-            self._encode_max(a, b_lst[0], b_lst[1])
-        elif len(b_lst) == 1:
-            self.model.addConstr(a == b_lst[0])
-        else:
-            c = self.model.addMVar(1,lb=-float('inf'))
-            self._add_max_constraint(c, b_lst[1:])
-            self._encode_max(a, b_lst[0], c)
-    
-    def _add_min_constraint(self, a, b_lst):
-        """
-        Add constraints to the optimization problem such that
-
-            a = min(b_1,b_2,...,b_N)
-
-        where b_lst = [b_1,b_2,...,b_N]
-        """
-        if len(b_lst) == 2:
-            self._encode_min(a, b_lst[0], b_lst[1])
-        elif len(b_lst) == 1:
-            self.model.addConstr(a == b_lst[0])
-        else:
-            c = self.model.addMVar(1,lb=-float('inf'))
-            self._add_min_constraint(c, b_lst[1:])
-            self._encode_min(a, b_lst[0], c)
-    
-    def _encode_max(self, a, b, c):
-        """
-        This very important method converts a non-convex contraint
-
-        .. math::
-
-            a = \max(b, c)
-
-        into a mixed-integer convex constraint using the "big-M" method:
-
-        .. math::
-
-            & a \geq b
-
-            & a \geq c
-
-            & a \leq b + Mz
-
-            & a \leq c + M(1-z)
-
-            & z \in \{0,1\}
-
-        where :math:`M` is a large integer.
-        """
-        z = self.model.addMVar(1,vtype=GRB.BINARY)  
-        self.model.addConstr( a >= b )
-        self.model.addConstr( a >= c )
-        self.model.addConstr( a <= b + self.M*z )
-        self.model.addConstr( a <= c + self.M*(1-z) )
-    
-    def _encode_min(self, a, b, c):
-        """
-        This very important method converts a non-convex contraint
-
-        .. math::
-
-            a = \min(b, c)
-
-        into a mixed-integer convex constraint using the "big-M" method:
-
-        .. math::
-
-            & a \leq b
-
-            & a \leq c
-
-            & a \geq b - Mz
-
-            & a \geq c - M(1-z)
-
-            & z \in \{0,1\}
-
-        where :math:`M` is a large integer.
-        """
-        z = self.model.addMVar(1,vtype=GRB.BINARY)  
-        self.model.addConstr( a <= b )
-        self.model.addConstr( a <= c )
-        self.model.addConstr( a >= b - self.M*z )
-        self.model.addConstr( a >= c - self.M*(1-z) )
+                    z_sub = self.model.addMVar(1,vtype=GRB.BINARY)  
+                    t_sub = formula.timesteps[i]
+                    z_subs.append(z_sub)
+                    self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
+                self.model.addConstr( z <= sum(z_subs) )
