@@ -78,6 +78,7 @@ class DrakeMICPSolver(DrakeSTLSolver):
         res = self.solver.Solve(self.mp)
 
         solve_time = res.get_solver_details().optimizer_time
+        print("")
         print("Solve time: ", solve_time)
 
         if res.is_success():
