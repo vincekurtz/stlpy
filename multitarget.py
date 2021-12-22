@@ -48,10 +48,11 @@ R = 1e-1*np.eye(2)
 x0 = np.array([2.0,2.0,0,0])
 
 # Solve for the system trajectory
-solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
+#solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=False)
+solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
 #solver.AddQuadraticCost(Q,R)
 
