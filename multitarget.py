@@ -16,8 +16,8 @@ from solvers import *
 
 # Specification Parameters
 num_obstacles = 5
-num_groups = 5
-targets_per_group = 2
+num_groups = 10
+targets_per_group = 1
 T = 30
 
 # Create the specification

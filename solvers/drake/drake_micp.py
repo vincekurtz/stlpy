@@ -179,7 +179,8 @@ class DrakeMICPSolver(DrakeSTLSolver):
         else:
             if formula.combination_type == "and":
                 for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = self.NewBinaryVariables(1)
+                    #z_sub = self.NewBinaryVariables(1)
+                    z_sub = self.mp.NewContinuousVariables(1)
                     t_sub = formula.timesteps[i]   # the timestep at which this formula 
                                                    # should hold
                     self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)

@@ -19,7 +19,7 @@ goal = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 target_one = (1,2,6,7)
 target_two = (7,8,4.5,5.5)
 obstacle = (3,5,4,6)
-T = 15
+T = 100
 
 # Create the specification
 spec = either_or_specification(goal, target_one, target_two, obstacle, T)
@@ -49,6 +49,7 @@ x0 = np.array([1.0,1.0,0,0])
 # Solve for the system trajectory
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
