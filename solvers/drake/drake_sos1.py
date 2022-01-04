@@ -50,9 +50,11 @@ class DrakeSos1Solver(DrakeMICPSolver):
                             a convex relaxation of the problem. Default is ``False``.
     :param robustness_cost: (optional) Boolean flag for adding a linear cost to maximize
                             the robustness measure. Default is ``True``.
+    :param solver:          (optional) String describing the solver to use. Must be one
+                            of 'gurobi', 'mosek', or 'bnb'.
     """
-    def __init__(self, spec, sys, x0, T, M=1000, relaxed=False, robustness_cost=True):
-        super().__init__(spec, sys, x0, T, M, relaxed=relaxed, robustness_cost=robustness_cost)
+    def __init__(self, spec, sys, x0, T, M=1000, relaxed=False, robustness_cost=True, solver='gurobi'):
+        super().__init__(spec, sys, x0, T, M, relaxed=relaxed, robustness_cost=robustness_cost, solver=solver)
 
     def AddSubformulaConstraints(self, formula, z, t):
         """

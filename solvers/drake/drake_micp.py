@@ -2,9 +2,10 @@ from solvers.drake.drake_base import DrakeSTLSolver
 from STL import STLPredicate
 import numpy as np
 from pydrake.all import (MathematicalProgram, 
-                         GurobiSolver, MosekSolver, 
+                         GurobiSolver, MosekSolver, ClpSolver,
                          SolverOptions, CommonSolverOption,
                          eq, le, ge)
+from pydrake.solvers.branch_and_bound import MixedIntegerBranchAndBound
 
 class DrakeMICPSolver(DrakeSTLSolver):
     """
@@ -49,15 +50,22 @@ class DrakeMICPSolver(DrakeSTLSolver):
                             a convex relaxation of the problem. Default is ``False``.
     :param robustness_cost: (optional) Boolean flag for adding a linear cost to maximize
                             the robustness measure. Default is ``True``.
+    :param solver:          (optional) String describing the solver to use. Must be one
+                            of 'gurobi', 'mosek', or 'bnb'.
     """
-    def __init__(self, spec, sys, x0, T, M=1000, relaxed=False, robustness_cost=True):
+    def __init__(self, spec, sys, x0, T, M=1000, relaxed=False, robustness_cost=True, solver='gurobi'):
         assert M > 0, "M should be a (large) positive scalar"
         super().__init__(spec, sys, x0, T)
         self.M = M
 
         # Choose which solver to use
-        self.solver = GurobiSolver()
-        #self.solver = MosekSolver()
+        if solver == 'gurobi':
+            self.solver = GurobiSolver()
+        elif solver == 'mosek':
+            self.solver = MosekSolver()
+        else:
+            print("Using Naive Branch-and-Bound solver")
+            self.solver = "bnb"
 
         # Flag for whether to use a convex relaxation
         self.convex_relaxation = relaxed
@@ -74,8 +82,13 @@ class DrakeMICPSolver(DrakeSTLSolver):
         options = SolverOptions()
         options.SetOption(CommonSolverOption.kPrintToConsole,1)
         self.mp.SetSolverOptions(options)
+            
+        if self.solver == "bnb":
+            bnb_solver = MixedIntegerBranchAndBound(self.mp, ClpSolver.id())
+            res = bnb_solver.Solve()
 
-        res = self.solver.Solve(self.mp)
+        else:
+            res = self.solver.Solve(self.mp)
 
         solve_time = res.get_solver_details().optimizer_time
         print("")
