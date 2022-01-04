@@ -1,5 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
+from treelib import Node, Tree
 
 class STLFormula(ABC):
     """
@@ -321,7 +322,29 @@ class STLTree(STLFormula):
         return boolean_operation and children_match and self.combination_type == "and"
 
     def __str__(self):
-        if self.name is None:
-            return "{ Formula of %s-type, %s subformulas }" % (self.combination_type, len(self.subformula_list))
+        """
+        Return a string representing this formula. This string displays
+        the tree structure of the formula, where each node represents either
+        a conjuction or disjuction of subformulas, and leaves are state formulas.
+        """
+        string = 'hello world'
+
+        tree = Tree()
+        root = tree.create_node(self.combination_type)
+
+        for subformula in self.subformula_list:
+            self._add_subformula_to_tree(tree, root, subformula)
+
+        return tree.__str__()
+
+    def _add_subformula_to_tree(self, tree, root, formula):
+        """
+        Helper function for recursively parsing subformulas to create
+        a Tree object for visualizing this formula. 
+        """
+        if formula.is_conjunctive_state_formula():
+            tree.create_node('state formula', parent=root) 
         else:
-            return "{ Formula " + self.name + " }"
+            new_node = tree.create_node(formula.combination_type, parent=root)
+            for subformula in formula.subformula_list:
+                self._add_subformula_to_tree(tree, new_node, subformula)
