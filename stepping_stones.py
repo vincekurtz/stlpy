@@ -2,27 +2,24 @@
 
 ##
 # 
-# Set up, solve, and plot the solution for a more complex
-# reach-avoid problem involing multiple obstacles and multiple
-# possible goals. 
+# Set up, solve, and plot the solution for a reachability
+# problem where the robot must navigate over a stepping
+# stones in order to reach a goal.
 #
 ##
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scenarios.random_multitarget import * 
+from scenarios.stepping_stones import * 
 from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-num_obstacles = 1
-num_groups = 12
-targets_per_group = 1
+num_stones = 20
 T = 30
 
 # Create the specification
-spec, obstacles, targets = random_multitarget_specification(
-        num_obstacles, num_groups, targets_per_group, T, seed=0)
+spec, stones = stepping_stones_specification(num_stones, T, seed=1)
 
 # System dynamics
 A = np.block([[1,0,1,0],
@@ -60,6 +57,6 @@ x, u, _, _ = solver.Solve()
 
 if x is not None:
     # Plot the solution
-    plot_random_multitarget_scenario(obstacles, targets)
+    plot_stepping_stones_scenario(stones)
     plt.scatter(*x[:2,:])
     plt.show()
