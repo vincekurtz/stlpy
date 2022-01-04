@@ -26,6 +26,15 @@ class STLFormula(ABC):
         pass
 
     @abstractmethod
+    def is_predicate(self):
+        """
+        Indicate whether this formula is a predicate.
+
+        :return:    A boolean which is ``True`` only if this is a predicate.
+        """
+        pass
+
+    @abstractmethod
     def is_state_formula(self):
         """
         Indicate whether this formula is a state formula, e.g.,
@@ -303,6 +312,9 @@ class STLTree(STLFormula):
         else: # combination_type == "or"
             return max( [formula.robustness(y,t+self.timesteps[i]) for i, formula in enumerate(self.subformula_list)] )
 
+    def is_predicate(self):
+        return False
+
     def is_state_formula(self):
         boolean_operation = all([self.timesteps[i] == self.timesteps[0] for i in range(len(self.timesteps))])
         children_are_state_formulas = all([subformula.is_state_formula() for subformula in self.subformula_list])
@@ -320,6 +332,55 @@ class STLTree(STLFormula):
         children_match = all([s.is_conjunctive_state_formula() for s in self.subformula_list])
 
         return boolean_operation and children_match and self.combination_type == "and"
+
+    def simplify(self):
+        """
+        Modify this formula to reduce the depth of the formula tree while preserving
+        logical equivalence. 
+        
+        A shallower formula tree can result in a more efficient binary encoding in some
+        cases. 
+        """
+        mod = True
+        while mod:
+            # Just keep trying to flatten until we don't get any improvement
+            mod = self.flatten(self)
+
+    def flatten(self, formula):
+        """
+        Reduce the depth of the given :class:`STLFormula` by combining adjacent
+        layers with the same logical operation. This preserves the meaning of the 
+        formula, since, for example,
+
+        ..math::
+
+            (a \land b) \land (c \land d) = a \land b \land c \land d
+
+        :param formula: The formula to modify
+
+        :return made_modification: boolean flag indicating whether the formula was changed.l
+
+        """
+        made_modification = False
+
+        for subformula in formula.subformula_list:
+            if subformula.is_predicate():
+                pass
+            else:
+                if formula.combination_type == subformula.combination_type:
+                    # Remove the subformula
+                    i = formula.subformula_list.index(subformula)
+                    formula.subformula_list.pop(i)
+                    st = formula.timesteps.pop(i)
+
+                    # Add all the subformula's subformulas instead
+                    formula.subformula_list += subformula.subformula_list
+                    formula.timesteps += [t+st for t in subformula.timesteps]
+                    made_modification = True
+                
+                made_modification = self.flatten(subformula) or made_modification
+
+        return made_modification
 
     def __str__(self):
         """

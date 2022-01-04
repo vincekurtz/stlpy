@@ -19,14 +19,10 @@ goal = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 target_one = (1,2,6,7)
 target_two = (7,8,4.5,5.5)
 obstacle = (3,5,4,6)
-T = 3
+T = 15
 
 # Create the specification
 spec = either_or_specification(goal, target_one, target_two, obstacle, T)
-
-print(spec)
-
-sys.exit()
 
 # System dynamics
 A = np.block([[1,0,1,0],

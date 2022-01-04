@@ -46,6 +46,9 @@ class STLPredicate(STLFormula):
 
         return self.a.T@y[:,t] - self.b
 
+    def is_predicate(self):
+        return True
+
     def is_state_formula(self):
         return True
 

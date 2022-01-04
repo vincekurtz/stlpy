@@ -16,10 +16,11 @@ from solvers import *
 
 # Specification Parameters
 num_stones = 20
-T = 30
+T = 20
 
 # Create the specification
 spec, stones = stepping_stones_specification(num_stones, T, seed=1)
+spec.simplify()
 
 # System dynamics
 A = np.block([[1,0,1,0],
@@ -51,7 +52,7 @@ x0 = np.array([2.0,2.0,0,0])
 #solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=False)
 solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
-#solver.AddQuadraticCost(Q,R)
+solver.AddQuadraticCost(Q,R)
 
 x, u, _, _ = solver.Solve()
 

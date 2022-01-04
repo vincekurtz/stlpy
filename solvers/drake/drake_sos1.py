@@ -195,7 +195,7 @@ class DrakeSos1Solver(DrakeSTLSolver):
                 # At least one of these elements must be equal to 1
                 z_all = np.vstack([1-z, z_subs]).flatten()
 
-                self.mp.AddConstraint(eq( z_all, lambda_ ))  # >= or ==, both work
+                self.mp.AddConstraint(ge( z_all, lambda_ ))  # >= or ==, both work
 
                 for i, subformula in enumerate(formula.subformula_list):
                     z_sub = z_subs[i]
