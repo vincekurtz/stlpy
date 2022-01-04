@@ -1,4 +1,4 @@
-from solvers.drake.drake_base import DrakeSTLSolver
+from solvers.drake.drake_micp import DrakeMICPSolver
 from STL import STLPredicate
 import numpy as np
 from pydrake.all import (MathematicalProgram, 
@@ -7,7 +7,7 @@ from pydrake.all import (MathematicalProgram,
                          AddLogarithmicSos1Constraint,
                          eq, le, ge)
 
-class DrakeSos1Solver(DrakeSTLSolver):
+class DrakeSos1Solver(DrakeMICPSolver):
     """
     Given an :class:`.STLFormula` :math:`\\varphi` and a :class:`.LinearSystem`, 
     solve the optimization problem
@@ -26,15 +26,15 @@ class DrakeSos1Solver(DrakeSTLSolver):
 
     using mixed-integer convex programming. This gives a globally optimal
     solution, but may be computationally expensive for long and complex specifications.
+
+    This class uses the encoding described in
+
+        Vielma J, et al. 
+        *Modeling disjunctive constraints with a logarithmic number of binary variables and
+        constraints*. Mathematical Programming, 2011.
+
+    to use fewer binary variables, improving scalability to long specifications. 
     
-    .. note::
-
-        This class implements the algorithm described in
-
-        Raman V, et al. 
-        *Model predictive control with signal temporal logic specifications*. 
-        IEEE Conference on Decision and Control, 2014
-
     .. warning::
 
         Drake must be compiled from source to support Gurobi and Mosek MICP solvers.
@@ -52,92 +52,7 @@ class DrakeSos1Solver(DrakeSTLSolver):
                             the robustness measure. Default is ``True``.
     """
     def __init__(self, spec, sys, x0, T, M=1000, relaxed=False, robustness_cost=True):
-        assert M > 0, "M should be a (large) positive scalar"
-        super().__init__(spec, sys, x0, T)
-        self.M = M
-
-        # Choose which solver to use
-        self.solver = GurobiSolver()
-        #self.solver = MosekSolver()
-
-        # Flag for whether to use a convex relaxation
-        self.convex_relaxation = relaxed
-
-        # Add cost and constraints to the optimization problem
-        self.AddDynamicsConstraints()
-        self.AddSTLConstraints()
-        self.AddRobustnessConstraint()
-        if robustness_cost:
-            self.AddRobustnessCost()
-
-    def Solve(self):
-        # Set verbose output
-        options = SolverOptions()
-        options.SetOption(CommonSolverOption.kPrintToConsole,1)
-        self.mp.SetSolverOptions(options)
-
-        res = self.solver.Solve(self.mp)
-
-        solve_time = res.get_solver_details().optimizer_time
-        print("")
-        print("Solve time: ", solve_time)
-
-        if res.is_success():
-            x = res.GetSolution(self.x)
-            u = res.GetSolution(self.u)
-
-            y = np.vstack([x,u])
-            rho = self.spec.robustness(y,0)[0]
-            print("Optimal robustness: ", rho)
-        else:
-            print("No solution found")
-            x = None
-            u = None
-            rho = -np.inf
-
-        return (x,u, rho, solve_time)
-
-    def AddDynamicsConstraints(self):
-        """
-        Add the constraints
-
-            x_{t+1} = A@x_t + B@u_t
-            x_0 = x0
-
-        to the optimization problem. 
-        """
-        # Initial condition
-        self.mp.AddConstraint(eq( self.x[:,0], self.x0 ))
-
-        # Dynamics
-        for t in range(self.T-1):
-            self.mp.AddConstraint(eq(
-                self.x[:,t+1], self.sys.A@self.x[:,t] + self.sys.B@self.u[:,t]
-            ))
-            self.mp.AddConstraint(eq(
-                self.y[:,t], self.sys.C@self.x[:,t] + self.sys.D@self.u[:,t]
-            ))
-        self.mp.AddConstraint(eq(
-            self.y[:,self.T-1], self.sys.C@self.x[:,self.T-1] + self.sys.D@self.u[:,self.T-1]
-        ))
-
-    def AddSTLConstraints(self):
-        """
-        Add the STL constraints
-
-            (x,u) |= specification
-
-        to the optimization problem, via the recursive introduction
-        of binary variables for all subformulas in the specification.
-        """
-        # Add a binary variable which takes a value of 1 only 
-        # if the overall specification is satisfied.
-        z_spec = self.NewBinaryVariables(1)
-        self.mp.AddConstraint(eq( z_spec, 1 ))
-
-        # Recursively traverse the tree defined by the specification
-        # subformulas and add similar binary constraints. 
-        self.AddSubformulaConstraints(self.spec, z_spec, 0)
+        super().__init__(spec, sys, x0, T, M, relaxed=relaxed, robustness_cost=robustness_cost)
 
     def AddSubformulaConstraints(self, formula, z, t):
         """
@@ -195,7 +110,7 @@ class DrakeSos1Solver(DrakeSTLSolver):
                 # At least one of these elements must be equal to 1
                 z_all = np.vstack([1-z, z_subs]).flatten()
 
-                self.mp.AddConstraint(ge( z_all, lambda_ ))  # >= or ==, both work
+                self.mp.AddConstraint(eq( z_all, lambda_ ))  # >= or ==, both work
 
                 for i, subformula in enumerate(formula.subformula_list):
                     z_sub = z_subs[i]
