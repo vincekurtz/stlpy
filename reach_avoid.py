@@ -25,7 +25,9 @@ M = 1000
 
 # Create the specification
 spec = reach_avoid_specification(goal_bounds, obstacle_bounds, T)
-spec.simplify()
+#spec.simplify()
+
+print(spec)
 
 # Define the system
 A = np.block([[1,0,1,0],
