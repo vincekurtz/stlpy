@@ -106,7 +106,8 @@ class DrakeSos1Solver(DrakeMICPSolver):
 
             else:  # combination_type == "or":
                 nz = len(formula.subformula_list)
-                z_subs = self.mp.NewContinuousVariables(nz, 1)
+                #z_subs = self.mp.NewContinuousVariables(nz, 1)
+                z_subs = self.mp.NewBinaryVariables(nz, 1)
                 lambda_, y = AddLogarithmicSos1Constraint(self.mp, nz + 1)
                
                 # At least one of these elements must be equal to 1

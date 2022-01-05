@@ -16,13 +16,14 @@ from solvers import *
 
 # Specification Parameters
 num_obstacles = 1
-num_groups = 12
+num_groups = 5
 targets_per_group = 1
 T = 30
 
 # Create the specification
 spec, obstacles, targets = random_multitarget_specification(
         num_obstacles, num_groups, targets_per_group, T, seed=0)
+spec.simplify()
 
 # System dynamics
 A = np.block([[1,0,1,0],
@@ -51,8 +52,8 @@ x0 = np.array([2.0,2.0,0,0])
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=False)
+#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
 #solver.AddQuadraticCost(Q,R)
 

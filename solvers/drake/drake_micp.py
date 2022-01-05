@@ -81,6 +81,7 @@ class DrakeMICPSolver(DrakeSTLSolver):
         # Set verbose output
         options = SolverOptions()
         options.SetOption(CommonSolverOption.kPrintToConsole,1)
+        #options.SetOption(GurobiSolver.id(), "Presolve", 0)
         self.mp.SetSolverOptions(options)
             
         if self.solver == "bnb":

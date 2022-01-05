@@ -15,11 +15,12 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-T = 30
+T = 100
 N_pairs = 4
 
 # Create the specification
 spec = door_puzzle_specification(T, N_pairs)
+spec.simplify()
 
 # Define the system
 A = np.block([[1,0,1,0],
