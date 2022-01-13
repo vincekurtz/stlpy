@@ -1,11 +1,15 @@
 from solvers.drake.drake_base import DrakeSTLSolver
 from STL import STLPredicate
 import numpy as np
+import time
 from pydrake.all import (MathematicalProgram, 
                          GurobiSolver, MosekSolver, ClpSolver,
                          SolverOptions, CommonSolverOption,
                          eq, le, ge)
 from pydrake.solvers.branch_and_bound import MixedIntegerBranchAndBound
+
+# DEBUG
+from pydrake.all import *
 
 class DrakeMICPSolver(DrakeSTLSolver):
     """
@@ -81,21 +85,26 @@ class DrakeMICPSolver(DrakeSTLSolver):
         # Set verbose output
         options = SolverOptions()
         options.SetOption(CommonSolverOption.kPrintToConsole,1)
-        options.SetOption(GurobiSolver.id(), "Presolve", 0)
+        #options.SetOption(GurobiSolver.id(), "Presolve", 0)
         self.mp.SetSolverOptions(options)
             
         if self.solver == "bnb":
             bnb_solver = MixedIntegerBranchAndBound(self.mp, ClpSolver.id())
-            res = bnb_solver.Solve()
+            st = time.time()
+            status = bnb_solver.Solve()
+            solve_time = time.time() - st
+            success = True
+            res = bnb_solver
 
         else:
             res = self.solver.Solve(self.mp)
-
-        solve_time = res.get_solver_details().optimizer_time
+            success = res.is_success()
+            solve_time = res.get_solver_details().optimizer_time
+            
         print("")
         print("Solve time: ", solve_time)
 
-        if res.is_success():
+        if success:
             x = res.GetSolution(self.x)
             u = res.GetSolution(self.u)
 
@@ -193,8 +202,8 @@ class DrakeMICPSolver(DrakeSTLSolver):
         else:
             if formula.combination_type == "and":
                 for i, subformula in enumerate(formula.subformula_list):
-                    #z_sub = self.NewBinaryVariables(1)
-                    z_sub = self.mp.NewContinuousVariables(1)
+                    z_sub = self.NewBinaryVariables(1)
+                    #z_sub = self.mp.NewContinuousVariables(1)
                     t_sub = formula.timesteps[i]   # the timestep at which this formula 
                                                    # should hold
                     self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
