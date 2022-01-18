@@ -18,7 +18,7 @@ from solvers import *
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
-T = 15
+T = 30
 
 # The "big-M" constant used for mixed-integer encoding
 M = 10
@@ -56,8 +56,8 @@ x0 = np.array([1.0,2.0,0,0])
 #solver = GurobiMICPSolver(spec, sys, x0, T, M, robustness_cost=True)
 #solver = GurobiLCPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = DrakeMICPSolver(spec, sys, x0, T, M, robustness_cost=False)
-#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True, solver='bnb')
+solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = AdmmSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)

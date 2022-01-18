@@ -91,42 +91,22 @@ class DrakeSos1Solver(DrakeMICPSolver):
             self.mp.AddLinearConstraint(ge(
                 formula.a.T@y - formula.b + (1-z)*self.M, self.rho
             ))
-        
+
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
         else:
+            nz = len(formula.subformula_list)
+
             if formula.combination_type == "and":
-                for i, subformula in enumerate(formula.subformula_list):
-                    #z_sub = self.NewBinaryVariables(1)
-                    z_sub = self.mp.NewContinuousVariables(1)
-                    t_sub = formula.timesteps[i]   # the timestep at which this formula 
-                                                   # should hold
-                    self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
-                    self.mp.AddConstraint( z[0] <= z_sub[0] )
+                z_subs = self.mp.NewContinuousVariables(nz,1)
+                self.mp.AddConstraint(le( z, z_subs ))
 
             else:  # combination_type == "or":
-                nz = len(formula.subformula_list)
-                print(nz)
+                lambda_, _ = AddLogarithmicSos1Constraint(self.mp, nz + 1)
+                z_subs = lambda_[1:][np.newaxis].T
+                self.mp.AddConstraint(eq( 1-z, lambda_[0] ))
 
-                if nz >= 0:
-                    # Use logarithmic number of binary variables
-                    lambda_, _ = AddLogarithmicSos1Constraint(self.mp, nz + 1)
-
-                    #z_subs = self.mp.NewContinuousVariables(nz, 1)
-                    ##z_subs = self.mp.NewBinaryVariables(nz, 1)
-                    #z_all = np.vstack([1-z, z_subs]).flatten()
-                    #self.mp.AddConstraint(eq( z_all, lambda_ ))  # >= or ==, both work
-
-                    z_subs = lambda_[1:][np.newaxis].T
-                    self.mp.AddConstraint(eq( 1-z, lambda_[0] ))
-
-                else:
-                    # Use linear number of binary variables
-                    z_subs = self.mp.NewBinaryVariables(nz,1)
-                    self.mp.AddConstraint(le( z, sum(z_subs)))
-
-                for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = z_subs[i]
-                    t_sub = formula.timesteps[i]
-                    self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
+            for i, subformula in enumerate(formula.subformula_list):
+                t_sub = formula.timesteps[i]
+                self.AddSubformulaConstraints(subformula, z_subs[i], t+t_sub)
 
