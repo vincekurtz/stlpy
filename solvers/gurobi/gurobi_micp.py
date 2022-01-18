@@ -96,6 +96,10 @@ class GurobiMICPSolver(STLSolver):
         self.model.addConstr( self.rho >= rho_min )
     
     def Solve(self):
+        #self.model.setParam('Presolve', -1)
+        #self.model.setParam('Cuts', 2)
+        #self.model.setParam('LiftProjectCuts', 2)
+        #self.model.setParam('CutPasses',10000000)
         self.model.optimize()
 
         if self.model.status == GRB.OPTIMAL:
@@ -183,13 +187,17 @@ class GurobiMICPSolver(STLSolver):
         if isinstance(formula, STLPredicate):
             # a.T*y - b + (1-z)*M >= rho
             self.model.addConstr( formula.a.T@self.y[:,t] - formula.b + (1-z)*self.M  >= self.rho )
-        
+
+            # Force z to be binary
+            b = self.model.addMVar(1,vtype=GRB.BINARY)
+            self.model.addConstr(z == b)
+
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
         else:
             if formula.combination_type == "and":
                 for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = self.model.addMVar(1,vtype=GRB.BINARY)  
+                    z_sub = self.model.addMVar(1,vtype=GRB.CONTINUOUS)  
                     t_sub = formula.timesteps[i]   # the timestep at which this formula 
                                                    # should hold
                     self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
@@ -198,8 +206,9 @@ class GurobiMICPSolver(STLSolver):
             else:  # combination_type == "or":
                 z_subs = []
                 for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = self.model.addMVar(1,vtype=GRB.BINARY)  
-                    t_sub = formula.timesteps[i]
+                    z_sub = self.model.addMVar(1,vtype=GRB.CONTINUOUS)  
                     z_subs.append(z_sub)
+                    t_sub = formula.timesteps[i]
                     self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
                 self.model.addConstr( z <= sum(z_subs) )
+
