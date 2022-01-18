@@ -39,21 +39,6 @@ def door_puzzle_specification(T, N_pairs):
     key3_bounds = (6,7,8,9)
     key4_bounds = (6,7,1,2)
 
-    # Control bounds
-    u_min = -0.5
-    u_max = 0.5
-    control_bounded = inside_rectangle_formula((u_min,u_max,u_min,u_max), 4, 5, 6)
-    
-    # Velocity bounded
-    v_min = -1.0
-    v_max = 1.0
-    velocity_bounded = inside_rectangle_formula((v_min, v_max, v_min, v_max), 2, 3, 6)
-
-    # Workspace boundaries
-    x_min = 0; x_max = 15;
-    y_min = 0; y_max = 10;
-    in_workspace = inside_rectangle_formula((x_min, x_max, y_min, y_max), 0, 1, 6)
-
     # Goal Reaching
     at_goal = inside_rectangle_formula(goal_bounds, 0, 1, 6)
 
@@ -91,10 +76,7 @@ def door_puzzle_specification(T, N_pairs):
         raise ValueError("Invalid number of key-door pairs: %s" % N_pairs)
 
     # Put all of the constraints together in one specification
-    specification = control_bounded.always(0,T) & \
-                    velocity_bounded.always(0,T) & \
-                    in_workspace.always(0,T) & \
-                    obstacle_avoidance.always(0,T) & \
+    specification = obstacle_avoidance.always(0,T) & \
                     key_constraints & \
                     at_goal.eventually(0,T)
 

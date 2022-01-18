@@ -46,7 +46,7 @@ R = 1e-1*np.eye(2)
 # Initial state
 x0 = np.array([2.0,2.0,0,0])
 
-# Solve for the system trajectory
+# Specify a solution method
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
 solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
@@ -65,6 +65,7 @@ solver.AddStateBounds(x_min, x_max)
 # Add quadratic running cost (optional)
 solver.AddQuadraticCost(Q,R)
 
+# Solve the optimization problem
 x, u, _, _ = solver.Solve()
 
 if x is not None:

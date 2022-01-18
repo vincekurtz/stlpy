@@ -21,32 +21,14 @@ def reach_avoid_specification(goal_bounds, obstacle_bounds, T):
     
     and that the output signal is given by y = [x;u].
     """
-    # Control bounds
-    u_min = -0.5
-    u_max = 0.5
-    control_bounded = inside_rectangle_formula((u_min,u_max,u_min,u_max), 4, 5, 6)
-
     # Goal Reaching
     at_goal = inside_rectangle_formula(goal_bounds, 0, 1, 6)
 
     # Obstacle Avoidance
     not_at_obstacle = outside_rectangle_formula(obstacle_bounds, 0, 1, 6)
 
-    # Velocity bounded
-    v_min = -1.0
-    v_max = 1.0
-    velocity_bounded = inside_rectangle_formula((v_min, v_max, v_min, v_max), 2, 3, 6)
-
-    # Workspace boundaries
-    x_min = 0; x_max = 10;
-    y_min = 0; y_max = 10;
-    in_workspace = inside_rectangle_formula((x_min, x_max, y_min, y_max), 0, 1, 6)
-
     # Put all of the constraints together in one specification
-    specification = control_bounded.always(0,T) & \
-                    velocity_bounded.always(0,T) & \
-                    in_workspace.always(0,T) & \
-                    not_at_obstacle.until(at_goal, 0, T)
+    specification = not_at_obstacle.until(at_goal, 0, T)
 
     return specification
 
