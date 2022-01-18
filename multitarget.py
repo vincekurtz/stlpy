@@ -15,9 +15,9 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-num_obstacles = 1
+num_obstacles = 5
 num_groups = 5
-targets_per_group = 1
+targets_per_group = 2
 T = 30
 
 # Create the specification

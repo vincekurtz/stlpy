@@ -15,12 +15,12 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-T = 100
-N_pairs = 4
+T = 40
+N_pairs = 2
 
 # Create the specification
 spec = door_puzzle_specification(T, N_pairs)
-spec.simplify()
+#spec.simplify()
 
 # Define the system
 A = np.block([[1,0,1,0],
@@ -48,8 +48,8 @@ x0 = np.array([3.0,3.0,0,0])
 
 # Solve for the system trajectory
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=False)
+solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
