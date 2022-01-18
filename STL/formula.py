@@ -66,6 +66,26 @@ class STLFormula(ABC):
         pass
 
     @abstractmethod
+    def get_all_inequalities(self):
+        """
+        Return all inequalities associated with this formula stacked into vector form
+
+        .. math::
+
+            A*y <= b
+
+        where each row of :math:`A` and :math:`b` correspond to a predicate in this formula.
+
+        .. note::
+
+            This method is really only useful for conjunctive state formulas.
+
+        :return A:  An (n,m) numpy array representing :math:`A`
+        :return b:  An (n,) numpy array representing :math:`b`
+        """
+        pass
+
+    @abstractmethod
     def negation(self):
         """
         Return a new :class:`.STLFormula` :math:`\\varphi_{new}` which represents 
@@ -84,7 +104,6 @@ class STLFormula(ABC):
 
         """
         pass
-
 
     def conjunction(self, other):
         """
@@ -381,6 +400,18 @@ class STLTree(STLFormula):
                 made_modification = self.flatten(subformula) or made_modification
 
         return made_modification
+
+    def get_all_inequalities(self):
+        As = []
+        bs = []
+        for subformula in self.subformula_list:
+            A, b = subformula.get_all_inequalities()
+            As.append(A)
+            bs.append(b)
+        A = np.vstack(As)
+        b = np.hstack(bs)
+
+        return A, b
 
     def __str__(self):
         """

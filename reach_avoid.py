@@ -18,11 +18,11 @@ from solvers import *
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
-T = 15
+T = 10
 
 # Create the specification
 spec = reach_avoid_specification(goal_bounds, obstacle_bounds, T)
-spec.simplify()
+#spec.simplify()
 
 # Define the system
 A = np.block([[1,0,1,0],
@@ -53,8 +53,9 @@ x0 = np.array([1.0,2.0,0,0])
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = GurobiLCPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeTestSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = AdmmSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
@@ -68,7 +69,7 @@ solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
 
 # Add quadratic running cost (optional)
-solver.AddQuadraticCost(Q,R)
+#solver.AddQuadraticCost(Q,R)
 
 # Solve the optimization problem
 x, u, _, _ = solver.Solve()
