@@ -8,9 +8,6 @@ from pydrake.all import (MathematicalProgram,
                          eq, le, ge)
 from pydrake.solvers.branch_and_bound import MixedIntegerBranchAndBound
 
-# DEBUG
-from pydrake.all import *
-
 class DrakeMICPSolver(DrakeSTLSolver):
     """
     Given an :class:`.STLFormula` :math:`\\varphi` and a :class:`.LinearSystem`, 
@@ -85,7 +82,7 @@ class DrakeMICPSolver(DrakeSTLSolver):
         # Set verbose output
         options = SolverOptions()
         options.SetOption(CommonSolverOption.kPrintToConsole,1)
-        #options.SetOption(GurobiSolver.id(), "Presolve", 0)
+        #options.SetOption(GurobiSolver.id(), "Presolve", 2)
         self.mp.SetSolverOptions(options)
             
         if self.solver == "bnb":
@@ -154,7 +151,7 @@ class DrakeMICPSolver(DrakeSTLSolver):
         """
         # Add a binary variable which takes a value of 1 only 
         # if the overall specification is satisfied.
-        z_spec = self.NewBinaryVariables(1)
+        z_spec = self.mp.NewContinuousVariables(1)
         self.mp.AddConstraint(eq( z_spec, 1 ))
 
         # Recursively traverse the tree defined by the specification
@@ -196,30 +193,21 @@ class DrakeMICPSolver(DrakeSTLSolver):
             self.mp.AddLinearConstraint(ge(
                 formula.a.T@y - formula.b + (1-z)*self.M, self.rho
             ))
+
+            b = self.mp.NewBinaryVariables(1)
+            self.mp.AddConstraint(eq(b, z))
         
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
         else:
+            z_subs = self.mp.NewContinuousVariables(len(formula.subformula_list),1)
+            self.mp.AddConstraint(ge(z_subs, 0))
+                    
             if formula.combination_type == "and":
-                for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = self.NewBinaryVariables(1)
-                    #z_sub = self.mp.NewContinuousVariables(1)
-                    t_sub = formula.timesteps[i]   # the timestep at which this formula 
-                                                   # should hold
-                    self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
-                    self.mp.AddConstraint( z[0] <= z_sub[0] )
-
+                self.mp.AddConstraint(le( z, z_subs ))
             else:  # combination_type == "or":
-                z_subs = []
-                for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = self.NewBinaryVariables(1)
-                    t_sub = formula.timesteps[i]
-                    z_subs.append(z_sub)
-                    self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
+                self.mp.AddConstraint(le( z, sum(z_subs) ))
 
-                # z <= sum(z_subs)
-                A = np.hstack([1,-np.ones(len(z_subs))])[np.newaxis]
-                lb = -np.array([np.inf])
-                ub = np.array([0])
-                vars = np.vstack([z,z_subs])
-                self.mp.AddLinearConstraint(A=A, lb=lb, ub=ub, vars=vars)
+            for i, subformula in enumerate(formula.subformula_list):
+                t_sub = formula.timesteps[i]
+                self.AddSubformulaConstraints(subformula, z_subs[i], t+t_sub)
