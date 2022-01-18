@@ -19,6 +19,7 @@ T = 30
 
 # Create the specification
 spec = narrow_passage_specification(T)
+spec.simplify()
 
 # System dynamics
 A = np.block([[1,0,1,0],
@@ -47,12 +48,22 @@ x0 = np.array([2.0,2.0,0,0])
 
 # Solve for the system trajectory
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
-solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
-#solver.AddQuadraticCost(Q,R)
+
+# Set bounds on state and control variables
+u_min = np.array([-0.5,-0.5])
+u_max = np.array([0.5, 0.5])
+x_min = np.array([0.0, 0.0, -1.0, -1.0])
+x_max = np.array([10.0, 10.0, 1.0, 1.0])
+solver.AddControlBounds(u_min, u_max)
+solver.AddStateBounds(x_min, x_max)
+
+# Add quadratic running cost (optional)
+solver.AddQuadraticCost(Q,R)
 
 x, u, _, _ = solver.Solve()
 
