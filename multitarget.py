@@ -16,7 +16,7 @@ from solvers import *
 
 # Specification Parameters
 num_obstacles = 5
-num_groups = 5
+num_groups = 1
 targets_per_group = 2
 T = 30
 
@@ -52,8 +52,8 @@ x0 = np.array([2.0,2.0,0,0])
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
 
 # Set bounds on state and control variables

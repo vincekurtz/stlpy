@@ -28,6 +28,9 @@ def door_puzzle_specification(T, N_pairs):
 
     obs1_bounds = (8,15.01,-0.01,4)
     obs2_bounds = (8,15.01,6,10.01)
+    obs3_bounds = (3.5,5,-0.01,2.5)
+    obs4_bounds = (-0.01,2.5,4,6)
+    obs5_bounds = (3.5,5,7.5,10.01)
 
     door1_bounds = (12.8,14,3.99,6.01)
     door2_bounds = (11.5,12.7,3.99,6.01)
@@ -45,7 +48,10 @@ def door_puzzle_specification(T, N_pairs):
     # Obstacle Avoidance
     not_at_obs1 = outside_rectangle_formula(obs1_bounds, 0, 1, 6)
     not_at_obs2 = outside_rectangle_formula(obs2_bounds, 0, 1, 6)
-    obstacle_avoidance = not_at_obs1 & not_at_obs2
+    not_at_obs3 = outside_rectangle_formula(obs3_bounds, 0, 1, 6)
+    not_at_obs4 = outside_rectangle_formula(obs4_bounds, 0, 1, 6)
+    not_at_obs5 = outside_rectangle_formula(obs5_bounds, 0, 1, 6)
+    obstacle_avoidance = not_at_obs1 & not_at_obs2 & not_at_obs3 & not_at_obs4 & not_at_obs5
 
     # Key-door constraints
     no_door1 = outside_rectangle_formula(door1_bounds, 0, 1, 6)
@@ -87,6 +93,10 @@ def plot_door_puzzle_scenario(N_pairs):
 
     obs1_bounds = (8,15.01,-0.01,4)
     obs2_bounds = (8,15.01,6,10.01)
+    obs3_bounds = (3.5,5,-0.01,2.5)
+    obs4_bounds = (-0.01,2.5,4,6)
+    obs5_bounds = (3.5,5,7.5,10.01)
+    obs = [obs1_bounds, obs2_bounds, obs3_bounds, obs4_bounds, obs5_bounds]
 
     door1_bounds = (12.8,14,3.99,6.01)
     door2_bounds = (11.5,12.7,3.99,6.01)
@@ -101,8 +111,11 @@ def plot_door_puzzle_scenario(N_pairs):
     ax = plt.gca()
 
     # Make and add rectangular patches
-    obs1 = make_rectangle_patch(*obs1_bounds, color='k', alpha=0.5)
-    obs2 = make_rectangle_patch(*obs2_bounds, color='k', alpha=0.5)
+    for obs_bounds in obs:
+        obs_patch = make_rectangle_patch(*obs_bounds, color='k', alpha=0.5)
+        ax.add_patch(obs_patch)
+
+
     door1 = make_rectangle_patch(*door1_bounds, color='red', alpha=0.5)
     door2 = make_rectangle_patch(*door2_bounds, color='red', alpha=0.5)
     door3 = make_rectangle_patch(*door3_bounds, color='red', alpha=0.5)
@@ -112,9 +125,6 @@ def plot_door_puzzle_scenario(N_pairs):
     key3 = make_rectangle_patch(*key3_bounds, color='blue', alpha=0.5)
     key4 = make_rectangle_patch(*key4_bounds, color='blue', alpha=0.5)
     goal = make_rectangle_patch(*goal_bounds, color='green', alpha=0.5)
-
-    ax.add_patch(obs1)
-    ax.add_patch(obs2)
     ax.add_patch(goal)
 
     if N_pairs >= 1:

@@ -16,7 +16,7 @@ from solvers import *
 
 # Specification Parameters
 T = 40
-N_pairs = 2
+N_pairs = 1
 
 # Create the specification
 spec = door_puzzle_specification(T, N_pairs)
@@ -44,12 +44,12 @@ Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities
 R = 1e-1*np.eye(2)
 
 # Initial state
-x0 = np.array([3.0,3.0,0,0])
+x0 = np.array([6.0,1.0,0,0])
 
 # Define the solver
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
