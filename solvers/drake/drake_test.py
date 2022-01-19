@@ -14,10 +14,8 @@ class DrakeTestSolver(DrakeSTLSolver):
     """
     Scratch solver for implementing research ideas
     """
-    def __init__(self, spec, sys, x0, T, M=1000, relaxed=False, robustness_cost=True, solver='gurobi'):
-        assert M > 0, "M should be a (large) positive scalar"
+    def __init__(self, spec, sys, x0, T, solver='gurobi'):
         super().__init__(spec, sys, x0, T)
-        self.M = M
 
         # Choose which solver to use
         if solver == 'gurobi':
@@ -27,6 +25,13 @@ class DrakeTestSolver(DrakeSTLSolver):
         else:
             print("Using Naive Branch-and-Bound solver")
             self.solver = "bnb"
+        
+        # Define global bounds on y
+        # TODO: let the user determine this
+        y_min = np.array([0,0,-1,-1,-0.5,-0.5])
+        y_max = np.array([10,10,1,1,0.5,0.5])
+        A0 = np.vstack([np.eye(6),-np.eye(6)])
+        b0 = np.hstack([y_max,-y_min])
 
         # Get list of all conjunctive state formulas
         self.CSFs = self.spec.get_all_conjunctive_state_formulas()
@@ -36,14 +41,7 @@ class DrakeTestSolver(DrakeSTLSolver):
         s = [i for i in range(self.n_csf)]
         self.powerset_idx = list(chain.from_iterable(combinations(s, r) for r in range(len(s)+1)))
 
-        # DEBUG: define global bounds on y
-        # TODO: let the user determine this
-        y_min = np.array([0,0,-1,-1,-0.5,-0.5])
-        y_max = np.array([10,10,1,1,0.5,0.5])
-        A0 = np.vstack([np.eye(6),-np.eye(6)])
-        b0 = np.hstack([y_max,-y_min])
-
-        # Define a list of inequalities (A*y<=b) associated with each possible
+        # Define a "mode" (i.e., convex constraint A*y<=b) associated with each possible
         # combination of CSFs.
         self.powerset = []
         for idx in self.powerset_idx:
@@ -61,7 +59,7 @@ class DrakeTestSolver(DrakeSTLSolver):
             poly = HPolyhedron(A,b)
             self.powerset.append(poly)
 
-        # Prune infeasible combinations
+        # Prune infeasible modes
         i = 0
         while i < len(self.powerset_idx):
             A = self.powerset[i].A()
@@ -82,15 +80,20 @@ class DrakeTestSolver(DrakeSTLSolver):
                 self.powerset.pop(i)
                 self.powerset_idx.pop(i)
 
-        # Define binary variables for each element of the powerset at each timestep
+        # Define binary variables for each mode at each timestep
         self.nz = len(self.powerset)
         self.z = self.mp.NewBinaryVariables(self.nz,self.T,'z')
         
         # DEBUG: continuous relaxation
         #self.z = self.mp.NewContinuousVariables(self.nz,self.T,'z')
         #self.mp.AddConstraint(ge( self.z.flatten(), 0 ))
+        
+        # We can only be in one mode at each timestep
+        self.mp.AddConstraint(eq(
+            np.sum(self.z,axis=0), 1
+        ))
 
-        # Make copies of x, u and y for each element of the powerset at each timestep
+        # Make copies of x, u and y for each mode at each timestep
         # These are indexed by [i,t,:], where the last dimension is m, n, or p
         X = []; U = []; Y = []
         for i in range(self.nz):
@@ -101,20 +104,9 @@ class DrakeTestSolver(DrakeSTLSolver):
         self.U = np.array(U)
         self.Y = np.array(Y)
 
-        # We can only be in one element of the powerset at each timestep
-        self.mp.AddConstraint(eq(
-            np.sum(self.z,axis=0), 1
-        ))
-
-        # Flag for whether to use a convex relaxation
-        self.convex_relaxation = relaxed
-
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
-        self.AddRobustnessConstraint()
-        if robustness_cost:
-            self.AddRobustnessCost()
     
     def Solve(self):
         # Set verbose output
@@ -266,16 +258,15 @@ class DrakeTestSolver(DrakeSTLSolver):
         if formula.is_conjunctive_state_formula():
             idx = self.CSFs.index(formula)
 
-            # Get binary variables for all powersets that include this formula
-            # Each z_i in zs enforces one of the possible combinations of conjunctive
-            # state formulas that includes this CSF.
+            # Get binary variables for all modes that include this formula
             zs = []
             for i in range(len(self.powerset_idx)):
                 if idx in self.powerset_idx[i]:
                     zs.append(self.z[i,t])
 
+            # At least one of these binary variables must be 1 if z=1
             # z = sum(z_i)  
-            self.mp.AddConstraint(eq(z, sum(zs) ))
+            self.mp.AddConstraint(le(z, sum(zs) ))  # == or <=
 
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
