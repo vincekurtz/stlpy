@@ -249,6 +249,30 @@ class STLFormula(ABC):
         # Then we take the disjunction over each of these formulas
         return STLTree(self_until_tprime, "or", [0 for i in range(len(self_until_tprime))])
 
+    def get_all_conjunctive_state_formulas(self):
+        """
+        Return a list of all of the (unique) conjunctive state
+        formulas that make up this specification.
+
+        :return:    A list of STLFormula objects
+        """
+        CSFs = []
+        if self.is_conjunctive_state_formula():
+            CSFs.append(self)
+        else:
+            for subformula in self.subformula_list:
+                new_csf_list = subformula.get_all_conjunctive_state_formulas()
+                
+                # TODO: Deal with special case where there is only one formula in the
+                # conjunction list: this comes up when the UNTIL operator is used
+
+                # Only add those formulas that we don't already have to the list
+                for csf in new_csf_list:
+                    if not csf in CSFs:
+                        CSFs.append(csf)
+
+        return CSFs
+
 class STLTree(STLFormula):
     """
     Describes an STL formula :math:`\\varphi` which is made up of 
@@ -434,7 +458,8 @@ class STLTree(STLFormula):
         Helper function for recursively parsing subformulas to create
         a Tree object for visualizing this formula. 
         """
-        if formula.is_conjunctive_state_formula():
+        #if formula.is_conjunctive_state_formula():
+        if formula.is_predicate():
             tree.create_node('state formula', parent=root) 
         else:
             new_node = tree.create_node(formula.combination_type, parent=root)

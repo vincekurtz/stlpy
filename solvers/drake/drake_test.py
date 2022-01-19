@@ -26,6 +26,11 @@ class DrakeTestSolver(DrakeSTLSolver):
             print("Using Naive Branch-and-Bound solver")
             self.solver = "bnb"
 
+        # Get list of all conjunctive state formulas
+        self.CSFs = self.spec.get_all_conjunctive_state_formulas()
+        for i in self.CSFs:
+            print(i)
+
         # Flag for whether to use a convex relaxation
         self.convex_relaxation = relaxed
 

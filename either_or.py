@@ -23,7 +23,7 @@ T = 30
 
 # Create the specification
 spec = either_or_specification(goal, target_one, target_two, obstacle, T)
-spec.simplify()
+#spec.simplify()
 
 # System dynamics
 A = np.block([[1,0,1,0],
@@ -49,7 +49,8 @@ x0 = np.array([1.0,1.0,0,0])
 
 # Specify a solution strategy
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
-solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeTestSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)

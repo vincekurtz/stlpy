@@ -28,7 +28,8 @@ def reach_avoid_specification(goal_bounds, obstacle_bounds, T):
     not_at_obstacle = outside_rectangle_formula(obstacle_bounds, 0, 1, 6)
 
     # Put all of the constraints together in one specification
-    specification = not_at_obstacle.until(at_goal, 0, T)
+    #specification = not_at_obstacle.until(at_goal, 0, T)
+    specification = not_at_obstacle.always(0,T) & at_goal.eventually(0,T)
 
     return specification
 
