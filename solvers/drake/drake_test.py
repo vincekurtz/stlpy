@@ -81,11 +81,11 @@ class DrakeTestSolver(DrakeSTLSolver):
                 self.powerset_idx.pop(i)
 
         # Define binary variables for each mode at each timestep
-        self.nz = len(self.powerset)
-        self.z = self.mp.NewBinaryVariables(self.nz,self.T,'z')
+        self.num_modes = len(self.powerset)
+        self.z = self.mp.NewBinaryVariables(self.num_modes,self.T,'z')
         
         # DEBUG: continuous relaxation
-        #self.z = self.mp.NewContinuousVariables(self.nz,self.T,'z')
+        #self.z = self.mp.NewContinuousVariables(self.num_modes,self.T,'z')
         #self.mp.AddConstraint(ge( self.z.flatten(), 0 ))
         
         # We can only be in one mode at each timestep
@@ -96,13 +96,89 @@ class DrakeTestSolver(DrakeSTLSolver):
         # Make copies of x, u and y for each mode at each timestep
         # These are indexed by [i,t,:], where the last dimension is m, n, or p
         X = []; U = []; Y = []
-        for i in range(self.nz):
+        for i in range(self.num_modes):
             X.append(self.mp.NewContinuousVariables(self.T, self.sys.n))
             U.append(self.mp.NewContinuousVariables(self.T, self.sys.m))
             Y.append(self.mp.NewContinuousVariables(self.T, self.sys.p))
         self.X = np.array(X)
         self.U = np.array(U)
         self.Y = np.array(Y)
+
+        # Define a binary variable a_t^{ij} for each possible transition between
+        # modes at each timestep, and  store in a numpy array indexed by [t,i,j], 
+        # where
+        #   t is the starting time-index
+        #   i is the starting mode
+        #   j is the ending mode (i.e., the mode at t+1)
+        self.a = np.empty((self.T-1, self.num_modes, self.num_modes), dtype=object)
+        for t in range(self.T-1):
+            self.a[t,:,:] = self.mp.NewBinaryVariables(self.num_modes, self.num_modes, 'a')
+
+            # Must have exactly one active edge at each timestep
+            summ = np.sum(self.a[t,:,:])
+            self.mp.AddConstraint(summ == 1)
+
+        # Relate binary flow through each mode to its occupancy index z_t^i
+        for t in range(0,self.T-1):
+            for i in range(self.num_modes):
+                output_flow = np.sum(self.a[t,i,:])
+                self.mp.AddConstraint( self.z[i,t] == output_flow )
+        for t in range(1,self.T-1):
+            for i in range(self.num_modes):
+                input_flow = np.sum(self.a[t-1,:,i])
+                self.mp.AddConstraint( self.z[i,t] == input_flow )
+
+        # Create 2 copies of state/control/output for each edge in the SPP graph, and
+        # store in numpy arrays indexed by [t,i,j,:], where the last dimension
+        # is n, m, or p
+        self.X_start = np.empty(
+              (self.T-1, self.num_modes, self.num_modes, self.sys.n), dtype=object)
+        self.X_end = np.empty(
+              (self.T-1, self.num_modes, self.num_modes, self.sys.n), dtype=object)
+        self.U_start = np.empty(
+                (self.T-1, self.num_modes, self.num_modes, self.sys.m), dtype=object)
+        self.U_end = np.empty(
+                (self.T-1, self.num_modes, self.num_modes, self.sys.m), dtype=object)
+        self.Y_start = np.empty(
+              (self.T-1, self.num_modes, self.num_modes, self.sys.p), dtype=object)
+        self.Y_end = np.empty(
+              (self.T-1, self.num_modes, self.num_modes, self.sys.p), dtype=object)
+        for i in range(self.num_modes):
+            for j in range(self.num_modes):
+                self.X_start[:,i,j,:] = self.mp.NewContinuousVariables(self.T-1, self.sys.n)
+                self.X_end[:,i,j,:] = self.mp.NewContinuousVariables(self.T-1, self.sys.n)
+                self.U_start[:,i,j,:] = self.mp.NewContinuousVariables(self.T-1, self.sys.m)
+                self.U_end[:,i,j,:] = self.mp.NewContinuousVariables(self.T-1, self.sys.m)
+                self.Y_start[:,i,j,:] = self.mp.NewContinuousVariables(self.T-1, self.sys.p)
+                self.Y_end[:,i,j,:] = self.mp.NewContinuousVariables(self.T-1, self.sys.p)
+
+        # Recover original state, control, and output from these copies
+        x_start = np.sum(self.X_start, axis=(1,2))
+        x_end = np.sum(self.X_end, axis=(1,2))
+        self.mp.AddConstraint(eq(
+            x_start, self.x[:,:self.T-1].T
+        ))
+        self.mp.AddConstraint(eq(
+            x_end, self.x[:,1:].T
+        ))
+
+        y_start = np.sum(self.Y_start, axis=(1,2))
+        y_end = np.sum(self.Y_end, axis=(1,2))
+        self.mp.AddConstraint(eq(
+            y_start, self.y[:,:self.T-1].T
+        ))
+        self.mp.AddConstraint(eq(
+            y_end, self.y[:,1:].T
+        ))
+
+        u_start = np.sum(self.U_start, axis=(1,2))
+        u_end = np.sum(self.U_end, axis=(1,2))
+        self.mp.AddConstraint(eq(
+            u_start, self.u[:,:self.T-1].T
+        ))
+        self.mp.AddConstraint(eq(
+            u_end, self.u[:,1:].T
+        ))
 
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
@@ -153,12 +229,12 @@ class DrakeTestSolver(DrakeSTLSolver):
         constraints.
         """
         # Define slack variables
-        l = self.mp.NewContinuousVariables(self.nz, self.T)
+        l = self.mp.NewContinuousVariables(self.num_modes, self.T)
         self.mp.AddLinearConstraint(ge( l.flatten(), 0 ))
         self.mp.AddLinearCost(np.sum(l))
 
         for t in range(self.T):
-            for i in range(self.nz):
+            for i in range(self.num_modes):
                 x = self.X[i,t,:]
                 u = self.U[i,t,:]
                 z = self.z[i,t]
@@ -184,28 +260,67 @@ class DrakeTestSolver(DrakeSTLSolver):
         # Initial condition
         self.mp.AddConstraint(eq( self.x[:,0], self.x0 ))
 
-        # Dynamics constraints
-        for t in range(self.T-1):
-            x_next = 0
-            for i in range(self.nz):
-                x = self.X[i,t,:]
-                u = self.U[i,t,:]
-                x_next += self.sys.A@x + self.sys.B@u
+        # Binary flow constraints
+        #
+        #   sum_i a_{t-1}^{ij} = sum_k a_t^{jk}
+        for i in range(self.num_modes):
+            for t in range(1,self.T-1):
+                inflow = np.sum(self.a[t-1,:,i])
+                outflow = np.sum(self.a[t,i,:])
 
-            self.mp.AddConstraint(eq(
-                self.x[:,t+1], x_next
-            ))
+                self.mp.AddConstraint( inflow == outflow )
+
+        # Continuous flow constraints
+        #
+        #   sum_i x_end_{t-1}^{ij} = sum_k x_start_t^{jk}
+        for i in range(self.num_modes):
+            for t in range(1, self.T-1):
+                inflow_x = np.sum(self.X_end[t-1,:,i,:], axis=0)
+                outflow_x = np.sum(self.X_start[t,i,:,:],axis=0)
+        
+                inflow_y = np.sum(self.Y_end[t-1,:,i,:], axis=0)
+                outflow_y = np.sum(self.Y_start[t,i,:,:],axis=0)
+                
+                inflow_u = np.sum(self.U_end[t-1,:,i,:], axis=0)
+                outflow_u = np.sum(self.U_start[t,i,:,:],axis=0)
+                
+                self.mp.AddConstraint(eq( inflow_x, outflow_x ))
+                self.mp.AddConstraint(eq( inflow_y, outflow_y ))
+                self.mp.AddConstraint(eq( inflow_u, outflow_u ))
+
+
+        # Dynamics constraints
+        # x_end_t^{ij} = A x_start_t^{ij} + B u_start_t^{ij}
+        for t in range(self.T-1):
+            for i in range(self.num_modes):
+                for j in range(self.num_modes):
+                    x = self.X_start[t,i,j,:]
+                    u = self.U_start[t,i,j,:]
+                    x_next = self.X_end[t,i,j,:]
+
+                    self.mp.AddConstraint(eq(
+                        x_next, self.sys.A@x + self.sys.B@u
+                    ))
 
         # Output constraints
-        for t in range(self.T):
-            for i in range(self.nz):
-                x = self.X[i,t,:]
-                u = self.U[i,t,:]
-                y = self.Y[i,t,:]
-
-                self.mp.AddConstraint(eq(
-                    y, self.sys.C@x + self.sys.D@u
-                ))
+        for i in range(self.num_modes):
+            for j in range(self.num_modes):
+                for t in range(self.T-1):
+                    x = self.X_start[t,i,j,:]
+                    u = self.U_start[t,i,j,:]
+                    y = self.Y_start[t,i,j,:]
+                    
+                    self.mp.AddConstraint(eq(
+                        y, self.sys.C@x + self.sys.D@u
+                    ))
+                for t in range(self.T-1):
+                    x = self.X_end[t,i,j,:]
+                    u = self.U_end[t,i,j,:]
+                    y = self.Y_end[t,i,j,:]
+                    
+                    self.mp.AddConstraint(eq(
+                        y, self.sys.C@x + self.sys.D@u
+                    ))
 
     def AddSTLConstraints(self):
         """
@@ -219,7 +334,7 @@ class DrakeTestSolver(DrakeSTLSolver):
         # Add constraints to enforce state formulas depending on the value
         # of binary variables z
         for t in range(self.T):
-            for i in range(self.nz):
+            for i in range(self.num_modes):
                 y = self.Y[i,t,:]
                 z = self.z[i,t]
                 domain = self.powerset[i]
