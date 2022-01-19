@@ -2,7 +2,7 @@ from solvers.drake.drake_base import DrakeSTLSolver
 from STL import STLPredicate
 import numpy as np
 import time
-from pydrake.all import (MathematicalProgram, 
+from pydrake.all import (MathematicalProgram, HPolyhedron,
                          GurobiSolver, MosekSolver, ClpSolver,
                          SolverOptions, CommonSolverOption,
                          eq, le, ge)
@@ -59,7 +59,8 @@ class DrakeTestSolver(DrakeSTLSolver):
             A = np.vstack(As)
             b = np.hstack(bs)
 
-            self.powerset.append((A,b))
+            poly = HPolyhedron(A,b)
+            self.powerset.append(poly)
 
         # Define binary variables for each element of the powerset at each timestep
         self.nz = len(self.powerset)
@@ -155,7 +156,8 @@ class DrakeTestSolver(DrakeSTLSolver):
         # of binary variables z
         for t in range(self.T):
             for i in range(self.nz):
-                A, b = self.powerset[i]
+                A = self.powerset[i].A()
+                b = self.powerset[i].b()
                 y = self.y[:,t]
                 z = self.z[i,t]
                 self.mp.AddLinearConstraint(le(
