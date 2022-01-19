@@ -80,13 +80,10 @@ class DrakeTestSolver(DrakeSTLSolver):
                 self.powerset.pop(i)
                 self.powerset_idx.pop(i)
 
-        # Define binary variables for each mode at each timestep
+        # Define (binary) variables for each mode at each timestep
         self.num_modes = len(self.powerset)
-        self.z = self.mp.NewBinaryVariables(self.num_modes,self.T,'z')
-        
-        # DEBUG: continuous relaxation
-        #self.z = self.mp.NewContinuousVariables(self.num_modes,self.T,'z')
-        #self.mp.AddConstraint(ge( self.z.flatten(), 0 ))
+        self.z = self.mp.NewContinuousVariables(self.num_modes,self.T,'z')
+        self.mp.AddConstraint(ge( self.z.flatten(), 0 ))
         
         # We can only be in one mode at each timestep
         self.mp.AddConstraint(eq(
@@ -115,6 +112,10 @@ class DrakeTestSolver(DrakeSTLSolver):
         self.a = np.empty((self.T-1, self.num_modes, self.num_modes), dtype=object)
         for t in range(self.T-1):
             self.a[t,:,:] = self.mp.NewBinaryVariables(self.num_modes, self.num_modes, 'a')
+
+            # DEBUG: convex relaxation
+            #self.a[t,:,:] = self.mp.NewContinuousVariables(self.num_modes, self.num_modes, 'a')
+            #self.mp.AddConstraint(ge( self.a[t,:,:].flatten(), 0 ))
 
             # Must have exactly one active edge at each timestep
             summ = np.sum(self.a[t,:,:])
@@ -235,15 +236,16 @@ class DrakeTestSolver(DrakeSTLSolver):
         self.mp.AddLinearConstraint(ge( l.flatten(), 0 ))
         self.mp.AddLinearCost(np.sum(l))
 
-        for t in range(self.T):
+        for t in range(self.T-1):
             for i in range(self.num_modes):
-                x = self.X[t,i,:]
-                u = self.U[t,i,:]
-                z = self.z[i,t]
+                for j in range(self.num_modes):
+                    x = self.X_start[t,i,j,:]
+                    u = self.U_start[t,i,j,:]
+                    a = self.a[t,i,j]
 
-                quad_expr = x.T@Q@x + u.T@R@u
+                    quad_expr = x.T@Q@x + u.T@R@u
 
-                self.mp.AddRotatedLorentzConeConstraint(l[i,t], z, quad_expr)
+                    self.mp.AddRotatedLorentzConeConstraint(l[i,t], a, quad_expr)
 
     def AddDynamicsConstraints(self):
         """
