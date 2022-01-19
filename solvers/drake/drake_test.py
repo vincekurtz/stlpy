@@ -28,8 +28,10 @@ class DrakeTestSolver(DrakeSTLSolver):
 
         # Get list of all conjunctive state formulas
         self.CSFs = self.spec.get_all_conjunctive_state_formulas()
-        for i in self.CSFs:
-            print(i)
+        self.n_csf = len(self.CSFs)
+
+        # Define binary variables for each CSF at each timestep
+        self.z = self.mp.NewBinaryVariables(self.n_csf,self.T,'z')
 
         # Flag for whether to use a convex relaxation
         self.convex_relaxation = relaxed
@@ -151,7 +153,6 @@ class DrakeTestSolver(DrakeSTLSolver):
         """
         # We're at the bottom of the tree, so add the big-M constraints
         if formula.is_conjunctive_state_formula():
-        #if formula.is_predicate():
             # A*y - b <= M*(1-z) - rho
             A, b = formula.get_all_inequalities()
             y = self.y[:,t]
@@ -159,8 +160,12 @@ class DrakeTestSolver(DrakeSTLSolver):
                 A@y - b, self.M*(1-z) - self.rho
             ))
 
-            b = self.mp.NewBinaryVariables(1)
-            self.mp.AddConstraint(eq(b, z))
+            # Get the binary variable corresponding to this state_formula
+            # (Note that this implementation is somewhat inefficient, since
+            # the continuous variable z is redundant, but good solvers like
+            # Gurobi should remove that redundancy efficiently in presolve)
+            idx = self.CSFs.index(formula)
+            self.mp.AddConstraint(eq( z, self.z[idx, t] ))
         
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
