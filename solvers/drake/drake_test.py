@@ -61,10 +61,14 @@ class DrakeTestSolver(DrakeSTLSolver):
 
             self.powerset.append((A,b))
 
+        # Define binary variables for each element of the powerset at each timestep
+        self.nz = len(self.powerset)
+        self.z = self.mp.NewBinaryVariables(self.nz,self.T,'z')
 
-        # Define binary variables for each CSF at each timestep
-        self.z = self.mp.NewBinaryVariables(self.n_csf,self.T,'z')
-        
+        # We can only be in one element of the powerset at each timestep
+        self.mp.AddConstraint(eq(
+            np.sum(self.z,axis=0), 1
+        ))
 
         # Flag for whether to use a convex relaxation
         self.convex_relaxation = relaxed
@@ -150,12 +154,12 @@ class DrakeTestSolver(DrakeSTLSolver):
         # Add constraints to enforce state formulas depending on the value
         # of binary variables z
         for t in range(self.T):
-            for i in range(self.n_csf):
-                A, b = self.CSFs[i].get_all_inequalities()
+            for i in range(self.nz):
+                A, b = self.powerset[i]
                 y = self.y[:,t]
                 z = self.z[i,t]
                 self.mp.AddLinearConstraint(le(
-                    A@y - b, self.M*(1-z) - self.rho
+                    A@y - b, self.M*(1-z)
                 ))
 
         # Add a binary variable which takes a value of 1 only 
@@ -173,14 +177,6 @@ class DrakeTestSolver(DrakeSTLSolver):
         add constraints to the optimization problem such that z
         takes value 1 only if the formula is satisfied (at time t). 
 
-        If the formula is a predicate, this constraint uses the "big-M" 
-        formulation
-
-            A[x(t);u(t)] - b + (1-z)M >= 0,
-
-        which enforces A[x;u] - b >= 0 if z=1, where (A,b) are the 
-        linear constraints associated with this predicate. 
-
         If the formula is not a predicate, we recursively traverse the
         subformulas associated with this formula, adding new binary 
         variables z_i for each subformula and constraining
@@ -195,22 +191,21 @@ class DrakeTestSolver(DrakeSTLSolver):
         if the subformulas are combined with disjuction (at least one
         subformula must hold). 
         """
-        # We're at the bottom of the tree, so add the big-M constraints
+        # We're at the bottom of the tree
         if formula.is_conjunctive_state_formula():
-            # Get indeces for all powersets that include this formula
             idx = self.CSFs.index(formula)
-            idxs = []
+
+            # Get binary variables for all powersets that include this formula
+            # Each z_i in zs enforces one of the possible combinations of conjunctive
+            # state formulas that includes this CSF.
+            zs = []
             for i in range(len(self.powerset_idx)):
                 if idx in self.powerset_idx[i]:
-                    idxs.append(i)
+                    zs.append(self.z[i,t])
 
-            # Get the binary variable corresponding to this state_formula
-            # (Note that this implementation is somewhat inefficient, since
-            # the continuous variable z is redundant, but good solvers like
-            # Gurobi should remove that redundancy efficiently in presolve)
-            idx = self.CSFs.index(formula)
-            self.mp.AddConstraint(eq( z, self.z[idx, t] ))
-        
+            # z = sum(z_i)  
+            self.mp.AddConstraint(eq(z, sum(zs) ))
+
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
         else:
