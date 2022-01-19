@@ -8,6 +8,8 @@ from pydrake.all import (MathematicalProgram,
                          eq, le, ge)
 from pydrake.solvers.branch_and_bound import MixedIntegerBranchAndBound
 
+from itertools import chain, combinations
+
 class DrakeTestSolver(DrakeSTLSolver):
     """
     Scratch solver for implementing research ideas
@@ -29,6 +31,35 @@ class DrakeTestSolver(DrakeSTLSolver):
         # Get list of all conjunctive state formulas
         self.CSFs = self.spec.get_all_conjunctive_state_formulas()
         self.n_csf = len(self.CSFs)
+
+        # Define a list of indexes for all possible combinations of CSFs
+        s = [i for i in range(self.n_csf)]
+        self.powerset_idx = list(chain.from_iterable(combinations(s, r) for r in range(len(s)+1)))
+
+        # DEBUG: define global bounds on y
+        # TODO: let the user determine this
+        y_min = np.array([0,0,-1,-1,-0.5,-0.5])
+        y_max = np.array([10,10,1,1,0.5,0.5])
+        A0 = np.vstack([np.eye(6),-np.eye(6)])
+        b0 = np.hstack([y_max,-y_min])
+
+        # Define a list of inequalities (A*y<=b) associated with each possible
+        # combination of CSFs.
+        self.powerset = []
+        for idx in self.powerset_idx:
+            # TODO: check feasibility
+            As = [A0]
+            bs = [b0]
+            for i in idx:
+                state_formula = self.CSFs[i]
+                A, b = state_formula.get_all_inequalities()
+                As.append(A)
+                bs.append(b)
+
+            A = np.vstack(As)
+            b = np.hstack(bs)
+
+            self.powerset.append((A,b))
 
         # Define binary variables for each CSF at each timestep
         self.z = self.mp.NewBinaryVariables(self.n_csf,self.T,'z')
