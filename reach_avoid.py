@@ -54,8 +54,8 @@ x0 = np.array([1.0,2.0,0,0])
 #solver = GurobiLCPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 solver = DrakeTestSolver(spec, sys, x0, T, robustness_cost=False)
+#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = AdmmSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
@@ -69,7 +69,7 @@ solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
 
 # Add quadratic running cost (optional)
-#solver.AddQuadraticCost(Q,R)
+solver.AddQuadraticCost(Q,R)
 
 # Solve the optimization problem
 x, u, _, _ = solver.Solve()

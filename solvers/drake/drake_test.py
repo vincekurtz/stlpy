@@ -65,6 +65,21 @@ class DrakeTestSolver(DrakeSTLSolver):
         # Define binary variables for each element of the powerset at each timestep
         self.nz = len(self.powerset)
         self.z = self.mp.NewBinaryVariables(self.nz,self.T,'z')
+        
+        # DEBUG: continuous relaxation
+        #self.z = self.mp.NewContinuousVariables(self.nz,self.T,'z')
+        #self.mp.AddConstraint(ge( self.z.flatten(), 0 ))
+
+        # Make copies of x, u and y for each element of the powerset at each timestep
+        # These are indexed by [i,t,:], where the last dimension is m, n, or p
+        X = []; U = []; Y = []
+        for i in range(self.nz):
+            X.append(self.mp.NewContinuousVariables(self.T, self.sys.n))
+            U.append(self.mp.NewContinuousVariables(self.T, self.sys.m))
+            Y.append(self.mp.NewContinuousVariables(self.T, self.sys.p))
+        self.X = np.array(X)
+        self.U = np.array(U)
+        self.Y = np.array(Y)
 
         # We can only be in one element of the powerset at each timestep
         self.mp.AddConstraint(eq(
@@ -80,7 +95,7 @@ class DrakeTestSolver(DrakeSTLSolver):
         self.AddRobustnessConstraint()
         if robustness_cost:
             self.AddRobustnessCost()
-
+    
     def Solve(self):
         # Set verbose output
         options = SolverOptions()
@@ -118,6 +133,27 @@ class DrakeTestSolver(DrakeSTLSolver):
             rho = -np.inf
 
         return (x,u, rho, solve_time)
+    
+    def AddQuadraticCost(self, Q, R):
+        """
+        Add the running cost using the perspective formulation, which
+        encodes a quadratic cost as a linear cost plus second-order cone
+        constraints.
+        """
+        # Define slack variables
+        l = self.mp.NewContinuousVariables(self.nz, self.T)
+        self.mp.AddLinearConstraint(ge( l.flatten(), 0 ))
+        self.mp.AddLinearCost(np.sum(l))
+
+        for t in range(self.T):
+            for i in range(self.nz):
+                x = self.X[i,t,:]
+                u = self.U[i,t,:]
+                z = self.z[i,t]
+
+                quad_expr = x.T@Q@x + u.T@R@u
+
+                self.mp.AddRotatedLorentzConeConstraint(l[i,t], z, quad_expr)
 
     def AddDynamicsConstraints(self):
         """
@@ -128,20 +164,36 @@ class DrakeTestSolver(DrakeSTLSolver):
 
         to the optimization problem. 
         """
+        # Copies of x, u, y sum to the original thing
+        self.mp.AddConstraint(eq( self.x.T, np.sum(self.X,axis=0) ))
+        self.mp.AddConstraint(eq( self.u.T, np.sum(self.U,axis=0) ))
+        self.mp.AddConstraint(eq( self.y.T, np.sum(self.Y,axis=0) ))
+
         # Initial condition
         self.mp.AddConstraint(eq( self.x[:,0], self.x0 ))
 
-        # Dynamics
+        # Dynamics constraints
         for t in range(self.T-1):
+            x_next = 0
+            for i in range(self.nz):
+                x = self.X[i,t,:]
+                u = self.U[i,t,:]
+                x_next += self.sys.A@x + self.sys.B@u
+
             self.mp.AddConstraint(eq(
-                self.x[:,t+1], self.sys.A@self.x[:,t] + self.sys.B@self.u[:,t]
+                self.x[:,t+1], x_next
             ))
-            self.mp.AddConstraint(eq(
-                self.y[:,t], self.sys.C@self.x[:,t] + self.sys.D@self.u[:,t]
-            ))
-        self.mp.AddConstraint(eq(
-            self.y[:,self.T-1], self.sys.C@self.x[:,self.T-1] + self.sys.D@self.u[:,self.T-1]
-        ))
+
+        # Output constraints
+        for t in range(self.T):
+            for i in range(self.nz):
+                x = self.X[i,t,:]
+                u = self.U[i,t,:]
+                y = self.Y[i,t,:]
+
+                self.mp.AddConstraint(eq(
+                    y, self.sys.C@x + self.sys.D@u
+                ))
 
     def AddSTLConstraints(self):
         """
@@ -156,13 +208,10 @@ class DrakeTestSolver(DrakeSTLSolver):
         # of binary variables z
         for t in range(self.T):
             for i in range(self.nz):
-                A = self.powerset[i].A()
-                b = self.powerset[i].b()
-                y = self.y[:,t]
+                y = self.Y[i,t,:]
                 z = self.z[i,t]
-                self.mp.AddLinearConstraint(le(
-                    A@y - b, self.M*(1-z)
-                ))
+                domain = self.powerset[i]
+                domain.AddPointInNonnegativeScalingConstraints(self.mp, y, z)
 
         # Add a binary variable which takes a value of 1 only 
         # if the overall specification is satisfied.
@@ -212,6 +261,7 @@ class DrakeTestSolver(DrakeSTLSolver):
         # boolean constraints recursively
         else:
             z_subs = self.mp.NewContinuousVariables(len(formula.subformula_list),1)
+            #z_subs = self.mp.NewBinaryVariables(len(formula.subformula_list),1)
             self.mp.AddConstraint(ge(z_subs, 0))
                     
             if formula.combination_type == "and":
