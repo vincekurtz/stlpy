@@ -94,15 +94,17 @@ class DrakeTestSolver(DrakeSTLSolver):
         ))
 
         # Make copies of x, u and y for each mode at each timestep
-        # These are indexed by [i,t,:], where the last dimension is m, n, or p
+        # These are indexed by [t,i,:], where the last dimension is m, n, or p
         X = []; U = []; Y = []
-        for i in range(self.num_modes):
-            X.append(self.mp.NewContinuousVariables(self.T, self.sys.n))
-            U.append(self.mp.NewContinuousVariables(self.T, self.sys.m))
-            Y.append(self.mp.NewContinuousVariables(self.T, self.sys.p))
+        for t in range(self.T):
+            X.append(self.mp.NewContinuousVariables(self.num_modes, self.sys.n))
+            U.append(self.mp.NewContinuousVariables(self.num_modes, self.sys.m))
+            Y.append(self.mp.NewContinuousVariables(self.num_modes, self.sys.p))
         self.X = np.array(X)
         self.U = np.array(U)
         self.Y = np.array(Y)
+
+        print("debug 1")
 
         # Define a binary variable a_t^{ij} for each possible transition between
         # modes at each timestep, and  store in a numpy array indexed by [t,i,j], 
@@ -123,10 +125,12 @@ class DrakeTestSolver(DrakeSTLSolver):
             for i in range(self.num_modes):
                 output_flow = np.sum(self.a[t,i,:])
                 self.mp.AddConstraint( self.z[i,t] == output_flow )
-        for t in range(1,self.T-1):
+        for t in range(1,self.T):
             for i in range(self.num_modes):
                 input_flow = np.sum(self.a[t-1,:,i])
                 self.mp.AddConstraint( self.z[i,t] == input_flow )
+        
+        print("debug 2")
 
         # Create 2 copies of state/control/output for each edge in the SPP graph, and
         # store in numpy arrays indexed by [t,i,j,:], where the last dimension
@@ -151,76 +155,74 @@ class DrakeTestSolver(DrakeSTLSolver):
                 self.U_end[:,i,j,:] = self.mp.NewContinuousVariables(self.T-1, self.sys.m)
                 self.Y_start[:,i,j,:] = self.mp.NewContinuousVariables(self.T-1, self.sys.p)
                 self.Y_end[:,i,j,:] = self.mp.NewContinuousVariables(self.T-1, self.sys.p)
+        
+        print("debug 3")
 
-        # Recover original state, control, and output from these copies
-        x_start = np.sum(self.X_start, axis=(1,2))
-        x_end = np.sum(self.X_end, axis=(1,2))
-        self.mp.AddConstraint(eq(
-            x_start, self.x[:,:self.T-1].T
-        ))
-        self.mp.AddConstraint(eq(
-            x_end, self.x[:,1:].T
-        ))
+        ## Recover original state, control, and output from these copies
+        #x_start = np.sum(self.X_start, axis=(1,2))
+        #x_end = np.sum(self.X_end, axis=(1,2))
+        #self.mp.AddConstraint(eq(
+        #    x_start, self.x[:,:self.T-1].T
+        #))
+        #self.mp.AddConstraint(eq(
+        #    x_end, self.x[:,1:].T
+        #))
 
-        y_start = np.sum(self.Y_start, axis=(1,2))
-        y_end = np.sum(self.Y_end, axis=(1,2))
-        self.mp.AddConstraint(eq(
-            y_start, self.y[:,:self.T-1].T
-        ))
-        self.mp.AddConstraint(eq(
-            y_end, self.y[:,1:].T
-        ))
+        #y_start = np.sum(self.Y_start, axis=(1,2))
+        #y_end = np.sum(self.Y_end, axis=(1,2))
+        #self.mp.AddConstraint(eq(
+        #    y_start, self.y[:,:self.T-1].T
+        #))
+        #self.mp.AddConstraint(eq(
+        #    y_end, self.y[:,1:].T
+        #))
 
-        u_start = np.sum(self.U_start, axis=(1,2))
-        u_end = np.sum(self.U_end, axis=(1,2))
-        self.mp.AddConstraint(eq(
-            u_start, self.u[:,:self.T-1].T
-        ))
-        self.mp.AddConstraint(eq(
-            u_end, self.u[:,1:].T
-        ))
+        #u_start = np.sum(self.U_start, axis=(1,2))
+        #u_end = np.sum(self.U_end, axis=(1,2))
+        #self.mp.AddConstraint(eq(
+        #    u_start, self.u[:,:self.T-1].T
+        #))
+        #self.mp.AddConstraint(eq(
+        #    u_end, self.u[:,1:].T
+        #))
+        
+        print("debug 4")
+
+        # Recover state, control, and output for each mode from these copies
+        for t in range(self.T-1):
+            for i in range(self.num_modes):
+                state_outflow = np.sum(self.X_start[t,i,:,:], axis=0)
+                control_outflow = np.sum(self.U_start[t,i,:,:], axis=0)
+                output_outflow = np.sum(self.Y_start[t,i,:,:], axis=0)
+                self.mp.AddConstraint(eq(
+                    self.X[t,i], state_outflow
+                ))
+                self.mp.AddConstraint(eq(
+                    self.U[t,i], control_outflow
+                ))
+                self.mp.AddConstraint(eq(
+                    self.Y[t,i], output_outflow
+                ))
+        for t in range(1,self.T):
+            for i in range(self.num_modes):
+                state_inflow = np.sum(self.X_end[t-1,:,i,:], axis=0)
+                control_inflow = np.sum(self.U_end[t-1,:,i,:], axis=0)
+                output_inflow = np.sum(self.Y_end[t-1,:,i,:], axis=0)
+                self.mp.AddConstraint(eq(
+                    self.X[t,i], state_inflow
+                ))
+                self.mp.AddConstraint(eq(
+                    self.U[t,i], control_inflow
+                ))
+                self.mp.AddConstraint(eq(
+                    self.Y[t,i], output_inflow
+                ))
 
         # Add cost and constraints to the optimization problem
+        print("debug 5")
         self.AddDynamicsConstraints()
+        print("debug 6")
         self.AddSTLConstraints()
-    
-    def Solve(self):
-        # Set verbose output
-        options = SolverOptions()
-        options.SetOption(CommonSolverOption.kPrintToConsole,1)
-        #options.SetOption(GurobiSolver.id(), "Presolve", 2)
-        self.mp.SetSolverOptions(options)
-            
-        if self.solver == "bnb":
-            bnb_solver = MixedIntegerBranchAndBound(self.mp, ClpSolver.id())
-            st = time.time()
-            status = bnb_solver.Solve()
-            solve_time = time.time() - st
-            success = True
-            res = bnb_solver
-
-        else:
-            res = self.solver.Solve(self.mp)
-            success = res.is_success()
-            solve_time = res.get_solver_details().optimizer_time
-            
-        print("")
-        print("Solve time: ", solve_time)
-
-        if success:
-            x = res.GetSolution(self.x)
-            u = res.GetSolution(self.u)
-
-            y = np.vstack([x,u])
-            rho = self.spec.robustness(y,0)[0]
-            print("Optimal robustness: ", rho)
-        else:
-            print("No solution found")
-            x = None
-            u = None
-            rho = -np.inf
-
-        return (x,u, rho, solve_time)
     
     def AddQuadraticCost(self, Q, R):
         """
@@ -235,8 +237,8 @@ class DrakeTestSolver(DrakeSTLSolver):
 
         for t in range(self.T):
             for i in range(self.num_modes):
-                x = self.X[i,t,:]
-                u = self.U[i,t,:]
+                x = self.X[t,i,:]
+                u = self.U[t,i,:]
                 z = self.z[i,t]
 
                 quad_expr = x.T@Q@x + u.T@R@u
@@ -253,9 +255,9 @@ class DrakeTestSolver(DrakeSTLSolver):
         to the optimization problem. 
         """
         # Copies of x, u, y sum to the original thing
-        self.mp.AddConstraint(eq( self.x.T, np.sum(self.X,axis=0) ))
-        self.mp.AddConstraint(eq( self.u.T, np.sum(self.U,axis=0) ))
-        self.mp.AddConstraint(eq( self.y.T, np.sum(self.Y,axis=0) ))
+        self.mp.AddConstraint(eq( self.x.T, np.sum(self.X,axis=1) ))
+        self.mp.AddConstraint(eq( self.u.T, np.sum(self.U,axis=1) ))
+        self.mp.AddConstraint(eq( self.y.T, np.sum(self.Y,axis=1) ))
 
         # Initial condition
         self.mp.AddConstraint(eq( self.x[:,0], self.x0 ))
@@ -332,13 +334,18 @@ class DrakeTestSolver(DrakeSTLSolver):
         of binary variables for all subformulas in the specification.
         """
         # Add constraints to enforce state formulas depending on the value
-        # of binary variables z
-        for t in range(self.T):
+        # of binary variables a_ij
+        for t in range(self.T-1):
             for i in range(self.num_modes):
-                y = self.Y[i,t,:]
-                z = self.z[i,t]
-                domain = self.powerset[i]
-                domain.AddPointInNonnegativeScalingConstraints(self.mp, y, z)
+                for j in range(self.num_modes):
+                    y_start = self.Y_start[t,i,j,:]
+                    y_end = self.Y_end[t,i,j,:]
+                    a = self.a[t,i,j]
+
+                    start_domain = self.powerset[i]
+                    end_domain = self.powerset[j]
+                    start_domain.AddPointInNonnegativeScalingConstraints(self.mp, y_start, a)
+                    end_domain.AddPointInNonnegativeScalingConstraints(self.mp, y_end, a)
 
         # Add a binary variable which takes a value of 1 only 
         # if the overall specification is satisfied.
@@ -381,7 +388,7 @@ class DrakeTestSolver(DrakeSTLSolver):
 
             # At least one of these binary variables must be 1 if z=1
             # z = sum(z_i)  
-            self.mp.AddConstraint(le(z, sum(zs) ))  # == or <=
+            self.mp.AddConstraint(eq(z, sum(zs) ))  # == or <=
 
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
@@ -398,3 +405,42 @@ class DrakeTestSolver(DrakeSTLSolver):
             for i, subformula in enumerate(formula.subformula_list):
                 t_sub = formula.timesteps[i]
                 self.AddSubformulaConstraints(subformula, z_subs[i], t+t_sub)
+    
+    def Solve(self):
+        # Set verbose output
+        options = SolverOptions()
+        options.SetOption(CommonSolverOption.kPrintToConsole,1)
+        #options.SetOption(GurobiSolver.id(), "Presolve", 2)
+        self.mp.SetSolverOptions(options)
+            
+        if self.solver == "bnb":
+            bnb_solver = MixedIntegerBranchAndBound(self.mp, ClpSolver.id())
+            st = time.time()
+            status = bnb_solver.Solve()
+            solve_time = time.time() - st
+            success = True
+            res = bnb_solver
+
+        else:
+            res = self.solver.Solve(self.mp)
+            success = res.is_success()
+            solve_time = res.get_solver_details().optimizer_time
+            
+        print("")
+        print("Solve time: ", solve_time)
+
+        if success:
+            x = res.GetSolution(self.x)
+            u = res.GetSolution(self.u)
+
+            y = np.vstack([x,u])
+            rho = self.spec.robustness(y,0)[0]
+            print("Optimal robustness: ", rho)
+        else:
+            print("No solution found")
+            x = None
+            u = None
+            rho = -np.inf
+
+        return (x,u, rho, solve_time)
+    

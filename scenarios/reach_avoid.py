@@ -29,7 +29,7 @@ def reach_avoid_specification(goal_bounds, obstacle_bounds, T):
 
     # Put all of the constraints together in one specification
     #specification = not_at_obstacle.until(at_goal, 0, T)
-    specification = not_at_obstacle.always(0,T) & at_goal.eventually(0,T)
+    specification = not_at_obstacle.always(0,T) & at_goal.eventually(T,T)
 
     return specification
 
