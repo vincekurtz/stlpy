@@ -61,8 +61,10 @@ class DrakeTestSolver(DrakeSTLSolver):
 
             self.powerset.append((A,b))
 
+
         # Define binary variables for each CSF at each timestep
         self.z = self.mp.NewBinaryVariables(self.n_csf,self.T,'z')
+        
 
         # Flag for whether to use a convex relaxation
         self.convex_relaxation = relaxed
@@ -145,6 +147,17 @@ class DrakeTestSolver(DrakeSTLSolver):
         to the optimization problem, via the recursive introduction
         of binary variables for all subformulas in the specification.
         """
+        # Add constraints to enforce state formulas depending on the value
+        # of binary variables z
+        for t in range(self.T):
+            for i in range(self.n_csf):
+                A, b = self.CSFs[i].get_all_inequalities()
+                y = self.y[:,t]
+                z = self.z[i,t]
+                self.mp.AddLinearConstraint(le(
+                    A@y - b, self.M*(1-z) - self.rho
+                ))
+
         # Add a binary variable which takes a value of 1 only 
         # if the overall specification is satisfied.
         z_spec = self.mp.NewContinuousVariables(1)
@@ -184,12 +197,12 @@ class DrakeTestSolver(DrakeSTLSolver):
         """
         # We're at the bottom of the tree, so add the big-M constraints
         if formula.is_conjunctive_state_formula():
-            # A*y - b <= M*(1-z) - rho
-            A, b = formula.get_all_inequalities()
-            y = self.y[:,t]
-            self.mp.AddLinearConstraint(le(
-                A@y - b, self.M*(1-z) - self.rho
-            ))
+            # Get indeces for all powersets that include this formula
+            idx = self.CSFs.index(formula)
+            idxs = []
+            for i in range(len(self.powerset_idx)):
+                if idx in self.powerset_idx[i]:
+                    idxs.append(i)
 
             # Get the binary variable corresponding to this state_formula
             # (Note that this implementation is somewhat inefficient, since
