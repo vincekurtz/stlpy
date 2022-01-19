@@ -47,7 +47,6 @@ class DrakeTestSolver(DrakeSTLSolver):
         # combination of CSFs.
         self.powerset = []
         for idx in self.powerset_idx:
-            # TODO: check feasibility
             As = [A0]
             bs = [b0]
             for i in idx:
@@ -61,6 +60,27 @@ class DrakeTestSolver(DrakeSTLSolver):
 
             poly = HPolyhedron(A,b)
             self.powerset.append(poly)
+
+        # Prune infeasible combinations
+        i = 0
+        while i < len(self.powerset_idx):
+            A = self.powerset[i].A()
+            b = self.powerset[i].b()
+
+            # solve a simple small LP to determine feasibility
+            prog = MathematicalProgram()
+            x = prog.NewContinuousVariables(A.shape[1])
+            prog.AddLinearConstraint(le( A@x, b ))
+            res = self.solver.Solve(prog)
+            feasible = res.is_success()
+
+            if feasible:
+                # leave this set alone and go to the next one
+                i += 1
+            else:
+                # Remove this set 
+                self.powerset.pop(i)
+                self.powerset_idx.pop(i)
 
         # Define binary variables for each element of the powerset at each timestep
         self.nz = len(self.powerset)
