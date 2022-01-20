@@ -82,7 +82,7 @@ class DrakeTestSolver(DrakeSTLSolver):
 
         # Define binary variables for each element of the powerset at each timestep
         self.nz = len(self.powerset)
-        self.z = self.mp.NewBinaryVariables(self.nz,self.T,'z')
+        #self.z = self.mp.NewBinaryVariables(self.nz,self.T,'z')
         
         # DEBUG: continuous relaxation
         self.z = self.mp.NewContinuousVariables(self.nz,self.T,'z')
@@ -141,6 +141,13 @@ class DrakeTestSolver(DrakeSTLSolver):
             y = np.vstack([x,u])
             rho = self.spec.robustness(y,0)[0]
             print("Optimal robustness: ", rho)
+
+            # DEBUG get approximate relaxation gap
+            # (assumes robustness cost is on)
+            rho_solver = -res.get_optimal_cost()
+            gap = 100* (rho_solver - rho) / (np.abs(rho) + 1e-6)
+
+            print("Relaxation gap: ", gap, "%")
         else:
             print("No solution found")
             x = None
@@ -262,16 +269,18 @@ class DrakeTestSolver(DrakeSTLSolver):
             
                     # Add robustness constraints 
                     A, b = formula.get_all_inequalities()
-                    M = 8
                     yi = self.Y[i,t,:]
                     zi = self.z[i,t]
-                    rho = self.mp.NewContinuousVariables(1)
+                    
+                    #rho = self.mp.NewContinuousVariables(1)
+                    #self.mp.AddConstraint(rho[0] >= 0)
+                    #self.mp.AddCost(-rho[0])
+                    #self.mp.AddConstraint(eq(
+                    #    rho, b*zi - A@yi
+                    #))
 
-                    self.mp.AddConstraint(rho[0] >= 0)
-                    self.mp.AddCost(-rho[0])
-
-                    self.mp.AddConstraint(eq(
-                        rho, b*zi - A@yi
+                    self.mp.AddConstraint(le(
+                        self.rho, b - A@yi + 8*(1-zi)
                     ))
 
             # z = sum(z_i)  

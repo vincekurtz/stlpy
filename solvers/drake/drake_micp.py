@@ -194,20 +194,31 @@ class DrakeMICPSolver(DrakeSTLSolver):
                 formula.a.T@y - formula.b + (1-z)*self.M, self.rho
             ))
 
-            # DEBUG
-            #rho_i = self.mp.NewContinuousVariables(1)
-            ##self.mp.AddConstraint(ge( rho_i, 0 ))
-            ##self.mp.AddConstraint(ge( rho_i, self.rho ))
-            #self.mp.AddLinearConstraint(ge(
-            #    formula.a.T@y - formula.b + (1-z)*self.M, rho_i
-            #))
-            ##self.mp.AddLinearConstraint(ge(
-            ##    self.M*z, rho_i
-            ##))
-            #self.mp.AddCost(-rho_i[0])
-
             b = self.mp.NewBinaryVariables(1)
             self.mp.AddConstraint(eq(b, z))
+    
+        # DEBUG
+        #if formula.is_conjunctive_state_formula():
+        #    y = self.y[:,t]
+        #    rho = self.mp.NewContinuousVariables(1)
+        #    self.mp.AddLinearConstraint( 0 <= rho[0] )
+        #    A, b = formula.get_all_inequalities()
+
+        #    self.mp.AddLinearConstraint(le(
+        #        A@y - b, self.M*(1-z) - rho
+        #    ))
+
+        #    b = self.mp.NewBinaryVariables(1)
+        #    self.mp.AddConstraint(eq(b, z))
+
+        #    #self.mp.AddConstraint(ge( rho_i, 0 ))
+        #    #self.mp.AddLinearConstraint(le(
+        #    #    formula.b - formula.a.T@y, -rho_i + (1-z)*self.M
+        #    #))
+        #    self.mp.AddLinearConstraint(ge(
+        #        self.M*z, rho
+        #    ))
+        #    self.mp.AddCost(-rho[0])
         
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
