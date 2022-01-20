@@ -34,7 +34,7 @@ class DrakeTestSolver(DrakeSTLSolver):
         s = [i for i in range(self.n_csf)]
         self.powerset_idx = list(chain.from_iterable(combinations(s, r) for r in range(len(s)+1)))
 
-        # DEBUG: define global bounds on y
+        # define global bounds on y
         # TODO: let the user determine this
         y_min = np.array([0,0,-1,-1,-0.5,-0.5])
         y_max = np.array([10,10,1,1,0.5,0.5])
@@ -85,8 +85,8 @@ class DrakeTestSolver(DrakeSTLSolver):
         self.z = self.mp.NewBinaryVariables(self.nz,self.T,'z')
         
         # DEBUG: continuous relaxation
-        #self.z = self.mp.NewContinuousVariables(self.nz,self.T,'z')
-        #self.mp.AddConstraint(ge( self.z.flatten(), 0 ))
+        self.z = self.mp.NewContinuousVariables(self.nz,self.T,'z')
+        self.mp.AddConstraint(ge( self.z.flatten(), 0 ))
 
         # Make copies of x, u and y for each element of the powerset at each timestep
         # These are indexed by [i,t,:], where the last dimension is m, n, or p
@@ -259,6 +259,20 @@ class DrakeTestSolver(DrakeSTLSolver):
             for i in range(len(self.powerset_idx)):
                 if idx in self.powerset_idx[i]:
                     zs.append(self.z[i,t])
+            
+                    # Add robustness constraints 
+                    A, b = formula.get_all_inequalities()
+                    M = 8
+                    yi = self.Y[i,t,:]
+                    zi = self.z[i,t]
+                    rho = self.mp.NewContinuousVariables(1)
+
+                    self.mp.AddConstraint(rho[0] >= 0)
+                    self.mp.AddCost(-rho[0])
+
+                    self.mp.AddConstraint(eq(
+                        rho, b*zi - A@yi
+                    ))
 
             # z = sum(z_i)  
             self.mp.AddConstraint(eq(z, sum(zs) ))

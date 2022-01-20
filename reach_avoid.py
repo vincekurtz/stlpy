@@ -18,7 +18,7 @@ from solvers import *
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
-T = 10
+T = 15
 
 # Create the specification
 spec = reach_avoid_specification(goal_bounds, obstacle_bounds, T)
@@ -54,7 +54,7 @@ x0 = np.array([1.0,2.0,0,0])
 #solver = GurobiLCPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = DrakeTestSolver(spec, sys, x0, T)
+solver = DrakeTestSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = AdmmSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)

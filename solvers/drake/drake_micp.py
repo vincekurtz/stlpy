@@ -194,6 +194,18 @@ class DrakeMICPSolver(DrakeSTLSolver):
                 formula.a.T@y - formula.b + (1-z)*self.M, self.rho
             ))
 
+            # DEBUG
+            #rho_i = self.mp.NewContinuousVariables(1)
+            ##self.mp.AddConstraint(ge( rho_i, 0 ))
+            ##self.mp.AddConstraint(ge( rho_i, self.rho ))
+            #self.mp.AddLinearConstraint(ge(
+            #    formula.a.T@y - formula.b + (1-z)*self.M, rho_i
+            #))
+            ##self.mp.AddLinearConstraint(ge(
+            ##    self.M*z, rho_i
+            ##))
+            #self.mp.AddCost(-rho_i[0])
+
             b = self.mp.NewBinaryVariables(1)
             self.mp.AddConstraint(eq(b, z))
         
