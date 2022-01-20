@@ -111,11 +111,11 @@ class DrakeTestSolver(DrakeSTLSolver):
         #   j is the ending mode (i.e., the mode at t+1)
         self.a = np.empty((self.T-1, self.num_modes, self.num_modes), dtype=object)
         for t in range(self.T-1):
-            self.a[t,:,:] = self.mp.NewBinaryVariables(self.num_modes, self.num_modes, 'a')
+            #self.a[t,:,:] = self.mp.NewBinaryVariables(self.num_modes, self.num_modes, 'a')
 
             # DEBUG: convex relaxation
-            #self.a[t,:,:] = self.mp.NewContinuousVariables(self.num_modes, self.num_modes, 'a')
-            #self.mp.AddConstraint(ge( self.a[t,:,:].flatten(), 0 ))
+            self.a[t,:,:] = self.mp.NewContinuousVariables(self.num_modes, self.num_modes, 'a')
+            self.mp.AddConstraint(ge( self.a[t,:,:].flatten(), 0 ))
 
             # Must have exactly one active edge at each timestep
             summ = np.sum(self.a[t,:,:])
@@ -434,6 +434,10 @@ class DrakeTestSolver(DrakeSTLSolver):
         if success:
             x = res.GetSolution(self.x)
             u = res.GetSolution(self.u)
+
+            # DEBUG
+            z = res.GetSolution(self.z)
+            print(z)
 
             y = np.vstack([x,u])
             rho = self.spec.robustness(y,0)[0]
