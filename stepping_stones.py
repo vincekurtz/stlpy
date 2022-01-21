@@ -15,8 +15,8 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-num_stones = 20
-T = 20
+num_stones = 7
+T = 15
 
 # Create the specification
 spec, stones = stepping_stones_specification(num_stones, T, seed=1)
@@ -43,15 +43,15 @@ Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities
 R = 1e-1*np.eye(2)
 
 # Initial state
-x0 = np.array([2.0,2.0,0,0])
+x0 = np.array([2.0,1.3,0,0])
 
 # Specify a solution strategy
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-solver = DrakeTestSolver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeTestSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
 
 # Set bounds on state and control variables
@@ -63,7 +63,7 @@ solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
 
 # Add quadratic running cost (optional)
-#solver.AddQuadraticCost(Q,R)
+solver.AddQuadraticCost(Q,R)
 
 # Solve the optimization problem
 x, u, _, _ = solver.Solve()

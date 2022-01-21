@@ -25,7 +25,9 @@ def either_or_specification(goal, target_one, target_two, obstacle, T):
     not_at_obstacle = outside_rectangle_formula(obstacle, 0, 1, 6)
 
     specification = at_either_target.eventually(0,T) & \
-                    not_at_obstacle.until(at_goal, 0, T)
+                    not_at_obstacle.always(0,T) & \
+                    at_goal.eventually(0,T)
+                    #not_at_obstacle.until(at_goal, 0, T)
 
     return specification
 

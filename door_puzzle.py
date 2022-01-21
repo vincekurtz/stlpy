@@ -15,8 +15,8 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-T = 40
-N_pairs = 1
+T = 50
+N_pairs = 2
 
 # Create the specification
 spec = door_puzzle_specification(T, N_pairs)
@@ -63,7 +63,7 @@ solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
 
 # Add quadratic running cost (optional)
-#solver.AddQuadraticCost(Q,R)
+solver.AddQuadraticCost(0.01*Q,0.01*R)
 
 # Solve the optimization problem
 x, u, _, _ = solver.Solve()

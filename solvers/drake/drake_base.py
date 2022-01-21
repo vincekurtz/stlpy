@@ -27,6 +27,7 @@ class DrakeSTLSolver(STLSolver):
         self.mp.AddConstraint( self.rho >= rho_min )
     
     def AddRobustnessCost(self):
+        # TODO: add adjustable weight
         self.mp.AddCost(-self.rho)
     
     def AddControlBounds(self, u_min, u_max):

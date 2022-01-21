@@ -82,11 +82,11 @@ class DrakeTestSolver(DrakeSTLSolver):
 
         # Define binary variables for each element of the powerset at each timestep
         self.nz = len(self.powerset)
-        #self.z = self.mp.NewBinaryVariables(self.nz,self.T,'z')
+        self.z = self.mp.NewBinaryVariables(self.nz,self.T,'z')
         
         # DEBUG: continuous relaxation
-        self.z = self.mp.NewContinuousVariables(self.nz,self.T,'z')
-        self.mp.AddConstraint(ge( self.z.flatten(), 0 ))
+        #self.z = self.mp.NewContinuousVariables(self.nz,self.T,'z')
+        #self.mp.AddConstraint(ge( self.z.flatten(), 0 ))
 
         # Make copies of x, u and y for each element of the powerset at each timestep
         # These are indexed by [i,t,:], where the last dimension is m, n, or p
@@ -280,7 +280,7 @@ class DrakeTestSolver(DrakeSTLSolver):
                     #))
 
                     self.mp.AddConstraint(le(
-                        self.rho, b - A@yi + 8*(1-zi)
+                        self.rho, b - A@yi + 10*(1-zi)
                     ))
 
             # z = sum(z_i)  

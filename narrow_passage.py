@@ -19,7 +19,7 @@ T = 30
 
 # Create the specification
 spec = narrow_passage_specification(T)
-spec.simplify()
+#spec.simplify()
 
 # System dynamics
 A = np.block([[1,0,1,0],
@@ -63,7 +63,7 @@ solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
 
 # Add quadratic running cost (optional)
-solver.AddQuadraticCost(Q,R)
+#solver.AddQuadraticCost(Q,R)
 
 # Solve the optimization problem
 x, u, _, _ = solver.Solve()
