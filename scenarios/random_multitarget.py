@@ -34,7 +34,7 @@ def random_multitarget_specification(num_obstacles, num_groups, targets_per_grou
     for i in range(num_obstacles):
         x = np.random.uniform(0,9)  # keep within workspace
         y = np.random.uniform(0,9)
-        obstacles.append((x,x+1,y,y+1))
+        obstacles.append((x,x+2,y,y+2))
    
     # Create the (randomly generated) set of targets
     targets = []

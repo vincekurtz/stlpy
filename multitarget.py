@@ -15,15 +15,15 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-num_obstacles = 5
-num_groups = 1
+num_obstacles = 1
+num_groups = 5
 targets_per_group = 2
-T = 30
+T = 35
 
 # Create the specification
 spec, obstacles, targets = random_multitarget_specification(
         num_obstacles, num_groups, targets_per_group, T, seed=0)
-spec.simplify()
+#spec.simplify()
 
 # System dynamics
 A = np.block([[1,0,1,0],
@@ -46,14 +46,14 @@ Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities
 R = 1e-1*np.eye(2)
 
 # Initial state
-x0 = np.array([2.0,2.0,0,0])
+x0 = np.array([5.0,2.0,0,0])
 
 # Define the solver
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeTestSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
 
@@ -66,7 +66,7 @@ solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
 
 # Add quadratic running cost (optional)
-#solver.AddQuadraticCost(Q,R)
+solver.AddQuadraticCost(0.01*Q,0.01*R)
 
 # Solve the optimization problem
 x, u, _, _ = solver.Solve()

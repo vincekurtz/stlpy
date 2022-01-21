@@ -15,7 +15,7 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-T = 30
+T = 25
 
 # Create the specification
 spec = narrow_passage_specification(T)
@@ -44,7 +44,7 @@ Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities
 R = 1e-1*np.eye(2)
 
 # Initial state
-x0 = np.array([2.0,2.0,0,0])
+x0 = np.array([3.0,3.6,0,0])
 
 # Specify a solution method
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
@@ -63,7 +63,7 @@ solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
 
 # Add quadratic running cost (optional)
-#solver.AddQuadraticCost(Q,R)
+solver.AddQuadraticCost(Q,R)
 
 # Solve the optimization problem
 x, u, _, _ = solver.Solve()
