@@ -15,8 +15,8 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-num_stones = 7
-T = 15
+num_stones = 15
+T = 20
 
 # Create the specification
 spec, stones = stepping_stones_specification(num_stones, T, seed=1)
@@ -49,8 +49,8 @@ x0 = np.array([2.0,1.3,0,0])
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeTestSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
 

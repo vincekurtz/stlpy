@@ -105,7 +105,7 @@ class DrakeMICPSolver(DrakeSTLSolver):
             x = res.GetSolution(self.x)
             u = res.GetSolution(self.u)
 
-            y = np.vstack([x,u])
+            y = self.sys.C@x + self.sys.D@u
             rho = self.spec.robustness(y,0)[0]
             print("Optimal robustness: ", rho)
         else:

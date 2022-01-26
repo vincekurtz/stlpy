@@ -18,7 +18,7 @@ from solvers import *
 num_obstacles = 1
 num_groups = 5
 targets_per_group = 2
-T = 35
+T = 15
 
 # Create the specification
 spec, obstacles, targets = random_multitarget_specification(
@@ -52,8 +52,8 @@ x0 = np.array([5.0,2.0,0,0])
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeTestSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
 

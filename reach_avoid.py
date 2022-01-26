@@ -18,7 +18,7 @@ from solvers import *
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
-T = 50
+T = 20
 
 # Create the specification
 spec = reach_avoid_specification(goal_bounds, obstacle_bounds, T)

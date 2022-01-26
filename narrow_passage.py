@@ -15,11 +15,11 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-T = 25
+T = 15
 
 # Create the specification
 spec = narrow_passage_specification(T)
-#spec.simplify()
+spec.simplify()
 
 # System dynamics
 A = np.block([[1,0,1,0],

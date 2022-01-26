@@ -15,7 +15,7 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-T = 50
+T = 30
 N_pairs = 2
 
 # Create the specification
@@ -48,8 +48,8 @@ x0 = np.array([6.0,1.0,0,0])
 
 # Define the solver
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 #solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSmoothSolver(spec, sys, x0, T)
@@ -63,7 +63,7 @@ solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
 
 # Add quadratic running cost (optional)
-solver.AddQuadraticCost(0.01*Q,0.01*R)
+#solver.AddQuadraticCost(0.01*Q,0.01*R)
 
 # Solve the optimization problem
 x, u, _, _ = solver.Solve()
