@@ -29,10 +29,10 @@ from solvers import DrakeMICPSolver, DrakeSos1Solver
 # velocities ur = [vx,vy] for each ring. 
 
 # Number of rings (max 5 for now)
-N = 5
+N = 3
 
 # Time horizon (max number of control actions)
-T = 50
+T = 30
 
 # Ring sizes
 rh = 0.1                     # height
@@ -47,8 +47,8 @@ D = np.vstack([np.zeros((2*N,2*N)), np.eye(2*N)])
 sys = LinearSystem(A,B,C,D)
 
 # Initial state (all stacked on first peg)
-#x0 = np.array([0 if i%2==0 else rh/2+(i-1)/2*rh for i in range(2*N)])
-x0 = np.array([0 if i%2==0 else rh/2 for i in range(2*N)])
+x0 = np.array([0 if i%2==0 else rh/2+(i-1)/2*rh for i in range(2*N)])
+#x0 = np.array([0 if i%2==0 else rh/2 for i in range(2*N)])
 
 # Cost function penalizes large inputs
 Q = np.zeros((2*N,2*N))
@@ -108,7 +108,8 @@ for i in range(N):
 
 on_ground = []
 for i in range(N):
-    _on_ground = STLPredicate(-py_vec(i),-rh/2)
+    #_on_ground = STLPredicate(-py_vec(i),-rh/2)
+    _on_ground = STLPredicate(-py_vec(i),-N*rh+rh/2)
     on_ground.append(_on_ground)
 
 on_first_pole = []
@@ -132,13 +133,34 @@ for i in range(N):
     above_poles.append(_above_poles)
     below_poles.append(_below_poles)
 
+# Define formulas such that below[i][j] denotes the fact that
+# ring i is below ring j
+below = []
+for i in range(N):
+    _below = []
+    for j in range(N):
+        i_below_j = STLPredicate(py_vec(j)-py_vec(i),rh)
+        _below.append(i_below_j)
+    below.append(_below)
+
+# Similar formulas denoting being at different poles
+different_poles = []
+for i in range(N):
+    _different = []
+    for j in range(N):
+        i_gt_j = STLPredicate(px_vec(i)-px_vec(j), eps)
+        j_gt_i = STLPredicate(px_vec(j)-px_vec(i), eps)
+        diff = i_gt_j | j_gt_i | above_poles[i] | above_poles[j]
+        _different.append(diff)
+    different_poles.append(_different)
+
 # All rings must reach the third pole at the same time
 all_on_third_pole = on_third_pole[0] & no_movement[0]
 for i in range(1,N):
     all_on_third_pole = all_on_third_pole & on_third_pole[i] & no_movement[i]
 
 # Start building the specification
-spec = all_on_third_pole.eventually(0,T)
+spec = all_on_third_pole.eventually(T,T)
 
 # Movement rules that apply to each ring individually
 for i in range(N):
@@ -164,6 +186,10 @@ for (i,j) in itertools.combinations(range(N),2):
     spec = spec & max_one_moves.always(0,T)
 
 # Rings on the same pole must be stacked large-to-small
+for i in range(N):
+    for j in range(i+1,N):
+        small_on_big = different_poles[i][j] | below[i][j]
+        spec = spec & small_on_big.always(0,T)
 
 # Being on the ground includes being on top of any larger rings
 
@@ -229,7 +255,7 @@ def plot_solution(x, save_fname=None):
 #######################################
 # Solve the puzzle!
 #######################################
-#spec.simplify()
+spec.simplify()
 
 solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=False)
