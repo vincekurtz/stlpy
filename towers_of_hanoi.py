@@ -8,12 +8,15 @@
 ##
 
 import numpy as np
+import itertools
+
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 from STL import STLFormula, STLPredicate
 from systems import LinearSystem
 from solvers import DrakeMICPSolver, DrakeSos1Solver
+
 
 ######################################
 # System definition
@@ -26,7 +29,10 @@ from solvers import DrakeMICPSolver, DrakeSos1Solver
 # velocities ur = [vx,vy] for each ring. 
 
 # Number of rings (max 5 for now)
-N = 3
+N = 2
+
+# Time horizon (max number of control actions)
+T = 20
 
 # Ring sizes
 rh = 0.1                     # height
@@ -46,9 +52,6 @@ x0 = np.array([0 if i%2==0 else rh/2+(i-1)/2*rh for i in range(2*N)])
 # Cost function penalizes large inputs
 Q = np.zeros((2*N,2*N))
 R = np.eye(2*N)
-
-# Time horizon (max number of control actions)
-T = 10
 
 # Workspace boundaries
 u_min = np.array([-1,-1]*N)
@@ -155,9 +158,13 @@ for i in range(N):
     spec = spec & stop_on_ground.always(0,T)
 
 # Only one ring can move at a time
+for (i,j) in itertools.combinations(range(N),2):
+    max_one_moves = no_movement[i] | no_movement[j]
+    spec = spec & max_one_moves.always(0,T)
 
 # Rings on the same pole must be stacked large-to-small
 
+# Being on the ground includes being on top of any larger rings
 
 #######################################
 # Solution visualization
@@ -200,7 +207,7 @@ def plot_solution(x, save_fname=None):
 
     def data_gen():
         # Generate data that gets sent to update the animation
-        gen_list = (x[:,t] for t in range(x.shape[1]))
+        gen_list = (np.hstack([x[:,t],t]) for t in range(x.shape[1]))
         return gen_list
     
     def update(data):
@@ -208,9 +215,11 @@ def plot_solution(x, save_fname=None):
         for i in range(N):
             px = data[2*i]
             py = data[2*i+1]
-
+            t = data[-1]
+            
             rings[i].set_xy([px-rw[i]/2,py-rh/2])
-
+            
+            ax.set_title("t=%d" % t)
 
     ani = FuncAnimation(fig, update, data_gen)
 
@@ -221,9 +230,9 @@ def plot_solution(x, save_fname=None):
 #######################################
 #spec.simplify()
 
-#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
-solver.AddQuadraticCost(Q,R)
+solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=False)
+#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=False)
+#solver.AddQuadraticCost(Q,R)
 solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
 
