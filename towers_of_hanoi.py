@@ -29,10 +29,10 @@ from solvers import DrakeMICPSolver, DrakeSos1Solver
 # velocities ur = [vx,vy] for each ring. 
 
 # Number of rings (max 5 for now)
-N = 3
+N = 2
 
 # Time horizon (max number of control actions)
-T = 30
+T = 20
 
 # Ring sizes
 rh = 0.1                     # height
@@ -262,6 +262,9 @@ solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=False)
 #solver.AddQuadraticCost(Q,R)
 solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
+
+# DEBUG: gravity?
+solver.mp.AddCost(sum(solver.x.flatten()))
 
 x, u, _, _ = solver.Solve()
 
