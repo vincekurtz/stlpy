@@ -25,33 +25,36 @@ from solvers import DrakeMICPSolver, DrakeSos1Solver
 # Control input u = [u1,u2,...] is similarly composed of 
 # velocities ur = [vx,vy] for each ring. 
 
+# Number of rings (max 5 for now)
+N = 3
+
 # Ring sizes
-rh = 0.1   # height
-rw = 0.5   # width
+rh = 0.1                     # height
+rw = [0.5,0.4,0.3,0.2,0.1]   # width
 
 # The control input is change total position of each ring, and output
 # is both position and velocity y = [x,u]
-A = np.eye(2)
-B = np.eye(2)
-C = np.vstack([np.eye(2), np.zeros((2,2))])
-D = np.vstack([np.zeros((2,2)), np.eye(2)])
+A = np.eye(2*N)
+B = np.eye(2*N)
+C = np.vstack([np.eye(2*N), np.zeros((2*N,2*N))])
+D = np.vstack([np.zeros((2*N,2*N)), np.eye(2*N)])
 sys = LinearSystem(A,B,C,D)
 
-# Initial state
-x0 = np.array([1.0,rh/2])
+# Initial state (all stacked on first peg)
+x0 = np.array([0 if i%2==0 else rh/2+(i-1)/2*rh for i in range(2*N)])
 
 # Cost function penalizes large inputs
-Q = np.zeros((2,2))
-R = np.eye(2)
+Q = np.zeros((2*N,2*N))
+R = np.eye(2*N)
 
 # Time horizon (max number of control actions)
 T = 10
 
 # Workspace boundaries
-u_min = np.array([-1,-1])
-u_max = np.array([1,1])
-x_min = np.array([0,0])
-x_max = np.array([2.5,2])
+u_min = np.array([-1,-1]*N)
+u_max = np.array([1,1]*N)
+x_min = np.array([0,rh/2]*N)
+x_max = np.array([2.5,2]*N)
 
 #######################################
 # STL Specification
@@ -59,52 +62,102 @@ x_max = np.array([2.5,2])
 # The STL specification constraints both the (approximate) dynamics
 # of the system (e.g., only one ring can move at a time) as well as 
 # the rules of the game (e.g., we can only stack smaller rings on larger ones)
-eps = 1e-2   # small constant so that we can use strict > and <
+eps = 1e-1   # small constant so that we can use strict > and <
 
-# Define some basic predicates
-no_x_movement = STLPredicate([0,0,1,0],[0]) & STLPredicate([0,0,-1,0],[0])  # vx <= 0 & vx >= 0
-no_y_movement = STLPredicate([0,0,0,1],[0]) & STLPredicate([0,0,0,-1],[0])  # vy <= 0 & vy >= 0
-no_movement = no_x_movement & no_y_movement
+# Some convienience functions for generating a selection vector
+# for x position, y position, x velocity, and y velocity of each ring
+#
+# These selection vectors put a 1 in the corresponding output slot
+#   y = [px1, py1, px2, py2, ..., vx1, vy1, vx2, vy2, ... ]
+# and a zero everywhere else. This allows us to compactly define 
+# corresponding predicates. 
+px_vec = lambda i : np.hstack([[1,0] if j==i else [0,0] for j in range(N)] + [[0,0] for j in range(N)]).flatten()
+py_vec = lambda i : np.hstack([[0,1] if j==i else [0,0] for j in range(N)] + [[0,0] for j in range(N)]).flatten()
+vx_vec = lambda i : np.hstack([[0,0] for j in range(N)] + [[1,0] if j==i else [0,0] for j in range(N)]).flatten()
+vy_vec = lambda i : np.hstack([[0,0] for j in range(N)] + [[0,1] if j==i else [0,0] for j in range(N)]).flatten()
 
-x_movement = STLPredicate([0,0,1,0],[eps]) | STLPredicate([0,0,-1,0],[eps]) # |vx| > 0
-y_movement = STLPredicate([0,0,0,1],[eps]) | STLPredicate([0,0,0,-1],[eps]) # |vy| > 0
-movement = x_movement | y_movement
+# Define some basic formulas for each ring. Store equivalent formulas in a list
+# indexed by ring
+no_x_movement = []
+no_y_movement = []
+no_movement = []
+for i in range(N):
+    _no_x_movement = STLPredicate(vx_vec(i),0) & STLPredicate(-vx_vec(i),0) # vx <= 0 & vx >= 0
+    _no_y_movement = STLPredicate(vy_vec(i),0) & STLPredicate(-vy_vec(i),0)
+    _no_movement = _no_x_movement & _no_y_movement
 
-on_ground = STLPredicate([0,-1,0,0],[-rh/2])  # py <= minimum height
+    no_x_movement.append(_no_x_movement)
+    no_y_movement.append(_no_y_movement)
+    no_movement.append(_no_movement)
 
-on_first_pole = STLPredicate([1,0,0,0],[0]) & STLPredicate([-1,0,0,0],[0])   # px = 0
-on_second_pole = STLPredicate([1,0,0,0],[1]) & STLPredicate([-1,0,0,0],[-1]) # px = 1
-on_third_pole = STLPredicate([1,0,0,0],[2]) & STLPredicate([-1,0,0,0],[-2]) # px = 2
-on_a_pole = on_first_pole | on_second_pole | on_third_pole
+x_movement = []
+y_movement = []
+movement = []
+for i in range(N):
+    _x_movement = STLPredicate(vx_vec(i),eps) | STLPredicate(-vx_vec(i),eps) # vx >= eps or -vx >= eps
+    _y_movement = STLPredicate(vy_vec(i),eps) | STLPredicate(-vy_vec(i),eps) # vx >= eps or -vx >= eps
+    _movement = _x_movement | _y_movement
 
-above_poles = STLPredicate([0,1,0,0],[1.2])  # py >= 1.2
-below_poles = above_poles.negation()
+    x_movement.append(_x_movement)
+    y_movement.append(_y_movement)
+    movement.append(_movement)
 
-# Eventually all rings must reach the third pole
-reach_third_pole = (on_third_pole & no_movement).eventually(0,T)
+on_ground = []
+for i in range(N):
+    _on_ground = STLPredicate(-py_vec(i),-rh/2)
+    on_ground.append(_on_ground)
 
-# Rings cannot move in the x-direction unless they exceed a certain height
-no_move_below_poles = no_x_movement | above_poles
-never_move_below_poles = no_move_below_poles.always(0,T)
+on_first_pole = []
+on_second_pole = []
+on_third_pole = []
+for i in range(N):
+    _on_first_pole = STLPredicate(px_vec(i),0) & STLPredicate(-px_vec(i),0)
+    _on_second_pole = STLPredicate(px_vec(i),1) & STLPredicate(-px_vec(i),-1)
+    _on_third_pole = STLPredicate(px_vec(i),2) & STLPredicate(-px_vec(i),-2)
 
-# Rings need to be on one of the poles if they're below a certain height
-always_on_a_pole = (above_poles | on_a_pole).always(0,T)
+    on_first_pole.append(_on_first_pole)
+    on_second_pole.append(_on_second_pole)
+    on_third_pole.append(_on_third_pole)
 
-# Can move horizontally or vertically, but not both
-move_one_direction = (no_x_movement | no_y_movement).always(0,T)
+above_poles = []
+below_poles = []
+for i in range(N):
+    _above_poles = STLPredicate(py_vec(i), 1.2)
+    _below_poles = _above_poles.negation()
 
-# If a ring isn't moving, it must be on the ground
-stop_on_ground = (movement | on_ground).always(0,T)
+    above_poles.append(_above_poles)
+    below_poles.append(_below_poles)
 
-# Putting it all together
-movement_rules = never_move_below_poles & \
-                 move_one_direction & \
-                 stop_on_ground & \
-                 always_on_a_pole
+# All rings must reach the third pole at the same time
+all_on_third_pole = on_third_pole[0] & no_movement[0]
+for i in range(1,N):
+    all_on_third_pole = all_on_third_pole & on_third_pole[i] & no_movement[i]
 
-game_rules = reach_third_pole
+# Start building the specification
+spec = all_on_third_pole.eventually(0,T)
 
-spec = movement_rules & game_rules
+# Movement rules that apply to each ring individually
+for i in range(N):
+    # Can't move in the x-direction unless above the poles
+    no_move_below_poles = no_x_movement[i] | above_poles[i]
+    spec = spec & no_move_below_poles.always(0,T)
+    
+    # Must be on a pole if they're below a certain height
+    on_a_pole = on_first_pole[i] | on_second_pole[i] | on_third_pole[i]
+    spec = spec & (on_a_pole | above_poles[i]).always(0,T)
+
+    # Can move horizontally or vertically, but not both
+    move_one_direction = no_x_movement[i] | no_y_movement[i]
+    spec = spec & move_one_direction.always(0,T)
+
+    # If a ring isn't moving, it must be on the ground
+    stop_on_ground = movement[i] | on_ground[i]
+    spec = spec & stop_on_ground.always(0,T)
+
+# Only one ring can move at a time
+
+# Rings on the same pole must be stacked large-to-small
+
 
 #######################################
 # Solution visualization
@@ -138,8 +191,12 @@ def plot_solution(x, save_fname=None):
     plt.fill_between([-100,100],[-10,0],color='k')
 
     # Rings
-    r1 = plt.Rectangle([0,0],rw,rh, color='red')
-    ax.add_patch(r1)
+    rings = []
+    colors = ['red','blue','orange','green','purple']
+    for i in range(N):
+        r = plt.Rectangle([0,0], rw[i], rh, color=colors[i])
+        ax.add_patch(r)
+        rings.append(r)
 
     def data_gen():
         # Generate data that gets sent to update the animation
@@ -148,8 +205,11 @@ def plot_solution(x, save_fname=None):
     
     def update(data):
         # Update the animation based on data
-        px, py = data
-        r1.set_xy([px-rw/2,py-rh/2])
+        for i in range(N):
+            px = data[2*i]
+            py = data[2*i+1]
+
+            rings[i].set_xy([px-rw[i]/2,py-rh/2])
 
 
     ani = FuncAnimation(fig, update, data_gen)
@@ -159,8 +219,10 @@ def plot_solution(x, save_fname=None):
 #######################################
 # Solve the puzzle!
 #######################################
-solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=False)
+#spec.simplify()
+
+#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 solver.AddQuadraticCost(Q,R)
 solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
@@ -168,6 +230,4 @@ solver.AddStateBounds(x_min, x_max)
 x, u, _, _ = solver.Solve()
 
 if x is not None:
-    print(x)
-    print(u)
     plot_solution(x)
