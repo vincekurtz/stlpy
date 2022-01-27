@@ -29,10 +29,10 @@ from solvers import DrakeMICPSolver, DrakeSos1Solver
 # velocities ur = [vx,vy] for each ring. 
 
 # Number of rings (max 5 for now)
-N = 2
+N = 5
 
 # Time horizon (max number of control actions)
-T = 20
+T = 50
 
 # Ring sizes
 rh = 0.1                     # height
@@ -47,7 +47,8 @@ D = np.vstack([np.zeros((2*N,2*N)), np.eye(2*N)])
 sys = LinearSystem(A,B,C,D)
 
 # Initial state (all stacked on first peg)
-x0 = np.array([0 if i%2==0 else rh/2+(i-1)/2*rh for i in range(2*N)])
+#x0 = np.array([0 if i%2==0 else rh/2+(i-1)/2*rh for i in range(2*N)])
+x0 = np.array([0 if i%2==0 else rh/2 for i in range(2*N)])
 
 # Cost function penalizes large inputs
 Q = np.zeros((2*N,2*N))
