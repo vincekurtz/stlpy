@@ -28,18 +28,16 @@ class ScipyGradientSolver(STLSolver):
 
     :param spec:    An :class:`.STLFormula` describing the specification.
     :param sys:     A :class:`.NonlinearSystem` describing the system dynamics.
-    :param Q:       A ``(n,n)`` numpy matrix characterizing the state running cost.
-    :param R:       A ``(m,m)`` numpy matrix characterizing the control running cost.
     :param x0:      A ``(n,1)`` numpy matrix describing the initial state.
     :param T:       A positive integer fixing the total number of timesteps :math:`T`.
     :param method:  (optional) String characterizing the optimization algorithm to use. See 
                     `the scipy docs <https://docs.scipy.org/doc/scipy/reference/reference/generated/scipy.optimize.minimize.html>`_
                     for more details. Default is Sequential Least Squares (``"slsqp"``).
     """
-    def __init__(self, spec, sys, Q, R, x0, T, method="slsqp"):
+    def __init__(self, spec, sys, x0, T, method="slsqp"):
         super().__init__(spec, sys, x0, T)
-        self.Q = Q
-        self.R = R
+        self.Q = np.zeros((sys.n,sys.n))
+        self.R = np.zeros((sys.m,sys.m))
         self.method = method
 
     def AddControlBounds(self, u_min, u_max):
@@ -52,7 +50,10 @@ class ScipyGradientSolver(STLSolver):
         raise NotImplementedError("Dynamics constraints are added automatically in cost function computation")
     
     def AddQuadraticCost(self, Q, R):
-        raise NotImplementedError("Quadratic cost is added automatically in cost function computation")
+        assert Q.shape == (self.sys.n, self.sys.n), "Q must be an (n,n) numpy array"
+        assert R.shape == (self.sys.m, self.sys.m), "R must be an (m,m) numpy array"
+        self.Q = Q
+        self.R = R
     
     def AddRobustnessCost(self):
         raise NotImplementedError("Robustness cost is added automatically in cost function computation")
