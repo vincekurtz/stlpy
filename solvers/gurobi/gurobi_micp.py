@@ -44,12 +44,16 @@ class GurobiMICPSolver(STLSolver):
                             mixed-integer constraints. Default is ``1000``.
     :param robustness_cost: (optional) Boolean flag for adding a linear cost to maximize
                             the robustness measure. Default is ``True``.
+    :param presolve:        (optional) A boolean indicating whether to use Gurobi's
+                            presolve routines. Default is ``True``.
     """
 
-    def __init__(self, spec, sys, x0, T, M=1000, robustness_cost=True):
+    def __init__(self, spec, sys, x0, T, M=1000, robustness_cost=True, presolve=True):
         assert M > 0, "M should be a (large) positive scalar"
         super().__init__(spec, sys, x0, T)
+
         self.M = float(M)
+        self.presolve = presolve
 
         # Set up the optimization problem
         self.model = gp.Model("STL_MICP")
@@ -86,20 +90,15 @@ class GurobiMICPSolver(STLSolver):
             self.model.addConstr( self.x[:,t] <= x_max )
     
     def AddQuadraticCost(self, Q, R):
-        print("Warning: objective reset to minimize quadratic cost")
-        cost = self.x[:,0]@Q@self.x[:,0] + self.u[:,0]@R@self.u[:,0]
-        for t in range(1,self.T):
-            cost += self.x[:,t]@Q@self.x[:,t] + self.u[:,0]@R@self.u[:,0]
-        self.model.setObjective(cost, GRB.MINIMIZE)
+        raise NotImplementedError("Quadratic costs are not currently supported. Please use the DrakeMICPSolver for specifications with quadratic costs.")
 
     def AddRobustnessConstraint(self, rho_min=0.0):
         self.model.addConstr( self.rho >= rho_min )
     
     def Solve(self):
-        #self.model.setParam('Presolve', -1)
-        #self.model.setParam('Cuts', 2)
-        #self.model.setParam('LiftProjectCuts', 2)
-        #self.model.setParam('CutPasses',10000000)
+        if not self.presolve:
+            self.model.setParam('Presolve', 0)
+
         self.model.optimize()
 
         if self.model.status == GRB.OPTIMAL:
