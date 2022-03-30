@@ -32,9 +32,15 @@ class DrakeMICPSolver(DrakeSTLSolver):
 
         This class implements the algorithm described in
 
+        Belta C, et al.
+        *Formal methods for control synthesis: an optimization perspective*.
+        Anual Review of Control, Robotics, and Autonomous Systems, 2019.
+
+        which is an improved version of the original STL MICP encoding from
+
         Raman V, et al. 
         *Model predictive control with signal temporal logic specifications*. 
-        IEEE Conference on Decision and Control, 2014
+        IEEE Conference on Decision and Control, 2014.
 
     .. warning::
 
@@ -47,17 +53,19 @@ class DrakeMICPSolver(DrakeSTLSolver):
     :param T:               A positive integer fixing the total number of timesteps :math:`T`.
     :param M:               (optional) A large positive scalar used to rewrite ``min`` and ``max`` as
                             mixed-integer constraints. Default is ``1000``.
-    :param relaxed:         (optional) A boolean indicating whether to solve
-                            a convex relaxation of the problem. Default is ``False``.
     :param robustness_cost: (optional) Boolean flag for adding a linear cost to maximize
                             the robustness measure. Default is ``True``.
     :param solver:          (optional) String describing the solver to use. Must be one
                             of 'gurobi', 'mosek', or 'bnb'.
+    :param presolve:        (optional) A boolean indicating whether to use gurobi's
+                            presolve routines. Only affects the gurobi solver. Default is ``True``.
     """
-    def __init__(self, spec, sys, x0, T, M=1000, relaxed=False, robustness_cost=True, solver='gurobi'):
+    def __init__(self, spec, sys, x0, T, M=1000, robustness_cost=True, solver='gurobi', presolve=True):
         assert M > 0, "M should be a (large) positive scalar"
         super().__init__(spec, sys, x0, T)
+
         self.M = M
+        self.presolve = presolve
 
         # Choose which solver to use
         if solver == 'gurobi':
@@ -68,9 +76,6 @@ class DrakeMICPSolver(DrakeSTLSolver):
             print("Using Naive Branch-and-Bound solver")
             self.solver = "bnb"
 
-        # Flag for whether to use a convex relaxation
-        self.convex_relaxation = relaxed
-
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
@@ -79,12 +84,15 @@ class DrakeMICPSolver(DrakeSTLSolver):
             self.AddRobustnessCost()
 
     def Solve(self):
-        # Set verbose output
+
+        # Set solver options
         options = SolverOptions()
         options.SetOption(CommonSolverOption.kPrintToConsole,1)
-        #options.SetOption(GurobiSolver.id(), "Presolve", 0)
+        if not self.presolve:
+            options.SetOption(GurobiSolver.id(), "Presolve", 0)
         self.mp.SetSolverOptions(options)
-            
+        
+        # Setup for naive branch and bound
         if self.solver == "bnb":
             bnb_solver = MixedIntegerBranchAndBound(self.mp, ClpSolver.id())
             st = time.time()
@@ -93,6 +101,7 @@ class DrakeMICPSolver(DrakeSTLSolver):
             success = True
             res = bnb_solver
 
+        # Setup for Gurobi/Mosek
         else:
             res = self.solver.Solve(self.mp)
             success = res.is_success()
@@ -194,32 +203,12 @@ class DrakeMICPSolver(DrakeSTLSolver):
                 formula.a.T@y - formula.b + (1-z)*self.M, self.rho
             ))
 
-            b = self.mp.NewBinaryVariables(1)
-            self.mp.AddConstraint(eq(b, z))
+            # By default, z is defined as a continuous variable. This
+            # is a hack to make it binary. The redundant continuous 
+            # variable will be removed in presolve.
+            tmp = self.mp.NewBinaryVariables(1)
+            self.mp.AddConstraint(eq(tmp, z))
     
-        # DEBUG
-        #if formula.is_conjunctive_state_formula():
-        #    y = self.y[:,t]
-        #    rho = self.mp.NewContinuousVariables(1)
-        #    self.mp.AddLinearConstraint( 0 <= rho[0] )
-        #    A, b = formula.get_all_inequalities()
-
-        #    self.mp.AddLinearConstraint(le(
-        #        A@y - b, self.M*(1-z) - rho
-        #    ))
-
-        #    b = self.mp.NewBinaryVariables(1)
-        #    self.mp.AddConstraint(eq(b, z))
-
-        #    #self.mp.AddConstraint(ge( rho_i, 0 ))
-        #    #self.mp.AddLinearConstraint(le(
-        #    #    formula.b - formula.a.T@y, -rho_i + (1-z)*self.M
-        #    #))
-        #    self.mp.AddLinearConstraint(ge(
-        #        self.M*z, rho
-        #    ))
-        #    self.mp.AddCost(-rho[0])
-        
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
         else:

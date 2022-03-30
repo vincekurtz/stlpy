@@ -1,15 +1,13 @@
-from solvers import DrakeLCPSolver
 from solvers.drake.drake_base import DrakeSTLSolver
 from STL import STLPredicate
 import numpy as np
 
 from pydrake.all import MathematicalProgram, eq, le, ge
-from pydrake.solvers.all import IpoptSolver, SnoptSolver
-from pydrake.solvers.nlopt import NloptSolver
+from pydrake.solvers.all import IpoptSolver, SnoptSolver, SolverOptions, CommonSolverOption
 
 import time
 
-class DrakeSmoothSolver(DrakeLCPSolver):
+class DrakeSmoothSolver(DrakeSTLSolver):
     """
     Given an :class:`.STLFormula` :math:`\\varphi` and a :class:`.LinearSystem`, 
     solve the optimization problem
@@ -51,14 +49,18 @@ class DrakeSmoothSolver(DrakeLCPSolver):
         self.k = k
 
         # Choose a solver
-        #self.solver = IpoptSolver()
-        self.solver = SnoptSolver()
-        #self.solver = NloptSolver()
+        snopt_solver = SnoptSolver()
+        if snopt_solver.available():
+            self.solver = snopt_solver
+        else:
+            print("\nWarning: this Drake installation does not include the sparse SQP solver SNOPT.")
+            print("We'll try to use IPOPT instead, but this is slower and less reliable.")
+            print("See https://drake.mit.edu/doxygen_cxx/classdrake_1_1solvers_1_1_snopt_solver.html for more details.\n")
+            self.solver = IpoptSolver()
 
         # Add cost and constraints to the optimization problem
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
-        #self.AddRobustnessConstraint()
         self.AddRobustnessCost()
         
         print(f"Setup complete in {time.time()-st} seconds.")
@@ -81,6 +83,12 @@ class DrakeSmoothSolver(DrakeLCPSolver):
 
 
     def Solve(self):
+
+        # Set solver options
+        options = SolverOptions()
+        options.SetOption(CommonSolverOption.kPrintToConsole,1)
+        self.mp.SetSolverOptions(options)
+        
         # Local solvers tend to be sensitive to the initial guess
         np.random.seed(0)
         initial_guess = np.random.normal(size=self.mp.initial_guess().shape)

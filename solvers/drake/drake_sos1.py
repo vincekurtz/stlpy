@@ -46,15 +46,15 @@ class DrakeSos1Solver(DrakeMICPSolver):
     :param T:               A positive integer fixing the total number of timesteps :math:`T`.
     :param M:               (optional) A large positive scalar used to rewrite ``min`` and ``max`` as
                             mixed-integer constraints. Default is ``1000``.
-    :param relaxed:         (optional) A boolean indicating whether to solve
-                            a convex relaxation of the problem. Default is ``False``.
     :param robustness_cost: (optional) Boolean flag for adding a linear cost to maximize
                             the robustness measure. Default is ``True``.
     :param solver:          (optional) String describing the solver to use. Must be one
                             of 'gurobi', 'mosek', or 'bnb'.
+    :param presolve:        (optional) A boolean indicating whether to use gurobi's
+                            presolve routines. Only affects the gurobi solver. Default is ``True``.
     """
-    def __init__(self, spec, sys, x0, T, M=1000, relaxed=False, robustness_cost=True, solver='gurobi'):
-        super().__init__(spec, sys, x0, T, M, relaxed=relaxed, robustness_cost=robustness_cost, solver=solver)
+    def __init__(self, spec, sys, x0, T, M=1000, robustness_cost=True, solver='gurobi', presolve=True):
+        super().__init__(spec, sys, x0, T, M, robustness_cost=robustness_cost, solver=solver, presolve=presolve)
 
     def AddSubformulaConstraints(self, formula, z, t):
         """
