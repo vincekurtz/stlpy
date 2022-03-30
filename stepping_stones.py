@@ -46,13 +46,9 @@ R = 1e-1*np.eye(2)
 x0 = np.array([2.0,1.3,0,0])
 
 # Specify a solution strategy
-#solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
+solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeTestSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeSmoothSolver(spec, sys, x0, T)
+#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 
 # Set bounds on state and control variables
 u_min = np.array([-0.5,-0.5])

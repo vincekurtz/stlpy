@@ -20,7 +20,6 @@ N_pairs = 2
 
 # Create the specification
 spec = door_puzzle_specification(T, N_pairs)
-spec.simplify()
 
 # Define the system
 A = np.block([[1,0,1,0],
@@ -50,9 +49,6 @@ x0 = np.array([6.0,1.0,0,0])
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=False)
 solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
-#solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeSmoothSolver(spec, sys, x0, T)
 
 # Set bounds on state and control variables
 u_min = np.array([-0.5,-0.5])

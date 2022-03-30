@@ -15,11 +15,10 @@ from systems import LinearSystem
 from solvers import *
 
 # Specification Parameters
-T = 15
+T = 25
 
 # Create the specification
 spec = narrow_passage_specification(T)
-spec.simplify()
 
 # System dynamics
 A = np.block([[1,0,1,0],
@@ -37,7 +36,6 @@ D = np.block([[np.zeros((4,2))],
 
 sys = LinearSystem(A,B,C,D)
 
-
 # Specify any additional running cost (this helps the numerics in 
 # a gradient-based method)
 Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities
@@ -50,9 +48,6 @@ x0 = np.array([3.0,3.6,0,0])
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
 solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
-#solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeSmoothSolver(spec, sys, x0, T)
 
 # Set bounds on state and control variables
 u_min = np.array([-0.5,-0.5])

@@ -23,7 +23,6 @@ T = 15
 # Create the specification
 spec, obstacles, targets = random_multitarget_specification(
         num_obstacles, num_groups, targets_per_group, T, seed=0)
-#spec.simplify()
 
 # System dynamics
 A = np.block([[1,0,1,0],
@@ -50,12 +49,8 @@ x0 = np.array([5.0,2.0,0,0])
 
 # Define the solver
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeTestSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeSmoothSolver(spec, sys, x0, T)
+#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 
 # Set bounds on state and control variables
 u_min = np.array([-0.5,-0.5])

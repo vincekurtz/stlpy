@@ -32,7 +32,7 @@ from solvers import DrakeMICPSolver, DrakeSos1Solver
 N = 2
 
 # Time horizon (max number of control actions)
-T = 20
+T = 30
 
 # Ring sizes
 rh = 0.1                     # height
@@ -48,7 +48,6 @@ sys = LinearSystem(A,B,C,D)
 
 # Initial state (all stacked on first peg)
 x0 = np.array([0 if i%2==0 else rh/2+(i-1)/2*rh for i in range(2*N)])
-#x0 = np.array([0 if i%2==0 else rh/2 for i in range(2*N)])
 
 # Cost function penalizes large inputs
 Q = np.zeros((2*N,2*N))
@@ -191,12 +190,9 @@ for i in range(N):
         small_on_big = different_poles[i][j] | below[i][j]
         spec = spec & small_on_big.always(0,T)
 
-# Being on the ground includes being on top of any larger rings
-
 #######################################
 # Solution visualization
 #######################################
-# Given a solution, we'd like to show a nice animation of how the blocks move
 
 def plot_solution(x, save_fname=None):
     """
@@ -250,6 +246,9 @@ def plot_solution(x, save_fname=None):
 
     ani = FuncAnimation(fig, update, data_gen)
 
+    # DEBUG
+    ani.save("towers_of_hanoi.mp4")
+
     plt.show()
 
 #######################################
@@ -258,13 +257,8 @@ def plot_solution(x, save_fname=None):
 spec.simplify()
 
 solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=False)
-#solver.AddQuadraticCost(Q,R)
 solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
-
-# DEBUG: gravity?
-solver.mp.AddCost(sum(solver.x.flatten()))
 
 x, u, _, _ = solver.Solve()
 
