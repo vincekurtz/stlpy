@@ -19,7 +19,7 @@ goal = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 target_one = (1,2,6,7)
 target_two = (7,8,4.5,5.5)
 obstacle = (3,5,4,6)
-T = 50
+T = 20
 
 # Create the specification
 spec = either_or_specification(goal, target_one, target_two, obstacle, T)
@@ -42,7 +42,7 @@ sys = LinearSystem(A,B,C,D)
 
 # Specify any additional running cost
 Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities
-R = 1e-1*np.eye(2)
+R = 1e-0*np.eye(2)
 
 # Initial state
 x0 = np.array([2.0,2.0,0,0])
@@ -51,10 +51,6 @@ x0 = np.array([2.0,2.0,0,0])
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
 solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeTestSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = KnitroLCPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeLCPSolver(spec, sys, x0, T, robustness_cost=False)
-#solver = DrakeSmoothSolver(spec, sys, x0, T)
 
 # Set bounds on state and control variables
 u_min = np.array([-0.5,-0.5])

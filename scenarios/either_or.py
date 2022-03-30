@@ -17,17 +17,16 @@ def either_or_specification(goal, target_one, target_two, obstacle, T):
     at_goal = inside_rectangle_formula(goal, 0, 1, 6)
 
     # Target reaching
-    at_target_one = inside_rectangle_formula(target_one, 0, 1, 6)
-    at_target_two = inside_rectangle_formula(target_two, 0, 1, 6)
+    at_target_one = inside_rectangle_formula(target_one, 0, 1, 6).always(0,5)
+    at_target_two = inside_rectangle_formula(target_two, 0, 1, 6).always(0,5)
     at_either_target = at_target_one | at_target_two
 
     # Obstacle Avoidance
     not_at_obstacle = outside_rectangle_formula(obstacle, 0, 1, 6)
 
-    specification = at_either_target.eventually(0,T) & \
+    specification = at_either_target.eventually(0,T-5) & \
                     not_at_obstacle.always(0,T) & \
                     at_goal.eventually(0,T)
-                    #not_at_obstacle.until(at_goal, 0, T)
 
     return specification
 
