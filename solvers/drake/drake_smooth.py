@@ -72,15 +72,14 @@ class DrakeSmoothSolver(DrakeSTLSolver):
         # Dynamics
         for t in range(self.T-1):
             self.mp.AddConstraint(eq(
-                self.x[:,t+1], self.sys.A@self.x[:,t] + self.sys.B@self.u[:,t]
+                self.x[:,t+1], self.sys.f(self.x[:,t], self.u[:,t])
             ))
             self.mp.AddConstraint(eq(
-                self.y[:,t], self.sys.C@self.x[:,t] + self.sys.D@self.u[:,t]
+                self.y[:,t], self.sys.g(self.x[:,t], self.u[:,t])
             ))
         self.mp.AddConstraint(eq(
-            self.y[:,self.T-1], self.sys.C@self.x[:,self.T-1] + self.sys.D@self.u[:,self.T-1]
+            self.y[:,self.T-1], self.sys.g(self.x[:,self.T-1], self.u[:,self.T-1])
         ))
-
 
     def Solve(self):
 
