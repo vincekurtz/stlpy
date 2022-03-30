@@ -46,10 +46,6 @@ and non-convex quadratic programs with quadratic constraints. Free academic lice
     :members: Solve
     :show-inheritance:
 
-.. autoclass:: solvers.GurobiLCPSolver
-    :members: Solve
-    :show-inheritance:
-
 Drake
 =============================
 
@@ -67,25 +63,11 @@ Installation instructions for Drake can be found `here <https://drake.mit.edu/in
     :members: Solve
     :show-inheritance:
 
-.. autoclass:: solvers.DrakeLCPSolver
+.. autoclass:: solvers.DrakeSos1Solver
     :members: Solve
     :show-inheritance:
 
 .. autoclass:: solvers.DrakeSmoothSolver
-    :members: Solve
-    :show-inheritance:
-
-Knitro
-=============================
-
-Solvers in this section use the commercial `Artelys Knitro <https://www.artelys.com/solvers/knitro/>`_ solver. 
-Knitro is a commercial solver which aims to find high-quality locally optimal solutions to nonconvex
-problems. It tends to perform particularly well on problems with complementarity constraints. 
-
-More information on how to install Knitro, the algorithms they use, and how to obtain a license
-can be found `here <https://www.artelys.com/docs/knitro/1_introduction.html>`__.
-
-.. autoclass:: solvers.KnitroLCPSolver
     :members: Solve
     :show-inheritance:
 

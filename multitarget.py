@@ -11,7 +11,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.random_multitarget import * 
-from systems import LinearSystem
+from systems import DoubleIntegrator
 from solvers import *
 
 # Specification Parameters
@@ -25,19 +25,7 @@ spec, obstacles, targets = random_multitarget_specification(
         num_obstacles, num_groups, targets_per_group, T, seed=0)
 
 # System dynamics
-A = np.block([[1,0,1,0],
-              [0,1,0,1],
-              [0,0,1,0],
-              [0,0,0,1]])
-B = np.block([[0,0],
-              [0,0],
-              [1,0],
-              [0,1]])
-C = np.block([[np.eye(4)],
-              [np.zeros((2,4))]])
-D = np.block([[np.zeros((4,2))],
-              [np.eye(2)]])
-sys = LinearSystem(A,B,C,D)
+sys = DoubleIntegrator(2)
 
 # Specify any additional running cost (this helps the numerics in 
 # a gradient-based method)

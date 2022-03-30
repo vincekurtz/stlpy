@@ -12,7 +12,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.reach_avoid import reach_avoid_specification, plot_reach_avoid_scenario
-from systems import LinearSystem
+from systems import DoubleIntegrator
 from solvers import *
 
 # Specification Parameters
@@ -24,20 +24,7 @@ T = 15
 spec = reach_avoid_specification(goal_bounds, obstacle_bounds, T)
 
 # Define the system
-A = np.block([[1,0,1,0],
-              [0,1,0,1],
-              [0,0,1,0],
-              [0,0,0,1]])
-B = np.block([[0,0],
-              [0,0],
-              [1,0],
-              [0,1]])
-C = np.block([[np.eye(4)],
-              [np.zeros((2,4))]])
-D = np.block([[np.zeros((4,2))],
-              [np.eye(2)]])
-
-sys = LinearSystem(A,B,C,D)
+sys = DoubleIntegrator(2)
 
 # Specify any additional running cost (this helps the numerics in 
 # a gradient-based method)

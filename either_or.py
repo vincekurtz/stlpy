@@ -11,7 +11,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scenarios.either_or import either_or_specification, plot_either_or_scenario
-from systems import LinearSystem
+from systems import DoubleIntegrator
 from solvers import *
 
 # Specification Parameters
@@ -26,19 +26,7 @@ spec = either_or_specification(goal, target_one, target_two, obstacle, T)
 spec.simplify()
 
 # System dynamics
-A = np.block([[1,0,1,0],
-              [0,1,0,1],
-              [0,0,1,0],
-              [0,0,0,1]])
-B = np.block([[0,0],
-              [0,0],
-              [1,0],
-              [0,1]])
-C = np.block([[np.eye(4)],
-              [np.zeros((2,4))]])
-D = np.block([[np.zeros((4,2))],
-              [np.eye(2)]])
-sys = LinearSystem(A,B,C,D)
+sys = DoubleIntegrator(2)
 
 # Specify any additional running cost
 Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities

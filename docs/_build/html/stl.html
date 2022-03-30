@@ -295,6 +295,44 @@ formula (<span class="math notranslate nohighlight">\(\varphi\)</span>) holds fo
 </dd></dl>
 
 <dl class="method">
+<dt id="STL.STLFormula.get_all_conjunctive_state_formulas">
+<code class="descname">get_all_conjunctive_state_formulas</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.get_all_conjunctive_state_formulas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all of the (unique) conjunctive state
+formulas that make up this specification.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A list of STLFormula objects</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLFormula.get_all_inequalities">
+<code class="descname">get_all_inequalities</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.get_all_inequalities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all inequalities associated with this formula stacked into vector form</p>
+<div class="math notranslate nohighlight">
+\[A*y &lt;= b\]</div>
+<p>where each row of <span class="math notranslate nohighlight">\(A\)</span> and <span class="math notranslate nohighlight">\(b\)</span> correspond to a predicate in this formula.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This method is really only useful for conjunctive state formulas.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return A:</th><td class="field-body">An (n,m) numpy array representing <span class="math notranslate nohighlight">\(A\)</span></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return b:</th><td class="field-body">An (n,) numpy array representing <span class="math notranslate nohighlight">\(b\)</span></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="STL.STLFormula.is_conjunctive_state_formula">
 <code class="descname">is_conjunctive_state_formula</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.is_conjunctive_state_formula" title="Permalink to this definition">¶</a></dt>
 <dd><p>Indicate whether this formula is a state formula defined by
@@ -319,6 +357,20 @@ only disjunctions (or) over predicates.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A boolean which is <code class="docutils literal notranslate"><span class="pre">True</span></code> only if this is a disjunctive state formula.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="STL.STLFormula.is_predicate">
+<code class="descname">is_predicate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#STL.STLFormula.is_predicate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate whether this formula is a predicate.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A boolean which is <code class="docutils literal notranslate"><span class="pre">True</span></code> only if this is a predicate.</td>
 </tr>
 </tbody>
 </table>

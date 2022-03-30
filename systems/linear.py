@@ -1,4 +1,5 @@
 from systems.nonlinear import NonlinearSystem
+import numpy as np
 
 class LinearSystem(NonlinearSystem):
     """
@@ -41,4 +42,38 @@ class LinearSystem(NonlinearSystem):
         # Dynamics functions
         self.dynamics_fcn = lambda x, u: A@x + B@u
         self.output_fcn = lambda x, u: C@x + D@u
-        
+
+class DoubleIntegrator(LinearSystem):
+    """
+    A linear system describing a double integrator in :math:`d` dimensions
+    with full state and control output:
+
+    .. math::
+
+        A = \\begin{bmatrix} I_{d \\times d}  & I_{d \\times d} \\\ 0_{d \\times d} & I_{d \\times d}  \\end{bmatrix}
+        \quad
+        B = \\begin{bmatrix} 0_{d \\times d} \\\ I_{d \\times d}  \\end{bmatrix}
+    
+    .. math::
+        C = \\begin{bmatrix} I_{2d \\times 2d} \\\ 0_{d \\times 2d} \\end{bmatrix}
+        \quad
+        D = \\begin{bmatrix} 0_{2d \\times d} \\\ I_{d \\times d} \\end{bmatrix}
+
+    :param d: Integer describing the dimensionality of the system
+    """
+    def __init__(self, d):
+        I = np.eye(d)
+        z = np.zeros((d,d))
+
+        A = np.block([[I,I],
+                      [z,I]])
+        B = np.block([[z],
+                      [I]])
+        C = np.block([[I,z],
+                      [z,I],
+                      [z,z]])
+        D = np.block([[z],
+                      [z],
+                      [I]])
+
+        LinearSystem.__init__(self, A, B, C, D)
