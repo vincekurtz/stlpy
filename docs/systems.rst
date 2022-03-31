@@ -4,14 +4,14 @@ Modeling Control Systems
 
 These tools are use to model simple linear and nonlinear discrete-time control systems.
 
-.. autoclass:: systems.NonlinearSystem
+.. autoclass:: pySTL.systems.NonlinearSystem
     :members:
     :show-inheritance:
 
-.. autoclass:: systems.LinearSystem
+.. autoclass:: pySTL.systems.LinearSystem
     :members:
     :show-inheritance:
 
-.. autoclass:: systems.DoubleIntegrator
+.. autoclass:: pySTL.systems.DoubleIntegrator
     :members:
     :show-inheritance:

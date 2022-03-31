@@ -14,7 +14,7 @@ Reach-Avoid
 A robot needs to avoid and obstacle and reach a goal.
 
 .. autofunction::
-    scenarios.reach_avoid.reach_avoid_specification
+    pySTL.benchmarks.reach_avoid.reach_avoid_specification
     
 
 Either-Or

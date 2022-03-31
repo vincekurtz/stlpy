@@ -31,7 +31,7 @@ optimizer, which can be installed with ``pip``:
 
 Alternative installation instructions can be found `here <https://scipy.org/install/>`_
 
-.. autoclass:: solvers.ScipyGradientSolver
+.. autoclass:: pySTL.solvers.ScipyGradientSolver
     :members: Solve
     :show-inheritance:
 
@@ -42,7 +42,7 @@ Solvers in this section use the python bindings of `Gurobi <https://www.gurobi.c
 optimizer that handles a variety of problem classes, including convex programs, mixed-integer programs,
 and non-convex quadratic programs with quadratic constraints. Free academic licenses are available. 
 
-.. autoclass:: solvers.GurobiMICPSolver
+.. autoclass:: pySTL.solvers.GurobiMICPSolver
     :members: Solve
     :show-inheritance:
 
@@ -59,15 +59,15 @@ be found `here <https://drake.mit.edu/doxygen_cxx/group__solvers.html>`__.
 
 Installation instructions for Drake can be found `here <https://drake.mit.edu/installation.html>`__.
 
-.. autoclass:: solvers.DrakeMICPSolver
+.. autoclass:: pySTL.solvers.DrakeMICPSolver
     :members: Solve
     :show-inheritance:
 
-.. autoclass:: solvers.DrakeSos1Solver
+.. autoclass:: pySTL.solvers.DrakeSos1Solver
     :members: Solve
     :show-inheritance:
 
-.. autoclass:: solvers.DrakeSmoothSolver
+.. autoclass:: pySTL.solvers.DrakeSmoothSolver
     :members: Solve
     :show-inheritance:
 
@@ -78,6 +78,6 @@ All the solvers described above inherit from the :class:`.STLSolver` class.
 To implement your own optimization-based solver, all you need to do is create 
 a new class that inherits from :class:`.STLSolver`.
 
-.. autoclass:: solvers.STLSolver
+.. autoclass:: pySTL.solvers.base.STLSolver
     :members:
     :show-inheritance:

@@ -157,8 +157,8 @@
 <h1>Modeling Control Systems<a class="headerlink" href="#modeling-control-systems" title="Permalink to this headline">¶</a></h1>
 <p>These tools are use to model simple linear and nonlinear discrete-time control systems.</p>
 <dl class="class">
-<dt id="systems.NonlinearSystem">
-<em class="property">class </em><code class="descclassname">systems.</code><code class="descname">NonlinearSystem</code><span class="sig-paren">(</span><em>f</em>, <em>g</em>, <em>n</em>, <em>m</em>, <em>p</em><span class="sig-paren">)</span><a class="headerlink" href="#systems.NonlinearSystem" title="Permalink to this definition">¶</a></dt>
+<dt id="pySTL.systems.NonlinearSystem">
+<em class="property">class </em><code class="descclassname">pySTL.systems.</code><code class="descname">NonlinearSystem</code><span class="sig-paren">(</span><em>f</em>, <em>g</em>, <em>n</em>, <em>m</em>, <em>p</em><span class="sig-paren">)</span><a class="headerlink" href="#pySTL.systems.NonlinearSystem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class which represents some (possibly nonlinear)
 discrete-time control system</p>
@@ -192,8 +192,8 @@ numpy array (<span class="math notranslate nohighlight">\(y_{t}\)</span>).</li>
 </tbody>
 </table>
 <dl class="method">
-<dt id="systems.NonlinearSystem.f">
-<code class="descname">f</code><span class="sig-paren">(</span><em>x</em>, <em>u</em><span class="sig-paren">)</span><a class="headerlink" href="#systems.NonlinearSystem.f" title="Permalink to this definition">¶</a></dt>
+<dt id="pySTL.systems.NonlinearSystem.f">
+<code class="descname">f</code><span class="sig-paren">(</span><em>x</em>, <em>u</em><span class="sig-paren">)</span><a class="headerlink" href="#pySTL.systems.NonlinearSystem.f" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given state <span class="math notranslate nohighlight">\(x_t\)</span> and control <span class="math notranslate nohighlight">\(u_t\)</span>, compute
 the forward dynamics</p>
 <div class="math notranslate nohighlight">
@@ -216,8 +216,8 @@ the forward dynamics</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="systems.NonlinearSystem.g">
-<code class="descname">g</code><span class="sig-paren">(</span><em>x</em>, <em>u</em><span class="sig-paren">)</span><a class="headerlink" href="#systems.NonlinearSystem.g" title="Permalink to this definition">¶</a></dt>
+<dt id="pySTL.systems.NonlinearSystem.g">
+<code class="descname">g</code><span class="sig-paren">(</span><em>x</em>, <em>u</em><span class="sig-paren">)</span><a class="headerlink" href="#pySTL.systems.NonlinearSystem.g" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given state <span class="math notranslate nohighlight">\(x_t\)</span> and control <span class="math notranslate nohighlight">\(u_t\)</span>, compute
 the output</p>
 <div class="math notranslate nohighlight">
@@ -242,9 +242,9 @@ the output</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="systems.LinearSystem">
-<em class="property">class </em><code class="descclassname">systems.</code><code class="descname">LinearSystem</code><span class="sig-paren">(</span><em>A</em>, <em>B</em>, <em>C</em>, <em>D</em><span class="sig-paren">)</span><a class="headerlink" href="#systems.LinearSystem" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">systems.nonlinear.NonlinearSystem</span></code></p>
+<dt id="pySTL.systems.LinearSystem">
+<em class="property">class </em><code class="descclassname">pySTL.systems.</code><code class="descname">LinearSystem</code><span class="sig-paren">(</span><em>A</em>, <em>B</em>, <em>C</em>, <em>D</em><span class="sig-paren">)</span><a class="headerlink" href="#pySTL.systems.LinearSystem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pySTL.systems.nonlinear.NonlinearSystem</span></code></p>
 <p>A linear discrete-time system of the form</p>
 <div class="math notranslate nohighlight">
 \[ \begin{align}\begin{aligned}x_{t+1} = A x_t + B u_t\\y_t = C x_t + D u_t\end{aligned}\end{align} \]</div>
@@ -273,9 +273,9 @@ the output</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="systems.DoubleIntegrator">
-<em class="property">class </em><code class="descclassname">systems.</code><code class="descname">DoubleIntegrator</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="headerlink" href="#systems.DoubleIntegrator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">systems.linear.LinearSystem</span></code></p>
+<dt id="pySTL.systems.DoubleIntegrator">
+<em class="property">class </em><code class="descclassname">pySTL.systems.</code><code class="descname">DoubleIntegrator</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="headerlink" href="#pySTL.systems.DoubleIntegrator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pySTL.systems.linear.LinearSystem</span></code></p>
 <p>A linear system describing a double integrator in <span class="math notranslate nohighlight">\(d\)</span> dimensions
 with full state and control output:</p>
 <div class="math notranslate nohighlight">
