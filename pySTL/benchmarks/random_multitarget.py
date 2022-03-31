@@ -1,4 +1,6 @@
-from scenarios.common import *
+from .common import (inside_rectangle_formula,
+                     outside_rectangle_formula,
+                     make_rectangle_patch)
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle

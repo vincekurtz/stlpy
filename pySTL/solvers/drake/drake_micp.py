@@ -1,5 +1,5 @@
-from solvers.drake.drake_base import DrakeSTLSolver
-from STL import STLPredicate
+from .drake_base import DrakeSTLSolver
+from ...STL import STLPredicate
 import numpy as np
 import time
 from pydrake.all import (MathematicalProgram, 

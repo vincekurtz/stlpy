@@ -11,9 +11,10 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scenarios.reach_avoid import reach_avoid_specification, plot_reach_avoid_scenario
-from systems import DoubleIntegrator
-from solvers import *
+
+from pySTL.benchmarks.reach_avoid import reach_avoid_specification, plot_reach_avoid_scenario
+from pySTL.systems import DoubleIntegrator
+from pySTL.solvers import *
 
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)

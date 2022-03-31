@@ -1,4 +1,4 @@
-from solvers.base import STLSolver
+from ..base import STLSolver
 from pydrake.all import MathematicalProgram, eq, ge, le
 
 class DrakeSTLSolver(STLSolver):

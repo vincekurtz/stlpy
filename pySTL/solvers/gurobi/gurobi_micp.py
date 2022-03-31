@@ -1,5 +1,5 @@
-from solvers.base import STLSolver
-from STL import STLPredicate
+from ..base import STLSolver
+from ...STL import STLPredicate
 import numpy as np
 
 import gurobipy as gp

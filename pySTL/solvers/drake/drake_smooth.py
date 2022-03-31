@@ -1,5 +1,5 @@
-from solvers.drake.drake_base import DrakeSTLSolver
-from STL import STLPredicate
+from .drake_base import DrakeSTLSolver
+from ...STL import STLPredicate
 import numpy as np
 
 from pydrake.all import MathematicalProgram, eq, le, ge

@@ -1,5 +1,5 @@
-from solvers.drake.drake_micp import DrakeMICPSolver
-from STL import STLPredicate
+from .drake_micp import DrakeMICPSolver
+from ...STL import STLPredicate
 import numpy as np
 from pydrake.all import (MathematicalProgram, 
                          GurobiSolver, MosekSolver, 

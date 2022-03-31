@@ -1,5 +1,5 @@
 import numpy as np
-from STL.formula import STLFormula
+from .formula import STLFormula
 
 class STLPredicate(STLFormula):
     """

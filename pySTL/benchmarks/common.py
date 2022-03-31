@@ -5,7 +5,7 @@
 ##
 
 import numpy as np
-from STL import STLTree, STLPredicate
+from pySTL.STL import STLTree, STLPredicate
 from matplotlib.patches import Rectangle
 
 def inside_rectangle_formula(bounds, y1_index, y2_index, d, name=None):

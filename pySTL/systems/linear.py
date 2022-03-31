@@ -1,4 +1,4 @@
-from systems.nonlinear import NonlinearSystem
+from .nonlinear import NonlinearSystem
 import numpy as np
 
 class LinearSystem(NonlinearSystem):

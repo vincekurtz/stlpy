@@ -1,7 +1,7 @@
 import numpy as np
 import time
 from scipy.optimize import minimize
-from solvers import STLSolver
+from ..base import STLSolver
 
 class ScipyGradientSolver(STLSolver):
     """
