@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 ##
-# 
+#
 # Set up, solve, and plot the solution for a simple
 # reach-avoid problem, where the robot must avoid
 # a rectangular obstacle before reaching a rectangular
@@ -27,7 +27,7 @@ spec = reach_avoid_specification(goal_bounds, obstacle_bounds, T)
 # Define the system
 sys = DoubleIntegrator(2)
 
-# Specify any additional running cost (this helps the numerics in 
+# Specify any additional running cost (this helps the numerics in
 # a gradient-based method)
 Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities
 R = 1e-1*np.eye(2)

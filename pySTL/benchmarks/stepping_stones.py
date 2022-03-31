@@ -7,20 +7,20 @@ from matplotlib.patches import Rectangle
 
 ##
 #
-# Tools for setting up a specification where a robot with double 
+# Tools for setting up a specification where a robot with double
 # integrator dynamics must navigate to a goal while only stepping
-# on certain predefined spaces. 
+# on certain predefined spaces.
 #
 ##
 
 def stepping_stones_specification(num_stones, T, seed=None):
     """
     Return an STLFormula that describes this scenario, with time bound T.
-    
+
     We'll assume that the robot has double integrator dynamics, i.e.,
-    
+
         x = [px,py,pdx,pdy], u = [pddx, pddy]
-    
+
     and that the output signal is given by y = [x;u].
 
     In addition to the specification, this function returns a list
@@ -35,7 +35,7 @@ def stepping_stones_specification(num_stones, T, seed=None):
         x = np.random.uniform(0,9)  # keep within workspace
         y = np.random.uniform(0,9)
         stones.append((x,x+1,y,y+1))
-   
+
     # Specify the target/goal
     target = stones[-1]
 
@@ -54,7 +54,7 @@ def stepping_stones_specification(num_stones, T, seed=None):
     # Put all of the constraints together in one specification
     specification = on_any_stone.always(0,T) & \
                     reach_target.eventually(0,T)
-    
+
     return specification, stones
 
 def plot_stepping_stones_scenario(stones):

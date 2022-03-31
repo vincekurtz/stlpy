@@ -1,24 +1,24 @@
 from .drake_micp import DrakeMICPSolver
 from ...STL import STLPredicate
 import numpy as np
-from pydrake.all import (MathematicalProgram, 
-                         GurobiSolver, MosekSolver, 
+from pydrake.all import (MathematicalProgram,
+                         GurobiSolver, MosekSolver,
                          SolverOptions, CommonSolverOption,
                          AddLogarithmicSos1Constraint,
                          eq, le, ge)
 
 class DrakeSos1Solver(DrakeMICPSolver):
     """
-    Given an :class:`.STLFormula` :math:`\\varphi` and a :class:`.LinearSystem`, 
+    Given an :class:`.STLFormula` :math:`\\varphi` and a :class:`.LinearSystem`,
     solve the optimization problem
 
-    .. math:: 
+    .. math::
 
         \max ~& \\rho^{\\varphi}(y_0,y_1,\dots,y_T)
 
         \\text{s.t. } & x_0 \\text{ fixed}
 
-        & x_{t+1} = f(x_t, u_t) 
+        & x_{t+1} = f(x_t, u_t)
 
         & y_{t} = g(x_t, u_t)
 
@@ -29,12 +29,12 @@ class DrakeSos1Solver(DrakeMICPSolver):
 
     This class uses the encoding described in
 
-        Vielma J, et al. 
+        Vielma J, et al.
         *Modeling disjunctive constraints with a logarithmic number of binary variables and
         constraints*. Mathematical Programming, 2011.
 
-    to use fewer binary variables, improving scalability to long specifications. 
-    
+    to use fewer binary variables, improving scalability to long specifications.
+
     .. warning::
 
         Drake must be compiled from source to support Gurobi and Mosek MICP solvers.
@@ -60,29 +60,29 @@ class DrakeSos1Solver(DrakeMICPSolver):
         """
         Given an STLFormula (formula) and a binary variable (z),
         add constraints to the optimization problem such that z
-        takes value 1 only if the formula is satisfied (at time t). 
+        takes value 1 only if the formula is satisfied (at time t).
 
-        If the formula is a predicate, this constraint uses the "big-M" 
+        If the formula is a predicate, this constraint uses the "big-M"
         formulation
 
             A[x(t);u(t)] - b + (1-z)M >= 0,
 
-        which enforces A[x;u] - b >= 0 if z=1, where (A,b) are the 
-        linear constraints associated with this predicate. 
+        which enforces A[x;u] - b >= 0 if z=1, where (A,b) are the
+        linear constraints associated with this predicate.
 
         If the formula is not a predicate, we recursively traverse the
-        subformulas associated with this formula, adding new binary 
+        subformulas associated with this formula, adding new binary
         variables z_i for each subformula and constraining
 
             z <= z_i  for all i
 
-        if the subformulas are combined with conjunction (i.e. all 
+        if the subformulas are combined with conjunction (i.e. all
         subformulas must hold), or otherwise constraining
 
             z <= sum(z_i)
 
         if the subformulas are combined with disjuction (at least one
-        subformula must hold). 
+        subformula must hold).
         """
         # We're at the bottom of the tree, so add the big-M constraints
         if isinstance(formula, STLPredicate):

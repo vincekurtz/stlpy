@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
 ##
-# 
+#
 # Set up, solve, and plot the solution for a more complex
 # reach-avoid problem involing multiple obstacles and multiple
-# possible goals. 
+# possible goals.
 #
 ##
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pySTL.benchmarks.random_multitarget import * 
+from pySTL.benchmarks.random_multitarget import *
 from pySTL.systems import DoubleIntegrator
 from pySTL.solvers import *
 
@@ -27,7 +27,7 @@ spec, obstacles, targets = random_multitarget_specification(
 # System dynamics
 sys = DoubleIntegrator(2)
 
-# Specify any additional running cost (this helps the numerics in 
+# Specify any additional running cost (this helps the numerics in
 # a gradient-based method)
 Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities
 R = 1e-1*np.eye(2)

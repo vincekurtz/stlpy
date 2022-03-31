@@ -8,21 +8,21 @@ from matplotlib.patches import Rectangle
 #
 # Tools for setting up a slightly more complex specification where a robot
 # with double integrator dynamics must navigate through several obstacles
-# with narrow passages before reaching one of several possible goals. 
+# with narrow passages before reaching one of several possible goals.
 #
 ##
 
 def narrow_passage_specification(T):
     """
     Return an STLFormula that describes this scenario, with time bound T.
-    
+
     We'll assume that the robot has double integrator dynamics, i.e.,
-    
+
         x = [px,py,pdx,pdy], u = [pddx, pddy]
-    
+
     and that the output signal is given by y = [x;u].
     """
-    obstacles = [(2,5,4,6), 
+    obstacles = [(2,5,4,6),
                  (5.5,9,3.8,5.7),
                  (4.6,8,0.5,3.5),
                  (2.2,4.4,6.4,11)]
@@ -56,7 +56,7 @@ def narrow_passage_specification(T):
 def plot_narrow_passage_scenario():
     ax = plt.gca()
 
-    obstacles = [(2,5,4,6), 
+    obstacles = [(2,5,4,6),
                  (5.5,9,3.8,5.7),
                  (4.6,8,0.5,3.5),
                  (2.2,4.4,6.4,11)]

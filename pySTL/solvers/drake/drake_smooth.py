@@ -9,22 +9,22 @@ import time
 
 class DrakeSmoothSolver(DrakeSTLSolver):
     """
-    Given an :class:`.STLFormula` :math:`\\varphi` and a :class:`.LinearSystem`, 
+    Given an :class:`.STLFormula` :math:`\\varphi` and a :class:`.LinearSystem`,
     solve the optimization problem
 
-    .. math:: 
+    .. math::
 
         \max ~& \\rho^{\\varphi}(y_0,y_1,\dots,y_T)
 
         \\text{s.t. } & x_0 \\text{ fixed}
 
-        & x_{t+1} = f(x_t, u_t) 
+        & x_{t+1} = f(x_t, u_t)
 
         & y_{t} = g(x_t, u_t)
 
     where :math:`\\rho^{\\varphi}` is defined using a smooth approximation
-    of min and max. We then use one of the general nonlinear solvers availible 
-    in Drake to find a locally optimal solution. 
+    of min and max. We then use one of the general nonlinear solvers availible
+    in Drake to find a locally optimal solution.
 
     .. Note::
 
@@ -44,7 +44,7 @@ class DrakeSmoothSolver(DrakeSTLSolver):
     def __init__(self, spec, sys, x0, T, k=2.0):
         print("Setting up optimization problem...")
         st = time.time()  # for computing setup time
-        
+
         DrakeSTLSolver.__init__(self, spec, sys, x0, T)
         self.k = k
 
@@ -62,9 +62,9 @@ class DrakeSmoothSolver(DrakeSTLSolver):
         self.AddDynamicsConstraints()
         self.AddSTLConstraints()
         self.AddRobustnessCost()
-        
+
         print(f"Setup complete in {time.time()-st} seconds.")
-    
+
     def AddDynamicsConstraints(self):
         # Initial condition
         self.mp.AddConstraint(eq( self.x[:,0], self.x0 ))
@@ -87,7 +87,7 @@ class DrakeSmoothSolver(DrakeSTLSolver):
         options = SolverOptions()
         options.SetOption(CommonSolverOption.kPrintToConsole,1)
         self.mp.SetSolverOptions(options)
-        
+
         # Local solvers tend to be sensitive to the initial guess
         np.random.seed(0)
         initial_guess = np.random.normal(size=self.mp.initial_guess().shape)
@@ -155,14 +155,14 @@ class DrakeSmoothSolver(DrakeSTLSolver):
             # rho = a'y - b
             y = self.y[:,t]
             self.mp.AddConstraint(eq( formula.a.T@y - formula.b, rho ))
-        
+
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
         else:
             rho_subs = []
             for i, subformula in enumerate(formula.subformula_list):
                 rho_sub = self.mp.NewContinuousVariables(1)
-                t_sub = formula.timesteps[i]   # the timestep at which this formula 
+                t_sub = formula.timesteps[i]   # the timestep at which this formula
                                                # should hold
                 self.AddSubformulaConstraints(subformula, rho_sub, t+t_sub)
                 rho_subs.append(rho_sub)
@@ -181,7 +181,7 @@ class DrakeSmoothSolver(DrakeSTLSolver):
 
             a ~= max(b_1,b_2,...,b_N)
 
-        where b_lst = [b_1,b_2,...,b_N] useing a smooth approximation of 
+        where b_lst = [b_1,b_2,...,b_N] useing a smooth approximation of
         the max operator.
         """
         if len(b_lst) == 1:
@@ -189,18 +189,18 @@ class DrakeSmoothSolver(DrakeSTLSolver):
         else:
             x = np.array(b_lst)
             exp = np.exp(self.k*x)
-          
-            self.mp.AddConstraint(eq( 
-                a , np.sum(x*exp)/np.sum(exp) 
+
+            self.mp.AddConstraint(eq(
+                a , np.sum(x*exp)/np.sum(exp)
             ))
-    
+
     def _add_min_constraint(self, a, b_lst):
         """
         Add constraints to the optimization problem such that
 
             a ~= max(b_1,b_2,...,b_N)
 
-        where b_lst = [b_1,b_2,...,b_N] useing a smooth approximation of 
+        where b_lst = [b_1,b_2,...,b_N] useing a smooth approximation of
         the min operator.
         """
         if len(b_lst) == 1:
@@ -208,7 +208,7 @@ class DrakeSmoothSolver(DrakeSTLSolver):
         else:
             x = np.hstack(b_lst)
 
-            self.mp.AddConstraint(eq( 
-                a , -1./float(self.k) * np.log(np.sum(np.exp(-self.k*x))) 
+            self.mp.AddConstraint(eq(
+                a , -1./float(self.k) * np.log(np.sum(np.exp(-self.k*x)))
             ))
 

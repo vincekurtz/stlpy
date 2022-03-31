@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 ##
-# 
+#
 # Set up, solve, and plot the solution for the door-puzzle
-# scenario, where a robot needs to pick up several keys 
+# scenario, where a robot needs to pick up several keys
 # before reaching a goal region.
 #
 ##
@@ -24,7 +24,7 @@ spec = door_puzzle_specification(T, N_pairs)
 # Define the system
 sys = DoubleIntegrator(2)
 
-# Specify any additional running cost (this helps the numerics in 
+# Specify any additional running cost (this helps the numerics in
 # a gradient-based method)
 Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities
 R = 1e-1*np.eye(2)

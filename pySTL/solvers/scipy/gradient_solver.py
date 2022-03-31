@@ -5,32 +5,32 @@ from ..base import STLSolver
 
 class ScipyGradientSolver(STLSolver):
     """
-    Given an :class:`.STLFormula` :math:`\\varphi` and a :class:`.NonlinearSystem`, 
+    Given an :class:`.STLFormula` :math:`\\varphi` and a :class:`.NonlinearSystem`,
     solve the optimization problem
 
-    .. math:: 
+    .. math::
 
         \min & \sum_{t=0}^T x_t^TQx_t + u_t^TRu_t - \\rho^{\\varphi}(y_0,y_1,\dots,y_T)
 
         \\text{s.t. } & x_0 \\text{ fixed}
 
-        & x_{t+1} = f(x_t, u_t) 
+        & x_{t+1} = f(x_t, u_t)
 
         & y_{t} = g(x_t, u_t)
 
-    using a shooting method and the 
-    `scipy.optimize <https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html>`_ solver. 
+    using a shooting method and the
+    `scipy.optimize <https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html>`_ solver.
 
     .. warning::
 
         This solver uses finite-differences to approximate the gradient of the (non-smooth) cost.
-        As such, this method is likely to scale extremely poorly. 
+        As such, this method is likely to scale extremely poorly.
 
     :param spec:    An :class:`.STLFormula` describing the specification.
     :param sys:     A :class:`.NonlinearSystem` describing the system dynamics.
     :param x0:      A ``(n,1)`` numpy matrix describing the initial state.
     :param T:       A positive integer fixing the total number of timesteps :math:`T`.
-    :param method:  (optional) String characterizing the optimization algorithm to use. See 
+    :param method:  (optional) String characterizing the optimization algorithm to use. See
                     `the scipy docs <https://docs.scipy.org/doc/scipy/reference/reference/generated/scipy.optimize.minimize.html>`_
                     for more details. Default is Sequential Least Squares (``"slsqp"``).
     """
@@ -42,25 +42,25 @@ class ScipyGradientSolver(STLSolver):
 
     def AddControlBounds(self, u_min, u_max):
         raise NotImplementedError("This solver does not support control bounds!")
-    
+
     def AddStateBounds(self, x_min, x_max):
         raise NotImplementedError("This solver does not support state bounds!")
 
     def AddDynamicsConstraints(self):
         raise NotImplementedError("Dynamics constraints are added automatically in cost function computation")
-    
+
     def AddQuadraticCost(self, Q, R):
         assert Q.shape == (self.sys.n, self.sys.n), "Q must be an (n,n) numpy array"
         assert R.shape == (self.sys.m, self.sys.m), "R must be an (m,m) numpy array"
         self.Q = Q
         self.R = R
-    
+
     def AddRobustnessCost(self):
         raise NotImplementedError("Robustness cost is added automatically in cost function computation")
-    
+
     def AddRobustnessConstraint(self):
         raise NotImplementedError("This solver does not support robustness constraints")
-    
+
     def AddSTLConstraints(self):
         raise NotImplementedError("STL constraints are added automatically in cost function computation")
 
@@ -81,7 +81,7 @@ class ScipyGradientSolver(STLSolver):
         if res.success:
             u = res.x.reshape((self.sys.m,self.T))
             x, y = self.forward_rollout(u)
-            
+
             rho = self.spec.robustness(y, 0)[0]
             print("Optimal robustness: ", rho)
         else:
@@ -93,16 +93,16 @@ class ScipyGradientSolver(STLSolver):
 
     def forward_rollout(self, u):
         """
-        Given a control trajectory u of size (m,T), 
+        Given a control trajectory u of size (m,T),
         perform a forward rollout to compute the associated
         state and output trajectories.
         """
         T = u.shape[1]
         x = np.full((self.sys.n,T),np.nan)
         y = np.full((self.sys.p,T),np.nan)
-        
+
         x[:,0] = self.x0
-        
+
         for t in range(T-1):
             x[:,t+1] = self.sys.f(x[:,t], u[:,t])
             y[:,t] = self.sys.g(x[:,t], u[:,t])
@@ -120,7 +120,7 @@ class ScipyGradientSolver(STLSolver):
         # Reconstruct the (m,T) control trajectory from the flattened
         # input. We use a flattened input because scipy's minimize
         # (and indeed most optimization software) assumes the decision
-        # variables are put in a vector. 
+        # variables are put in a vector.
         u = u_flat.reshape((self.sys.m, self.T))
 
         # Do a forward rollout to compute the state and output trajectories
@@ -129,7 +129,7 @@ class ScipyGradientSolver(STLSolver):
         # Add additional state and control costs
         for t in range(self.T):
             cost += x[:,t].T@self.Q@x[:,t] + u[:,t].T@self.R@u[:,t]
-        
+
         # Add the (negative) robustness of this signal y with respect
         # to the specification to the cost
         cost += -self.spec.robustness(y,0)

@@ -5,20 +5,20 @@ from treelib import Node, Tree
 class STLFormula(ABC):
     """
     An abstract class which encompasses represents all kinds of STL formulas :math:`\\varphi`, including
-    predicates (the simplest possible formulas) and standard formulas (made up of logical operations over 
-    predicates and other formulas). 
+    predicates (the simplest possible formulas) and standard formulas (made up of logical operations over
+    predicates and other formulas).
     """
     @abstractmethod
     def robustness(self, y, t):
         """
         Compute the robustness measure :math:`\\rho^\\varphi(y,t)` of this formula for the
-        given signal :math:`y = y_0,y_1,\\dots,y_T`, evaluated at timestep :math:`t`. 
+        given signal :math:`y = y_0,y_1,\\dots,y_T`, evaluated at timestep :math:`t`.
 
         :param y:    A ``(d,T)`` numpy array representing the signal
                      to evaluate, where ``d`` is the dimension of
                      the signal and ``T`` is the number of timesteps
-        :param t:    The timestep :math:`t` to evaluate the signal at. This 
-                     is typically 0 for the full formula. 
+        :param t:    The timestep :math:`t` to evaluate the signal at. This
+                     is typically 0 for the full formula.
 
         :return:    The robustness measure :math:`\\rho^\\varphi(y,t)` which is positive only
                     if the signal satisfies the specification.
@@ -38,18 +38,18 @@ class STLFormula(ABC):
     def is_state_formula(self):
         """
         Indicate whether this formula is a state formula, e.g.,
-        a predicate or the result of boolean operations over 
-        predicates. 
+        a predicate or the result of boolean operations over
+        predicates.
 
         :return:    A boolean which is ``True`` only if this is a state formula.
         """
         pass
-    
+
     @abstractmethod
     def is_disjunctive_state_formula(self):
         """
         Indicate whether this formula is a state formula defined by
-        only disjunctions (or) over predicates. 
+        only disjunctions (or) over predicates.
 
         :return:     A boolean which is ``True`` only if this is a disjunctive state formula.
         """
@@ -88,18 +88,18 @@ class STLFormula(ABC):
     @abstractmethod
     def negation(self):
         """
-        Return a new :class:`.STLFormula` :math:`\\varphi_{new}` which represents 
+        Return a new :class:`.STLFormula` :math:`\\varphi_{new}` which represents
         the negation of this formula:
 
         .. math::
 
             \\varphi_{new} = \lnot \\varphi
-        
+
         :return: An :class:`.STLFormula` representing :math:`\\varphi_{new}`
-    
+
         .. note::
 
-            For now, only formulas in positive normal form are supported. That means that negation 
+            For now, only formulas in positive normal form are supported. That means that negation
             (:math:`\lnot`) can only be applied to predicates (:math:`\\pi`).
 
         """
@@ -107,7 +107,7 @@ class STLFormula(ABC):
 
     def conjunction(self, other):
         """
-        Return a new :class:`.STLTree` :math:`\\varphi_{new}` which represents the conjunction 
+        Return a new :class:`.STLTree` :math:`\\varphi_{new}` which represents the conjunction
         (and) of this formula (:math:`\\varphi`) and another one (:math:`\\varphi_{other}`):
 
         .. math::
@@ -119,7 +119,7 @@ class STLFormula(ABC):
         :return: An :class:`.STLTree` representing :math:`\\varphi_{new}`
 
         .. note::
-            
+
             Conjuction can also be represented with the ``&`` operator, i.e.,
             ::
 
@@ -138,10 +138,10 @@ class STLFormula(ABC):
         Syntatic sugar so we can write `one_and_two = one & two`
         """
         return self.conjunction(other)
-    
+
     def disjunction(self, other):
         """
-        Return a new :class:`.STLTree` :math:`\\varphi_{new}` which represents the disjunction 
+        Return a new :class:`.STLTree` :math:`\\varphi_{new}` which represents the disjunction
         (or) of this formula (:math:`\\varphi`) and another one (:math:`\\varphi_{other}`):
 
         .. math::
@@ -153,7 +153,7 @@ class STLFormula(ABC):
         :return: An :class:`.STLTree` representing :math:`\\varphi_{new}`
 
         .. note::
-            
+
             Disjunction can also be represented with the ``|`` operator, i.e.,
             ::
 
@@ -175,14 +175,14 @@ class STLFormula(ABC):
 
     def always(self, t1, t2):
         """
-        Return a new :class:`.STLTree` :math:`\\varphi_{new}` which ensures that this 
-        formula (:math:`\\varphi`) holds for all of the timesteps between 
+        Return a new :class:`.STLTree` :math:`\\varphi_{new}` which ensures that this
+        formula (:math:`\\varphi`) holds for all of the timesteps between
         :math:`t_1` and :math:`t_2`:
-       
+
         .. math::
 
             \\varphi_{new} = G_{[t_1,t_2]}(\\varphi)
-        
+
 
         :param t1:  An integer representing the delay :math:`t_1`
         :param t2:  An integer representing the deadline :math:`t_2`
@@ -191,21 +191,21 @@ class STLFormula(ABC):
         """
         time_interval = [t for t in range(t1,t2+1)]
         subformula_list = [self for t in time_interval]
-        formula = STLTree(subformula_list, "and", time_interval) 
+        formula = STLTree(subformula_list, "and", time_interval)
         if self.name is not None:
             formula.name = "always [%s,%s] %s" % (t1,t2,self.name)
         return formula
 
     def eventually(self, t1, t2):
         """
-        Return a new :class:`.STLTree` :math:`\\varphi_{new}` which ensures that this 
-        formula (:math:`\\varphi`) holds for at least one timestep between 
+        Return a new :class:`.STLTree` :math:`\\varphi_{new}` which ensures that this
+        formula (:math:`\\varphi`) holds for at least one timestep between
         :math:`t_1` and :math:`t_2`:
-       
+
         .. math::
 
             \\varphi_{new} = F_{[t_1,t_2]}(\\varphi)
-        
+
 
         :param t1:  An integer representing the delay :math:`t_1`
         :param t2:  An integer representing the deadline :math:`t_2`
@@ -214,7 +214,7 @@ class STLFormula(ABC):
         """
         time_interval = [t for t in range(t1,t2+1)]
         subformula_list = [self for t in time_interval]
-        formula = STLTree(subformula_list, "or", time_interval) 
+        formula = STLTree(subformula_list, "or", time_interval)
         if self.name is not None:
             formula.name = "eventually [%s,%s] %s" % (t1,t2,self.name)
         return formula
@@ -225,18 +225,18 @@ class STLFormula(ABC):
         given formula :math:`\\varphi_{other}` holds for at least one timestep between
         :math:`t_1` and :math:`t_2`, and that this formula (:math:`\\varphi`) holds
         at all timesteps until then:
-        
+
         .. math::
 
             \\varphi_{new} = \\varphi U_{[t_1,t_2]}(\\varphi_{other})
-        
+
         :param other:   A :class:`.STLFormula` representing :math:`\\varphi_{other`
         :param t1:  An integer representing the delay :math:`t_1`
         :param t2:  An integer representing the deadline :math:`t_2`
 
         :return: An :class:`.STLTree` representing :math:`\\varphi_{new}`
         """
-        # For every candidate swiching time (t_prime), construct a subformula 
+        # For every candidate swiching time (t_prime), construct a subformula
         # representing 'self' holding until t_prime, at which point 'other' holds.
         self_until_tprime = []
 
@@ -262,7 +262,7 @@ class STLFormula(ABC):
         else:
             for subformula in self.subformula_list:
                 new_csf_list = subformula.get_all_conjunctive_state_formulas()
-                
+
                 # TODO: Deal with special case where there is only one formula in the
                 # conjunction list: this comes up when the UNTIL operator is used
 
@@ -275,7 +275,7 @@ class STLFormula(ABC):
 
 class STLTree(STLFormula):
     """
-    Describes an STL formula :math:`\\varphi` which is made up of 
+    Describes an STL formula :math:`\\varphi` which is made up of
     operations over :class:`.STLFormula` objects. This defines a tree structure,
     so that, for example, the specification
 
@@ -309,15 +309,15 @@ class STLTree(STLFormula):
         }
 
     where each node is an :class:`.STLFormula` and the leaf nodes are :class:`.STLPredicate` objects.
-       
+
 
     Each :class:`.STLTree` is defined by a list of :class:`.STLFormula` objects
-    (the child nodes in the tree) which are combined together using either conjunction or 
-    disjunction. 
+    (the child nodes in the tree) which are combined together using either conjunction or
+    disjunction.
 
     :param subformula_list:     A list of :class:`.STLFormula` objects (formulas or
-                                predicates) that we'll use to construct this formula. 
-    :param combination_type:    A string representing the type of operation we'll use 
+                                predicates) that we'll use to construct this formula.
+    :param combination_type:    A string representing the type of operation we'll use
                                 to combine the child nodes. Must be either ``"and"`` or ``"or"``.
     :param timesteps:           A list of timesteps that the subformulas must hold at.
                                 This is needed to define the temporal operators.
@@ -379,10 +379,10 @@ class STLTree(STLFormula):
     def simplify(self):
         """
         Modify this formula to reduce the depth of the formula tree while preserving
-        logical equivalence. 
-        
+        logical equivalence.
+
         A shallower formula tree can result in a more efficient binary encoding in some
-        cases. 
+        cases.
         """
         mod = True
         while mod:
@@ -392,7 +392,7 @@ class STLTree(STLFormula):
     def flatten(self, formula):
         """
         Reduce the depth of the given :class:`STLFormula` by combining adjacent
-        layers with the same logical operation. This preserves the meaning of the 
+        layers with the same logical operation. This preserves the meaning of the
         formula, since, for example,
 
         ..math::
@@ -420,7 +420,7 @@ class STLTree(STLFormula):
                     formula.subformula_list += subformula.subformula_list
                     formula.timesteps += [t+st for t in subformula.timesteps]
                     made_modification = True
-                
+
                 made_modification = self.flatten(subformula) or made_modification
 
         return made_modification
@@ -456,11 +456,11 @@ class STLTree(STLFormula):
     def _add_subformula_to_tree(self, tree, root, formula):
         """
         Helper function for recursively parsing subformulas to create
-        a Tree object for visualizing this formula. 
+        a Tree object for visualizing this formula.
         """
         #if formula.is_conjunctive_state_formula():
         if formula.is_predicate():
-            tree.create_node('state formula', parent=root) 
+            tree.create_node('state formula', parent=root)
         else:
             new_node = tree.create_node(formula.combination_type, parent=root)
             for subformula in formula.subformula_list:

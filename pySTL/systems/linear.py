@@ -3,14 +3,14 @@ import numpy as np
 
 class LinearSystem(NonlinearSystem):
     """
-    A linear discrete-time system of the form 
+    A linear discrete-time system of the form
 
     .. math::
 
         x_{t+1} = A x_t + B u_t
 
         y_t = C x_t + D u_t
-    
+
     where
 
         - :math:`x_t \in \mathbb{R}^n` is a system state,
@@ -53,7 +53,7 @@ class DoubleIntegrator(LinearSystem):
         A = \\begin{bmatrix} I_{d \\times d}  & I_{d \\times d} \\\ 0_{d \\times d} & I_{d \\times d}  \\end{bmatrix}
         \quad
         B = \\begin{bmatrix} 0_{d \\times d} \\\ I_{d \\times d}  \\end{bmatrix}
-    
+
     .. math::
         C = \\begin{bmatrix} I_{2d \\times 2d} \\\ 0_{d \\times 2d} \\end{bmatrix}
         \quad

@@ -7,26 +7,26 @@ from matplotlib.patches import Rectangle
 
 ##
 #
-# Tools for setting up a specification where a robot with double 
+# Tools for setting up a specification where a robot with double
 # integrator dynamics must navigate through a field of obstacles
-# and reach targets from multiple sets. 
+# and reach targets from multiple sets.
 #
 ##
 
 def random_multitarget_specification(num_obstacles, num_groups, targets_per_group, T, seed=None):
     """
     Return an STLFormula that describes this scenario, with time bound T.
-    
+
     We'll assume that the robot has double integrator dynamics, i.e.,
-    
+
         x = [px,py,pdx,pdy], u = [pddx, pddy]
-    
+
     and that the output signal is given by y = [x;u].
 
     In addition to the specification, this function returns a list
     of obstacles and a list of target groups, where each element
     of each target group is itself a target, and at least one target
-    per group must be visited over the course of T timesteps. 
+    per group must be visited over the course of T timesteps.
     """
     # Set the seed for the random number generator (for reproducability)
     np.random.seed(seed)
@@ -37,7 +37,7 @@ def random_multitarget_specification(num_obstacles, num_groups, targets_per_grou
         x = np.random.uniform(0,9)  # keep within workspace
         y = np.random.uniform(0,9)
         obstacles.append((x,x+2,y,y+2))
-   
+
     # Create the (randomly generated) set of targets
     targets = []
     for i in range(num_groups):
@@ -72,7 +72,7 @@ def random_multitarget_specification(num_obstacles, num_groups, targets_per_grou
     specification = obstacle_avoidance.always(0,T)
     for reach_target_group in target_group_formulas:
         specification = specification & reach_target_group.eventually(0,T)
-    
+
     return specification, obstacles, targets
 
 def plot_random_multitarget_scenario(obstacles, targets):

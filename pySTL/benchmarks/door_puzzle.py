@@ -18,11 +18,11 @@ from matplotlib.patches import Rectangle
 
 def door_puzzle_specification(T, N_pairs):
     """
-    Return an STLFormula that describes this scenario. We'll assume that 
+    Return an STLFormula that describes this scenario. We'll assume that
     the robot has double integrator dynamics, i.e.,
-    
+
         x = [px,py,pdx,pdy], u = [pddx, pddy]
-    
+
     and that the output signal is given by y = [x;u].
     """
     assert N_pairs >= 1 and N_pairs <= 4, "number of pairs must be between 1 and 4"
@@ -59,15 +59,15 @@ def door_puzzle_specification(T, N_pairs):
     no_door1 = outside_rectangle_formula(door1_bounds, 0, 1, 6)
     key1 = inside_rectangle_formula(key1_bounds, 0, 1, 6)
     k1d1 = no_door1.until(key1, 0, T)
-    
+
     no_door2 = outside_rectangle_formula(door2_bounds, 0, 1, 6)
     key2 = inside_rectangle_formula(key2_bounds, 0, 1, 6)
     k2d2 = no_door2.until(key2, 0, T)
-    
+
     no_door3 = outside_rectangle_formula(door3_bounds, 0, 1, 6)
     key3 = inside_rectangle_formula(key3_bounds, 0, 1, 6)
     k3d3 = no_door3.until(key3, 0, T)
-    
+
     no_door4 = outside_rectangle_formula(door4_bounds, 0, 1, 6)
     key4 = inside_rectangle_formula(key4_bounds, 0, 1, 6)
     k4d4 = no_door4.until(key4, 0, T)

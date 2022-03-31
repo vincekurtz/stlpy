@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 ##
-# 
+#
 # Set up, solve, and plot the solution for the "reach-avoid"
 # scenario, where the robot must reach one of two targets before
-# reaching the goal. 
+# reaching the goal.
 #
 ##
 

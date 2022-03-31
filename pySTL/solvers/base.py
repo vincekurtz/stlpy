@@ -13,10 +13,10 @@ class STLSolver(ABC):
         \min & \sum_{t=0}^T x_t^TQx_t + u_t^TRu_t
 
         \\text{s.t. } & x_0 \\text{ fixed }
-        
+
         & x_{t+1} = f(x_t, u_t)
 
-        & y_t = g(x_t, u_t) 
+        & y_t = g(x_t, u_t)
 
         & \\rho^{\\varphi}(y_0,y_1,\dots,y_T) \geq 0
 
@@ -25,7 +25,7 @@ class STLSolver(ABC):
     a given STL specification :math:`\\varphi`.
 
     Possible variations include using the robustness measure :math:`\\rho^\\varphi`
-    as a cost, dropping the quadratic running cost, and removing the hard satisfaction 
+    as a cost, dropping the quadratic running cost, and removing the hard satisfaction
     constriant :math:`\\rho^{\\varphi}\geq 0`.
 
     :param spec:   An :class:`.STLFormula` describing the specification.
@@ -48,15 +48,15 @@ class STLSolver(ABC):
         .. math::
 
             & x_0 \\text{ fixed }
-        
+
             & x_{t+1} = f(x_t, u_t)
 
-            & y_t = g(x_t, u_t) 
+            & y_t = g(x_t, u_t)
 
         to the optimization problem.
         """
         pass
-    
+
     @abstractmethod
     def AddSTLConstraints(self):
         """
@@ -68,7 +68,7 @@ class STLSolver(ABC):
             \\rho^{\\varphi}(y_0,y_1,\dots,y_T).
         """
         pass
-    
+
     @abstractmethod
     def AddRobustnessCost(self):
         """
@@ -81,7 +81,7 @@ class STLSolver(ABC):
 
         """
         pass
-    
+
     @abstractmethod
     def AddRobustnessConstraint(self, rho_min=0.0):
         """
@@ -96,7 +96,7 @@ class STLSolver(ABC):
                             Defaults to 0, which enforces STL satisfaction.
         """
         pass
-    
+
     @abstractmethod
     def AddControlBounds(self, u_min, u_max):
         """
@@ -111,7 +111,7 @@ class STLSolver(ABC):
         :param u_max:   A ``(m,)`` numpy array specifying the maximum control input
         """
         pass
-    
+
     @abstractmethod
     def AddStateBounds(self, x_min, x_max):
         """
@@ -133,7 +133,7 @@ class STLSolver(ABC):
         Add a quadratic running cost to the optimization problem:
 
         .. math::
-        
+
             \min \sum_{t=0}^T x_t^TQx_t + u_t^TRu_t
 
         :param Q:   A ``(n,n)`` numpy array representing the state penalty matrix :math:`Q`
@@ -144,7 +144,7 @@ class STLSolver(ABC):
     @abstractmethod
     def Solve(self):
         """
-        Solve the STL syntheis optimization problem and return an optimal trajectory. 
+        Solve the STL syntheis optimization problem and return an optimal trajectory.
 
         :return x:          A ``(n,T)`` numpy array containing the optimal state :math:`x_t`
                             for each timestep.

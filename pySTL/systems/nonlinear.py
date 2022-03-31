@@ -4,7 +4,7 @@ class NonlinearSystem:
     discrete-time control system
 
     .. math::
-        
+
         x_{t+1} = f(x_t, u_t)
 
         y_t = g(x_t, u_t)
@@ -15,11 +15,11 @@ class NonlinearSystem:
         - :math:`u_t \in \mathbb{R}^m` is a control input,
         - :math:`y_t \in \mathbb{R}^p` is a system output.
 
-    :param f:   A function representing :math:`f`, which takes two numpy 
-                arrays (:math:`x_t,u_t`) as input and returns another 
+    :param f:   A function representing :math:`f`, which takes two numpy
+                arrays (:math:`x_t,u_t`) as input and returns another
                 numpy array (:math:`x_{t+1}`).
-    :param g:   A function representing :math:`f`, which takes two numpy 
-                arrays (:math:`x_t,u_t`) as input and returns another 
+    :param g:   A function representing :math:`f`, which takes two numpy
+                arrays (:math:`x_t,u_t`) as input and returns another
                 numpy array (:math:`y_{t}`).
     :param n:   Size of the state vector :math:`x_t`.
     :param m:   Size of the control vector :math:`u_t`.
@@ -33,14 +33,14 @@ class NonlinearSystem:
         self.n = n
         self.m = m
         self.p = p
-    
+
     def f(self, x, u):
         """
         Given state :math:`x_t` and control :math:`u_t`, compute
         the forward dynamics
-        
+
         .. math::
-            
+
             x_{t+1} = f(x_t, u_t).
 
         :param x:   The current state :math:`x_t`
@@ -54,9 +54,9 @@ class NonlinearSystem:
         """
         Given state :math:`x_t` and control :math:`u_t`, compute
         the output
-        
+
         .. math::
-            
+
             y_t = g(x_t, u_t).
 
         :param x:   The current state :math:`x_t`

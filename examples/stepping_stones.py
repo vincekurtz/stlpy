@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 ##
-# 
+#
 # Set up, solve, and plot the solution for a reachability
 # problem where the robot must navigate over a stepping
 # stones in order to reach a goal.
@@ -10,7 +10,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pySTL.benchmarks.stepping_stones import * 
+from pySTL.benchmarks.stepping_stones import *
 from pySTL.systems import DoubleIntegrator
 from pySTL.solvers import *
 
@@ -25,7 +25,7 @@ spec.simplify()
 # System dynamics
 sys = DoubleIntegrator(2)
 
-# Specify any additional running cost (this helps the numerics in 
+# Specify any additional running cost (this helps the numerics in
 # a gradient-based method)
 Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities
 R = 1e-1*np.eye(2)

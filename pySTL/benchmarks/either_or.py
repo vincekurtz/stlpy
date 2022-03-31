@@ -8,7 +8,7 @@ def either_or_specification(goal, target_one, target_two, obstacle, T):
     """
     Return an STLFormula that describes the "either-or" scenario, where
     a robot with double integrator dynamics must reach one of two targets
-    and avoid an obstacle before reaching the goal. 
+    and avoid an obstacle before reaching the goal.
 
     All regions are assumed to be rectangles specified by a tuple
 

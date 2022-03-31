@@ -9,8 +9,8 @@ class STLPredicate(STLFormula):
 
         a^Ty_t - b \geq 0
 
-    where :math:`y_t \in \mathbb{R}^d` is the value of the signal 
-    at a given timestep :math:`t`, :math:`a \in \mathbb{R}^d`, 
+    where :math:`y_t \in \mathbb{R}^d` is the value of the signal
+    at a given timestep :math:`t`, :math:`a \in \mathbb{R}^d`,
     and :math:`b \in \mathbb{R}`.
 
     :param a: a numpy array or list representing the vector :math:`a`
@@ -24,7 +24,7 @@ class STLPredicate(STLFormula):
         # Some dimension-related sanity checks
         assert (self.a.shape[1] == 1), "a must be of shape (d,1)"
         assert (self.b.shape == (1,)), "b must be of shape (1,)"
-        
+
         # Store the dimensionality of y_t
         self.d = self.a.shape[0]
 

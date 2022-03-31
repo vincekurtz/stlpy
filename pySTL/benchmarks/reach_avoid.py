@@ -6,8 +6,8 @@ from matplotlib.patches import Rectangle
 
 ##
 #
-# Tools for setting up a simple reach-avoid specification, 
-# i.e., reach a rectangular goal region and avoid a rectangular obstacle. 
+# Tools for setting up a simple reach-avoid specification,
+# i.e., reach a rectangular goal region and avoid a rectangular obstacle.
 #
 ##
 
@@ -15,12 +15,12 @@ def reach_avoid_specification(goal_bounds, obstacle_bounds, T):
     """
     Return an STLFormula that describes this scenario, where goal_bounds
     and obstacle_bounds are tuples containing (xmin, xmax, ymin, ymax)
-    for the rectangular regions of interest. 
-    
+    for the rectangular regions of interest.
+
     We'll assume that the robot has double integrator dynamics, i.e.,
-    
+
         x = [px,py,pdx,pdy], u = [pddx, pddy]
-    
+
     and that the output signal is given by y = [x;u].
     """
     # Goal Reaching

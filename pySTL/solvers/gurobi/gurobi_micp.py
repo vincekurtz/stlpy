@@ -9,16 +9,16 @@ import time
 
 class GurobiMICPSolver(STLSolver):
     """
-    Given an :class:`.STLFormula` :math:`\\varphi` and a :class:`.LinearSystem`, 
+    Given an :class:`.STLFormula` :math:`\\varphi` and a :class:`.LinearSystem`,
     solve the optimization problem
 
-    .. math:: 
+    .. math::
 
         \max & \\rho^{\\varphi}(y_0,y_1,\dots,y_T)
 
         \\text{s.t. } & x_0 \\text{ fixed}
 
-        & x_{t+1} = f(x_t, u_t) 
+        & x_{t+1} = f(x_t, u_t)
 
         & y_{t} = g(x_t, u_t)
 
@@ -26,13 +26,13 @@ class GurobiMICPSolver(STLSolver):
 
     with Gurobi using mixed-integer convex programming. This gives a globally optimal
     solution, but may be computationally expensive for long and complex specifications.
-   
+
     .. note::
 
         This class implements the method described in
 
-        Raman V, et al. 
-        *Model predictive control with signal temporal logic specifications*. 
+        Raman V, et al.
+        *Model predictive control with signal temporal logic specifications*.
         IEEE Conference on Decision and Control, 2014
 
 
@@ -60,7 +60,7 @@ class GurobiMICPSolver(STLSolver):
 
         # Set timeout (in seconds)
         self.model.setParam('TimeLimit', 10*60)
-        
+
         print("Setting up optimization problem...")
         st = time.time()  # for computing setup time
 
@@ -76,25 +76,25 @@ class GurobiMICPSolver(STLSolver):
         self.AddRobustnessConstraint()
         if robustness_cost:
             self.AddRobustnessCost()
-        
+
         print(f"Setup complete in {time.time()-st} seconds.")
 
     def AddControlBounds(self, u_min, u_max):
         for t in range(self.T):
             self.model.addConstr( u_min <= self.u[:,t] )
             self.model.addConstr( self.u[:,t] <= u_max )
-    
+
     def AddStateBounds(self, x_min, x_max):
         for t in range(self.T):
             self.model.addConstr( x_min <= self.x[:,t] )
             self.model.addConstr( self.x[:,t] <= x_max )
-    
+
     def AddQuadraticCost(self, Q, R):
         raise NotImplementedError("Quadratic costs are not currently supported. Please use the DrakeMICPSolver for specifications with quadratic costs.")
 
     def AddRobustnessConstraint(self, rho_min=0.0):
         self.model.addConstr( self.rho >= rho_min )
-    
+
     def Solve(self):
         if not self.presolve:
             self.model.setParam('Presolve', 0)
@@ -106,7 +106,7 @@ class GurobiMICPSolver(STLSolver):
             x = self.x.X
             u = self.u.X
             rho = self.rho.X[0]
-            
+
             # Report optimal cost and robustness
             print("Solve time: ", self.model.Runtime)
             print("Optimal robustness: ", rho)
@@ -125,13 +125,13 @@ class GurobiMICPSolver(STLSolver):
 
         # Dynamics
         for t in range(self.T-1):
-            self.model.addConstr( 
+            self.model.addConstr(
                     self.x[:,t+1] == self.sys.A@self.x[:,t] + self.sys.B@self.u[:,t] )
 
-            self.model.addConstr( 
+            self.model.addConstr(
                     self.y[:,t] == self.sys.C@self.x[:,t] + self.sys.D@self.u[:,t] )
-            
-        self.model.addConstr( 
+
+        self.model.addConstr(
                 self.y[:,self.T-1] == self.sys.C@self.x[:,self.T-1] + self.sys.D@self.u[:,self.T-1] )
 
     def AddRobustnessCost(self):
@@ -150,7 +150,7 @@ class GurobiMICPSolver(STLSolver):
         # Recursively traverse the tree defined by the specification
         # to add binary variables and constraints that ensure that
         # rho is the robustness value
-        z_spec = self.model.addMVar(1,vtype=GRB.BINARY)  
+        z_spec = self.model.addMVar(1,vtype=GRB.BINARY)
         self.AddSubformulaConstraints(self.spec, z_spec, 0)
         self.model.addConstr( z_spec == 1 )
 
@@ -158,29 +158,29 @@ class GurobiMICPSolver(STLSolver):
         """
         Given an STLFormula (formula) and a binary variable (z),
         add constraints to the optimization problem such that z
-        takes value 1 only if the formula is satisfied (at time t). 
+        takes value 1 only if the formula is satisfied (at time t).
 
-        If the formula is a predicate, this constraint uses the "big-M" 
+        If the formula is a predicate, this constraint uses the "big-M"
         formulation
 
             A[x(t);u(t)] - b + (1-z)M >= 0,
 
-        which enforces A[x;u] - b >= 0 if z=1, where (A,b) are the 
-        linear constraints associated with this predicate. 
+        which enforces A[x;u] - b >= 0 if z=1, where (A,b) are the
+        linear constraints associated with this predicate.
 
         If the formula is not a predicate, we recursively traverse the
-        subformulas associated with this formula, adding new binary 
+        subformulas associated with this formula, adding new binary
         variables z_i for each subformula and constraining
 
             z <= z_i  for all i
 
-        if the subformulas are combined with conjunction (i.e. all 
+        if the subformulas are combined with conjunction (i.e. all
         subformulas must hold), or otherwise constraining
 
             z <= sum(z_i)
 
         if the subformulas are combined with disjuction (at least one
-        subformula must hold). 
+        subformula must hold).
         """
         # We're at the bottom of the tree, so add the big-M constraints
         if isinstance(formula, STLPredicate):
@@ -196,8 +196,8 @@ class GurobiMICPSolver(STLSolver):
         else:
             if formula.combination_type == "and":
                 for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = self.model.addMVar(1,vtype=GRB.CONTINUOUS)  
-                    t_sub = formula.timesteps[i]   # the timestep at which this formula 
+                    z_sub = self.model.addMVar(1,vtype=GRB.CONTINUOUS)
+                    t_sub = formula.timesteps[i]   # the timestep at which this formula
                                                    # should hold
                     self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)
                     self.model.addConstr( z <= z_sub )
@@ -205,7 +205,7 @@ class GurobiMICPSolver(STLSolver):
             else:  # combination_type == "or":
                 z_subs = []
                 for i, subformula in enumerate(formula.subformula_list):
-                    z_sub = self.model.addMVar(1,vtype=GRB.CONTINUOUS)  
+                    z_sub = self.model.addMVar(1,vtype=GRB.CONTINUOUS)
                     z_subs.append(z_sub)
                     t_sub = formula.timesteps[i]
                     self.AddSubformulaConstraints(subformula, z_sub, t+t_sub)

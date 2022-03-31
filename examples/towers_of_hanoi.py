@@ -22,10 +22,10 @@ from pySTL.solvers import DrakeMICPSolver, DrakeSos1Solver
 ######################################
 # We represent each ring with its horizontal and
 # vertical position xr = [px,py]. The total state is the positions
-# of all rings x = [x1,x2,x3,...]. 
+# of all rings x = [x1,x2,x3,...].
 #
-# Control input u = [u1,u2,...] is similarly composed of 
-# velocities ur = [vx,vy] for each ring. 
+# Control input u = [u1,u2,...] is similarly composed of
+# velocities ur = [vx,vy] for each ring.
 
 # Number of rings (max 5 for now)
 N = 2
@@ -62,7 +62,7 @@ x_max = np.array([2.5,2]*N)
 # STL Specification
 #######################################
 # The STL specification constraints both the (approximate) dynamics
-# of the system (e.g., only one ring can move at a time) as well as 
+# of the system (e.g., only one ring can move at a time) as well as
 # the rules of the game (e.g., we can only stack smaller rings on larger ones)
 eps = 1e-1   # small constant so that we can use strict > and <
 
@@ -71,8 +71,8 @@ eps = 1e-1   # small constant so that we can use strict > and <
 #
 # These selection vectors put a 1 in the corresponding output slot
 #   y = [px1, py1, px2, py2, ..., vx1, vy1, vx2, vy2, ... ]
-# and a zero everywhere else. This allows us to compactly define 
-# corresponding predicates. 
+# and a zero everywhere else. This allows us to compactly define
+# corresponding predicates.
 px_vec = lambda i : np.hstack([[1,0] if j==i else [0,0] for j in range(N)] + [[0,0] for j in range(N)]).flatten()
 py_vec = lambda i : np.hstack([[0,1] if j==i else [0,0] for j in range(N)] + [[0,0] for j in range(N)]).flatten()
 vx_vec = lambda i : np.hstack([[0,0] for j in range(N)] + [[1,0] if j==i else [0,0] for j in range(N)]).flatten()
@@ -165,7 +165,7 @@ for i in range(N):
     # Can't move in the x-direction unless above the poles
     no_move_below_poles = no_x_movement[i] | above_poles[i]
     spec = spec & no_move_below_poles.always(0,T)
-    
+
     # Must be on a pole if they're below a certain height
     on_a_pole = on_first_pole[i] | on_second_pole[i] | on_third_pole[i]
     spec = spec & (on_a_pole | above_poles[i]).always(0,T)
@@ -198,7 +198,7 @@ def plot_solution(x, save_fname=None):
     Given a solution x, create a matplotlib animation of the solution.
 
     Args:
-        x:          The (2*num_rings, T) numpy array representing 
+        x:          The (2*num_rings, T) numpy array representing
                     the optimal positions of the rings.
         same_fname: (optional) filename for saving the animation. Doesn't
                     save if not provided.
@@ -231,16 +231,16 @@ def plot_solution(x, save_fname=None):
         # Generate data that gets sent to update the animation
         gen_list = (np.hstack([x[:,t],t]) for t in range(x.shape[1]))
         return gen_list
-    
+
     def update(data):
         # Update the animation based on data
         for i in range(N):
             px = data[2*i]
             py = data[2*i+1]
             t = data[-1]
-            
+
             rings[i].set_xy([px-rw[i]/2,py-rh/2])
-            
+
             ax.set_title("t=%d" % t)
 
     ani = FuncAnimation(fig, update, data_gen)
