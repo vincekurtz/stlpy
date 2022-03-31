@@ -10,9 +10,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scenarios.narrow_passage import narrow_passage_specification, plot_narrow_passage_scenario
-from systems import DoubleIntegrator
-from solvers import *
+from pySTL.benchmarks.narrow_passage import narrow_passage_specification, plot_narrow_passage_scenario
+from pySTL.systems import DoubleIntegrator
+from pySTL.solvers import *
 
 # Specification Parameters
 T = 25

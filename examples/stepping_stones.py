@@ -10,9 +10,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scenarios.stepping_stones import * 
-from systems import DoubleIntegrator
-from solvers import *
+from pySTL.benchmarks.stepping_stones import * 
+from pySTL.systems import DoubleIntegrator
+from pySTL.solvers import *
 
 # Specification Parameters
 num_stones = 15

@@ -10,9 +10,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scenarios.random_multitarget import * 
-from systems import DoubleIntegrator
-from solvers import *
+from pySTL.benchmarks.random_multitarget import * 
+from pySTL.systems import DoubleIntegrator
+from pySTL.solvers import *
 
 # Specification Parameters
 num_obstacles = 1

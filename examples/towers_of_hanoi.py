@@ -13,10 +13,9 @@ import itertools
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-from STL import STLFormula, STLPredicate
-from systems import LinearSystem
-from solvers import DrakeMICPSolver, DrakeSos1Solver
-
+from pySTL.STL import STLFormula, STLPredicate
+from pySTL.systems import LinearSystem
+from pySTL.solvers import DrakeMICPSolver, DrakeSos1Solver
 
 ######################################
 # System definition
@@ -246,8 +245,8 @@ def plot_solution(x, save_fname=None):
 
     ani = FuncAnimation(fig, update, data_gen)
 
-    # DEBUG
-    ani.save("towers_of_hanoi.mp4")
+    # Save the animation to a file
+    #ani.save("towers_of_hanoi.mp4")
 
     plt.show()
 

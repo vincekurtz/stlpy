@@ -10,9 +10,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scenarios.door_puzzle import door_puzzle_specification, plot_door_puzzle_scenario
-from systems import DoubleIntegrator
-from solvers import *
+from pySTL.benchmarks.door_puzzle import door_puzzle_specification, plot_door_puzzle_scenario
+from pySTL.systems import DoubleIntegrator
+from pySTL.solvers import *
 
 # Specification Parameters
 T = 30

@@ -10,9 +10,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scenarios.either_or import either_or_specification, plot_either_or_scenario
-from systems import DoubleIntegrator
-from solvers import *
+from pySTL.benchmarks.either_or import either_or_specification, plot_either_or_scenario
+from pySTL.systems import DoubleIntegrator
+from pySTL.solvers import *
 
 # Specification Parameters
 goal = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
