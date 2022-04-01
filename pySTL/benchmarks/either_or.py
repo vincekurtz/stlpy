@@ -1,47 +1,72 @@
-from .common import (inside_rectangle_formula,
-                     outside_rectangle_formula,
-                     make_rectangle_patch)
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-def either_or_specification(goal, target_one, target_two, obstacle, T):
+from .base import BenchmarkScenario
+from .common import (inside_rectangle_formula,
+                     outside_rectangle_formula,
+                     make_rectangle_patch)
+from ..systems import DoubleIntegrator
+
+class EitherOr(BenchmarkScenario):
+    r"""
+    A 2D mobile robot with double integrator dynamics must
+    avoid an obstacle (:math:`\mathcal{O}`) before reaching a goal
+    (:math:`\mathcal{G}`). Along the way, the robot must reach one
+    of two intermediate targets (:math:`\mathcal{T}_i`) and stay
+    there for several timesteps:
+
+    .. math::
+
+        \varphi = 
+            F_{[0,T-\tau]} 
+                \left( G_{[0,\tau]} \mathcal{T}_1 \lor G_{[0,\tau]} \mathcal{T}_2 \right)
+            \land F_{[0,T]} \mathcal{G} 
+            \land G_{[0,T]} \lnot \mathcal{O}
+
+    :param goal:        Tuple containing bounds of the rectangular goal region
+    :param target_one:  Tuple containing bounds of the rectangular first target
+    :param target_two:  Tuple containing bounds of the rectangular second target
+    :param obstacle:    Tuple containing bounds of the rectangular obstacle
+    :param T:           Total number of time steps
+    :param T_dwell:     Dwell time :math:`\tau` (integer number of timesteps)
     """
-    Return an STLFormula that describes the "either-or" scenario, where
-    a robot with double integrator dynamics must reach one of two targets
-    and avoid an obstacle before reaching the goal.
+    def __init__(self, goal, target_one, target_two, obstacle, T, T_dwell):
+        self.goal = goal
+        self.target_one = target_one
+        self.target_two = target_two
+        self.obstacle = obstacle
+        self.T = T
+        self.T_dwell = T_dwell
 
-    All regions are assumed to be rectangles specified by a tuple
+    def GetSpecification(self):
+        # Goal Reaching
+        at_goal = inside_rectangle_formula(self.goal, 0, 1, 6)
 
-        (xmin, xmax, ymin, ymax)
+        # Target reaching
+        at_target_one = inside_rectangle_formula(self.target_one, 0, 1, 6).always(0, self.T_dwell)
+        at_target_two = inside_rectangle_formula(self.target_two, 0, 1, 6).always(0, self.T_dwell)
+        at_either_target = at_target_one | at_target_two
 
-    """
-    # Goal Reaching
-    at_goal = inside_rectangle_formula(goal, 0, 1, 6)
+        # Obstacle Avoidance
+        not_at_obstacle = outside_rectangle_formula(self.obstacle, 0, 1, 6)
 
-    # Target reaching
-    at_target_one = inside_rectangle_formula(target_one, 0, 1, 6).always(0,5)
-    at_target_two = inside_rectangle_formula(target_two, 0, 1, 6).always(0,5)
-    at_either_target = at_target_one | at_target_two
+        specification = at_either_target.eventually(0, self.T-self.T_dwell) & \
+                        not_at_obstacle.always(0, self.T) & \
+                        at_goal.eventually(0, self.T)
 
-    # Obstacle Avoidance
-    not_at_obstacle = outside_rectangle_formula(obstacle, 0, 1, 6)
+        return specification
 
-    specification = at_either_target.eventually(0,T-5) & \
-                    not_at_obstacle.always(0,T) & \
-                    at_goal.eventually(0,T)
+    def GetSystem(self):
+        return DoubleIntegrator(2)
 
-    return specification
+    def add_to_plot(self, ax):
+        # Make and add rectangular patches
+        ax.add_patch(make_rectangle_patch(*self.obstacle, color='k', alpha=0.5))
+        ax.add_patch(make_rectangle_patch(*self.target_one, color='blue', alpha=0.5))
+        ax.add_patch(make_rectangle_patch(*self.target_two, color='blue', alpha=0.5))
+        ax.add_patch(make_rectangle_patch(*self.goal, color='green', alpha=0.5))
 
-def plot_either_or_scenario(goal, target_one, target_two, obstacle):
-    ax = plt.gca()
-
-    # Make and add rectangular patches
-    ax.add_patch(make_rectangle_patch(*obstacle, color='k', alpha=0.5))
-    ax.add_patch(make_rectangle_patch(*target_one, color='blue', alpha=0.5))
-    ax.add_patch(make_rectangle_patch(*target_two, color='blue', alpha=0.5))
-    ax.add_patch(make_rectangle_patch(*goal, color='green', alpha=0.5))
-
-    # set the field of view
-    ax.set_xlim((0,10))
-    ax.set_ylim((0,10))
-    ax.set_aspect('equal')
+        # set the field of view
+        ax.set_xlim((0,10))
+        ax.set_ylim((0,10))
+        ax.set_aspect('equal')

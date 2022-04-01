@@ -10,8 +10,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pySTL.benchmarks.either_or import either_or_specification, plot_either_or_scenario
-from pySTL.systems import DoubleIntegrator
+from pySTL.benchmarks import EitherOr
 from pySTL.solvers import *
 
 # Specification Parameters
@@ -20,13 +19,13 @@ target_one = (1,2,6,7)
 target_two = (7,8,4.5,5.5)
 obstacle = (3,5,4,6)
 T = 20
+dwell_time = 5
 
 # Create the specification
-spec = either_or_specification(goal, target_one, target_two, obstacle, T)
+scenario = EitherOr(goal, target_one, target_two, obstacle, T, dwell_time)
+spec = scenario.GetSpecification()
 spec.simplify()
-
-# System dynamics
-sys = DoubleIntegrator(2)
+sys = scenario.GetSystem()
 
 # Specify any additional running cost
 Q = 1e-1*np.diag([0,0,1,1])   # just penalize high velocities
@@ -56,6 +55,7 @@ x, u, _, _ = solver.Solve()
 
 if x is not None:
     # Plot the solution
-    plot_either_or_scenario(goal, target_one, target_two, obstacle)
+    ax = plt.gca()
+    scenario.add_to_plot(ax)
     plt.scatter(*x[:2,:])
     plt.show()

@@ -19,6 +19,11 @@ Reach-Avoid
 Either-Or
 ---------
 
+.. autoclass::
+    pySTL.benchmarks.EitherOr
+    :members:
+    :show-inheritance:
+
 In addition to avoiding an obstacle and reaching a goal, the robot
 must visit one of two intermediate target regions. 
 

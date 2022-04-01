@@ -9,7 +9,7 @@ from ..systems import DoubleIntegrator
 
 class ReachAvoid(BenchmarkScenario):
     r"""
-    A simple 2D mobile robot with double integrator dynamics must
+    A 2D mobile robot with double integrator dynamics must
     avoid an obstacle (:math:`\mathcal{O}`) before reaching a goal (:math:`\mathcal{G}`):
 
     .. math::
