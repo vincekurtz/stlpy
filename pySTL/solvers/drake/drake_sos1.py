@@ -52,9 +52,13 @@ class DrakeSos1Solver(DrakeMICPSolver):
                             of 'gurobi', 'mosek', or 'bnb'.
     :param presolve:        (optional) A boolean indicating whether to use gurobi's
                             presolve routines. Only affects the gurobi solver. Default is ``True``.
+    :param verbose:         (optional) A boolean indicating whether to print detailed
+                            solver info. Default is ``True``.
     """
-    def __init__(self, spec, sys, x0, T, M=1000, robustness_cost=True, solver='gurobi', presolve=True):
-        super().__init__(spec, sys, x0, T, M, robustness_cost=robustness_cost, solver=solver, presolve=presolve)
+    def __init__(self, spec, sys, x0, T, M=1000, robustness_cost=True, 
+            solver='gurobi', presolve=True, verbose=True):
+        super().__init__(spec, sys, x0, T, M, robustness_cost=robustness_cost, 
+                solver=solver, presolve=presolve, verbose=verbose)
 
     def AddSubformulaConstraints(self, formula, z, t):
         """

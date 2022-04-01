@@ -33,9 +33,11 @@ class ScipyGradientSolver(STLSolver):
     :param method:  (optional) String characterizing the optimization algorithm to use. See
                     `the scipy docs <https://docs.scipy.org/doc/scipy/reference/reference/generated/scipy.optimize.minimize.html>`_
                     for more details. Default is Sequential Least Squares (``"slsqp"``).
+    :param verbose: (optional) A boolean indicating whether to print detailed
+                    solver info. Default is ``True``.
     """
-    def __init__(self, spec, sys, x0, T, method="slsqp"):
-        super().__init__(spec, sys, x0, T)
+    def __init__(self, spec, sys, x0, T, method="slsqp", verbose=True):
+        super().__init__(spec, sys, x0, T, verbose)
         self.Q = np.zeros((sys.n,sys.n))
         self.R = np.zeros((sys.m,sys.m))
         self.method = method
@@ -75,15 +77,17 @@ class ScipyGradientSolver(STLSolver):
                 method=self.method)
         solve_time = time.time() - start_time
 
-        print(res.message)
-        print("Solve Time: ", solve_time)
+        if self.verbose:
+            print(res.message)
+            print("Solve Time: ", solve_time)
 
         if res.success:
             u = res.x.reshape((self.sys.m,self.T))
             x, y = self.forward_rollout(u)
 
             rho = self.spec.robustness(y, 0)[0]
-            print("Optimal robustness: ", rho)
+            if self.verbose:
+                print("Optimal robustness: ", rho)
         else:
             x = None
             u = None

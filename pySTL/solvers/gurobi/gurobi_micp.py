@@ -46,11 +46,14 @@ class GurobiMICPSolver(STLSolver):
                             the robustness measure. Default is ``True``.
     :param presolve:        (optional) A boolean indicating whether to use Gurobi's
                             presolve routines. Default is ``True``.
+    :param verbose:         (optional) A boolean indicating whether to print detailed
+                            solver info. Default is ``True``.
     """
 
-    def __init__(self, spec, sys, x0, T, M=1000, robustness_cost=True, presolve=True):
+    def __init__(self, spec, sys, x0, T, M=1000, robustness_cost=True, 
+            presolve=True, verbose=True):
         assert M > 0, "M should be a (large) positive scalar"
-        super().__init__(spec, sys, x0, T)
+        super().__init__(spec, sys, x0, T, verbose)
 
         self.M = float(M)
         self.presolve = presolve
@@ -58,11 +61,15 @@ class GurobiMICPSolver(STLSolver):
         # Set up the optimization problem
         self.model = gp.Model("STL_MICP")
 
-        # Set timeout (in seconds)
-        self.model.setParam('TimeLimit', 10*60)
+        # Set some model parameters
+        if not self.presolve:
+            self.model.setParam('Presolve', 0)
+        if not self.verbose:
+            self.model.setParam('OutputFlag', 0)
 
-        print("Setting up optimization problem...")
-        st = time.time()  # for computing setup time
+        if self.verbose:
+            print("Setting up optimization problem...")
+            st = time.time()  # for computing setup time
 
         # Create optimization variables
         self.y = self.model.addMVar((self.sys.p, self.T), lb=-float('inf'), name='y')
@@ -77,7 +84,8 @@ class GurobiMICPSolver(STLSolver):
         if robustness_cost:
             self.AddRobustnessCost()
 
-        print(f"Setup complete in {time.time()-st} seconds.")
+        if self.verbose:
+            print(f"Setup complete in {time.time()-st} seconds.")
 
     def AddControlBounds(self, u_min, u_max):
         for t in range(self.T):
@@ -96,23 +104,23 @@ class GurobiMICPSolver(STLSolver):
         self.model.addConstr( self.rho >= rho_min )
 
     def Solve(self):
-        if not self.presolve:
-            self.model.setParam('Presolve', 0)
-
         self.model.optimize()
 
         if self.model.status == GRB.OPTIMAL:
-            print("\nOptimal Solution Found!\n")
+            if self.verbose:
+                print("\nOptimal Solution Found!\n")
             x = self.x.X
             u = self.u.X
             rho = self.rho.X[0]
 
             # Report optimal cost and robustness
-            print("Solve time: ", self.model.Runtime)
-            print("Optimal robustness: ", rho)
-            print("")
+            if self.verbose:
+                print("Solve time: ", self.model.Runtime)
+                print("Optimal robustness: ", rho)
+                print("")
         else:
-            print(f"\nOptimization failed with status {self.model.status}.\n")
+            if self.verbose:
+                print(f"\nOptimization failed with status {self.model.status}.\n")
             x = None
             u = None
             rho = -np.inf
@@ -135,7 +143,6 @@ class GurobiMICPSolver(STLSolver):
                 self.y[:,self.T-1] == self.sys.C@self.x[:,self.T-1] + self.sys.D@self.u[:,self.T-1] )
 
     def AddRobustnessCost(self):
-        print("Warning: objective reset to maximize robustness measure")
         self.model.setObjective(1*self.rho, GRB.MAXIMIZE)
 
     def AddSTLConstraints(self):

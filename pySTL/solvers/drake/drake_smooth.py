@@ -39,14 +39,17 @@ class DrakeSmoothSolver(DrakeSTLSolver):
     :param T:       A positive integer fixing the total number of timesteps :math:`T`.
     :param k:       (optional). A smoothing parameter characterizing the tightness of
                     the smooth approximation. Larger values give a tighter approximation.
+    :param verbose: (optional) A boolean indicating whether to print detailed
+                    solver info. Default is ``True``.
     """
 
-    def __init__(self, spec, sys, x0, T, k=2.0):
-        print("Setting up optimization problem...")
-        st = time.time()  # for computing setup time
-
-        DrakeSTLSolver.__init__(self, spec, sys, x0, T)
+    def __init__(self, spec, sys, x0, T, k=2.0, verbose=True):
+        DrakeSTLSolver.__init__(self, spec, sys, x0, T, verbose)
         self.k = k
+        
+        if self.verbose:
+            print("Setting up optimization problem...")
+            st = time.time()  # for computing setup time
 
         # Choose a solver
         snopt_solver = SnoptSolver()
@@ -63,7 +66,8 @@ class DrakeSmoothSolver(DrakeSTLSolver):
         self.AddSTLConstraints()
         self.AddRobustnessCost()
 
-        print(f"Setup complete in {time.time()-st} seconds.")
+        if self.verbose:
+            print(f"Setup complete in {time.time()-st} seconds.")
 
     def AddDynamicsConstraints(self):
         # Initial condition
@@ -85,7 +89,8 @@ class DrakeSmoothSolver(DrakeSTLSolver):
 
         # Set solver options
         options = SolverOptions()
-        options.SetOption(CommonSolverOption.kPrintToConsole,1)
+        if self.verbose:
+            options.SetOption(CommonSolverOption.kPrintToConsole,1)
         self.mp.SetSolverOptions(options)
 
         # Local solvers tend to be sensitive to the initial guess
@@ -97,18 +102,21 @@ class DrakeSmoothSolver(DrakeSTLSolver):
         solve_time = time.time() - st
 
         if res.is_success():
-            print("\nOptimal Solution Found!\n")
+            if self.verbose:
+                print("\nOptimal Solution Found!\n")
             x = res.GetSolution(self.x)
             u = res.GetSolution(self.u)
 
             # Report solve time and robustness
             y = np.vstack([x,u])
             rho = self.spec.robustness(y,0)[0]
-            print("Solve time: ", solve_time)
-            print("Optimal robustness: ", rho)
+            if self.verbose:
+                print("Solve time: ", solve_time)
+                print("Optimal robustness: ", rho)
 
         else:
-            print("\nNo solution found.\n")
+            if self.verbose:
+                print("\nNo solution found.\n")
             x = None
             u = None
             rho = -np.inf

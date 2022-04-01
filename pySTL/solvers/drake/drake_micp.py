@@ -59,10 +59,13 @@ class DrakeMICPSolver(DrakeSTLSolver):
                             of 'gurobi', 'mosek', or 'bnb'.
     :param presolve:        (optional) A boolean indicating whether to use gurobi's
                             presolve routines. Only affects the gurobi solver. Default is ``True``.
+    :param verbose:         (optional) A boolean indicating whether to print detailed
+                            solver info. Default is ``True``.
     """
-    def __init__(self, spec, sys, x0, T, M=1000, robustness_cost=True, solver='gurobi', presolve=True):
+    def __init__(self, spec, sys, x0, T, M=1000, robustness_cost=True, 
+            solver='gurobi', presolve=True, verbose=True):
         assert M > 0, "M should be a (large) positive scalar"
-        super().__init__(spec, sys, x0, T)
+        super().__init__(spec, sys, x0, T, verbose)
 
         self.M = M
         self.presolve = presolve
@@ -87,11 +90,12 @@ class DrakeMICPSolver(DrakeSTLSolver):
 
         # Set solver options
         options = SolverOptions()
-        options.SetOption(CommonSolverOption.kPrintToConsole,1)
+        if self.verbose:
+            options.SetOption(CommonSolverOption.kPrintToConsole,1)
         if not self.presolve:
             options.SetOption(GurobiSolver.id(), "Presolve", 0)
         self.mp.SetSolverOptions(options)
-
+        
         # Setup for naive branch and bound
         if self.solver == "bnb":
             bnb_solver = MixedIntegerBranchAndBound(self.mp, ClpSolver.id())
@@ -107,8 +111,9 @@ class DrakeMICPSolver(DrakeSTLSolver):
             success = res.is_success()
             solve_time = res.get_solver_details().optimizer_time
 
-        print("")
-        print("Solve time: ", solve_time)
+        if self.verbose:
+            print("")
+            print("Solve time: ", solve_time)
 
         if success:
             x = res.GetSolution(self.x)
@@ -116,9 +121,11 @@ class DrakeMICPSolver(DrakeSTLSolver):
 
             y = self.sys.C@x + self.sys.D@u
             rho = self.spec.robustness(y,0)[0]
-            print("Optimal robustness: ", rho)
+            if self.verbose:
+                print("Optimal robustness: ", rho)
         else:
-            print("No solution found")
+            if self.verbose:
+                print("No solution found")
             x = None
             u = None
             rho = -np.inf

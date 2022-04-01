@@ -6,8 +6,8 @@ class DrakeSTLSolver(STLSolver):
     A base class for solvers that use the Drake interface to connect with
     a lower-level solver like Gurobi, Mosek, SNOPT, or IPOPT.
     """
-    def __init__(self, spec, sys, x0, T):
-        STLSolver.__init__(self, spec, sys, x0, T)
+    def __init__(self, spec, sys, x0, T, verbose):
+        STLSolver.__init__(self, spec, sys, x0, T, verbose)
 
         # Create the drake MathematicalProgram instance that will allow
         # us to interface with a MIP solver like Gurobi or Mosek

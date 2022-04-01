@@ -28,17 +28,19 @@ class STLSolver(ABC):
     as a cost, dropping the quadratic running cost, and removing the hard satisfaction
     constriant :math:`\\rho^{\\varphi}\geq 0`.
 
-    :param spec:   An :class:`.STLFormula` describing the specification.
-    :param sys:    An :class:`.NonlinearSystem` characterizing the system dynamics.
-    :param x0:     A ``(n,1)`` numpy array representing the initial state :math:`x_0`.
-    :param T:      A positive integer fixing the total number of timesteps :math:`T`.
+    :param spec:    An :class:`.STLFormula` describing the specification.
+    :param sys:     An :class:`.NonlinearSystem` characterizing the system dynamics.
+    :param x0:      A ``(n,1)`` numpy array representing the initial state :math:`x_0`.
+    :param T:       A positive integer fixing the total number of timesteps :math:`T`.
+    :param verbose: A boolean specifying whether to print detailed solver info.
     """
-    def __init__(self, spec, sys, x0, T):
+    def __init__(self, spec, sys, x0, T, verbose):
         # Store the relevant data
         self.sys = sys
         self.spec = spec
         self.x0 = x0
         self.T = T+1  # needed to be consistent with how we've defined STLFormula
+        self.verbose = verbose
 
     @abstractmethod
     def AddDynamicsConstraints(self):
