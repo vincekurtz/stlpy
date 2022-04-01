@@ -11,11 +11,10 @@ Simple Scenarios
 Reach-Avoid
 -----------
 
-A robot needs to avoid and obstacle and reach a goal.
-
-.. autofunction::
-    pySTL.benchmarks.reach_avoid.reach_avoid_specification
-    
+.. autoclass::
+    pySTL.benchmarks.reach_avoid.ReachAvoid
+    :members:
+    :show-inheritance:
 
 Either-Or
 ---------
@@ -42,6 +41,17 @@ Key-Door
 
 The robot must visit several target regions (rooms), but before entering each room it must
 visit a different location to pick up a key. 
+
+Adding New Benchmarks
+=======================
+
+To add additional benchmark scenarios, simply create
+an object that inherits from the following ``BenchmarkScenario`` class:
+
+.. autoclass::
+    pySTL.benchmarks.base.BenchmarkScenario
+    :members:
+    :show-inheritance:
 
 Helper functions
 ==========================

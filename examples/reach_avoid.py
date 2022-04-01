@@ -12,7 +12,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from pySTL.benchmarks.reach_avoid import reach_avoid_specification, plot_reach_avoid_scenario
+#from pySTL.benchmarks.reach_avoid import reach_avoid_specification, plot_reach_avoid_scenario
+from pySTL.benchmarks import ReachAvoid
 from pySTL.systems import DoubleIntegrator
 from pySTL.solvers import *
 
@@ -22,10 +23,9 @@ obstacle_bounds = (3,5,4,6)
 T = 15
 
 # Create the specification
-spec = reach_avoid_specification(goal_bounds, obstacle_bounds, T)
-
-# Define the system
-sys = DoubleIntegrator(2)
+scenario = ReachAvoid(goal_bounds, obstacle_bounds, T)
+spec = scenario.GetSpecification()
+sys = scenario.GetSystem()
 
 # Specify any additional running cost (this helps the numerics in
 # a gradient-based method)
@@ -58,6 +58,7 @@ x, u, _, _ = solver.Solve()
 
 if x is not None:
     # Plot the solution
-    plot_reach_avoid_scenario(goal_bounds, obstacle_bounds)
+    ax = plt.gca()
+    scenario.add_to_plot(ax)
     plt.scatter(*x[:2,:])
     plt.show()

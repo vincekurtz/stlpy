@@ -1,50 +1,56 @@
-from .common import (inside_rectangle_formula,
-                     outside_rectangle_formula,
-                     make_rectangle_patch)
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-##
-#
-# Tools for setting up a simple reach-avoid specification,
-# i.e., reach a rectangular goal region and avoid a rectangular obstacle.
-#
-##
+from .base import BenchmarkScenario
+from .common import (inside_rectangle_formula,
+                     outside_rectangle_formula,
+                     make_rectangle_patch)
+from ..systems import DoubleIntegrator
 
-def reach_avoid_specification(goal_bounds, obstacle_bounds, T):
+class ReachAvoid(BenchmarkScenario):
+    r"""
+    A simple 2D mobile robot with double integrator dynamics must
+    avoid an obstacle (:math:`\mathcal{O}`) before reaching a goal (:math:`\mathcal{G}`):
+
+    .. math::
+
+        \varphi = G_{[0,T]} \lnot \mathcal{O} \land F_{[0,T]} \mathcal{G}
+
+    :param goal_bounds:      a tuple ``(xmin, xmax, ymin, ymax)`` defining a
+                             rectangular goal region.
+    :param obstacle_bounds:  a tuple ``(xmin, xmax, ymin, ymax)`` defining a
+                             rectangular obstacle.
+    :param T:                the time horizon for this scenario.
     """
-    Return an STLFormula that describes this scenario, where goal_bounds
-    and obstacle_bounds are tuples containing (xmin, xmax, ymin, ymax)
-    for the rectangular regions of interest.
+    def __init__(self, goal_bounds, obstacle_bounds, T):
+        self.goal_bounds = goal_bounds
+        self.obstacle_bounds = obstacle_bounds
+        self.T = T
 
-    We'll assume that the robot has double integrator dynamics, i.e.,
+    def GetSpecification(self):
+        # Goal Reaching
+        at_goal = inside_rectangle_formula(self.goal_bounds, 0, 1, 6)
 
-        x = [px,py,pdx,pdy], u = [pddx, pddy]
+        # Obstacle Avoidance
+        not_at_obstacle = outside_rectangle_formula(self.obstacle_bounds, 0, 1, 6)
 
-    and that the output signal is given by y = [x;u].
-    """
-    # Goal Reaching
-    at_goal = inside_rectangle_formula(goal_bounds, 0, 1, 6)
+        # Put all of the constraints together in one specification
+        spec = not_at_obstacle.always(0, self.T) & at_goal.eventually(0, self.T)
 
-    # Obstacle Avoidance
-    not_at_obstacle = outside_rectangle_formula(obstacle_bounds, 0, 1, 6)
+        return spec
 
-    # Put all of the constraints together in one specification
-    #specification = not_at_obstacle.until(at_goal, 0, T)
-    specification = not_at_obstacle.always(0,T) & at_goal.eventually(0,T)
+    def GetSystem(self):
+        sys = DoubleIntegrator(2)
+        return sys
 
-    return specification
+    def add_to_plot(self, ax):
+        # Make and add rectangular patches
+        obstacle = make_rectangle_patch(*self.obstacle_bounds, color='k', alpha=0.5)
+        goal = make_rectangle_patch(*self.goal_bounds, color='green', alpha=0.5)
+        ax.add_patch(obstacle)
+        ax.add_patch(goal)
 
-def plot_reach_avoid_scenario(goal_bounds, obstacle_bounds):
-    ax = plt.gca()
-
-    # Make and add rectangular patches
-    obstacle = make_rectangle_patch(*obstacle_bounds, color='k', alpha=0.5)
-    goal = make_rectangle_patch(*goal_bounds, color='green', alpha=0.5)
-    ax.add_patch(obstacle)
-    ax.add_patch(goal)
-
-    # set the field of view
-    ax.set_xlim((0,10))
-    ax.set_ylim((0,10))
-    ax.set_aspect('equal')
+        # set the field of view
+        ax.set_xlim((0,10))
+        ax.set_ylim((0,10))
+        ax.set_aspect('equal')
