@@ -12,7 +12,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-#from pySTL.benchmarks.reach_avoid import reach_avoid_specification, plot_reach_avoid_scenario
 from pySTL.benchmarks import ReachAvoid
 from pySTL.systems import DoubleIntegrator
 from pySTL.solvers import *
@@ -22,7 +21,7 @@ goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
 T = 15
 
-# Create the specification
+# Define the system and specification
 scenario = ReachAvoid(goal_bounds, obstacle_bounds, T)
 spec = scenario.GetSpecification()
 sys = scenario.GetSystem()
@@ -35,7 +34,7 @@ R = 1e-1*np.eye(2)
 # Initial state
 x0 = np.array([1.0,2.0,0,0])
 
-# Define the solver
+# Choose a solver
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)

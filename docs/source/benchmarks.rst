@@ -12,7 +12,7 @@ Reach-Avoid
 -----------
 
 .. autoclass::
-    pySTL.benchmarks.reach_avoid.ReachAvoid
+    pySTL.benchmarks.ReachAvoid
     :members:
     :show-inheritance:
 
@@ -41,6 +41,11 @@ Key-Door
 
 The robot must visit several target regions (rooms), but before entering each room it must
 visit a different location to pick up a key. 
+
+.. autoclass::
+    pySTL.benchmarks.DoorPuzzle
+    :members:
+    :show-inheritance:
 
 Adding New Benchmarks
 =======================
