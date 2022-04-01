@@ -45,3 +45,18 @@ visit a different location to pick up a key.
 
 Helper functions
 ==========================
+
+inside_rectangle_formula
+------------------------
+.. autofunction::
+    pySTL.benchmarks.common.inside_rectangle_formula
+
+outside_rectangle_formula
+-------------------------
+.. autofunction::
+    pySTL.benchmarks.common.outside_rectangle_formula
+
+make_rectangle_patch
+--------------------
+.. autofunction::
+    pySTL.benchmarks.common.make_rectangle_patch
