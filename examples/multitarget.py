@@ -10,8 +10,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pySTL.benchmarks.random_multitarget import *
-from pySTL.systems import DoubleIntegrator
+from pySTL.benchmarks import RandomMultitarget
 from pySTL.solvers import *
 
 # Specification Parameters
@@ -20,12 +19,11 @@ num_groups = 5
 targets_per_group = 2
 T = 15
 
-# Create the specification
-spec, obstacles, targets = random_multitarget_specification(
+# Define the specification and system dynamics
+scenario = RandomMultitarget(
         num_obstacles, num_groups, targets_per_group, T, seed=0)
-
-# System dynamics
-sys = DoubleIntegrator(2)
+spec = scenario.GetSpecification()
+sys = scenario.GetSystem()
 
 # Specify any additional running cost (this helps the numerics in
 # a gradient-based method)
@@ -56,6 +54,7 @@ x, u, _, _ = solver.Solve()
 
 if x is not None:
     # Plot the solution
-    plot_random_multitarget_scenario(obstacles, targets)
+    ax = plt.gca()
+    scenario.add_to_plot(ax)
     plt.scatter(*x[:2,:])
     plt.show()

@@ -10,18 +10,16 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pySTL.benchmarks.narrow_passage import narrow_passage_specification, plot_narrow_passage_scenario
-from pySTL.systems import DoubleIntegrator
+from pySTL.benchmarks import NarrowPassage
 from pySTL.solvers import *
 
 # Specification Parameters
 T = 25
 
-# Create the specification
-spec = narrow_passage_specification(T)
-
-# System dynamics
-sys = DoubleIntegrator(2)
+# Create the specification and define the dynamics
+scenario = NarrowPassage(T)
+spec = scenario.GetSpecification()
+sys = scenario.GetSystem()
 
 # Specify any additional running cost (this helps the numerics in
 # a gradient-based method)
@@ -52,6 +50,7 @@ x, u, _, _ = solver.Solve()
 
 if x is not None:
     # Plot the solution
-    plot_narrow_passage_scenario()
+    ax = plt.gca()
+    scenario.add_to_plot(ax)
     plt.scatter(*x[:2,:])
     plt.show()

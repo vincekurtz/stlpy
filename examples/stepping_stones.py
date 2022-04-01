@@ -10,20 +10,18 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pySTL.benchmarks.stepping_stones import *
-from pySTL.systems import DoubleIntegrator
+from pySTL.benchmarks import SteppingStones
 from pySTL.solvers import *
 
 # Specification Parameters
 num_stones = 15
 T = 20
 
-# Create the specification
-spec, stones = stepping_stones_specification(num_stones, T, seed=1)
+# Define the specification and system dynamics
+scenario = SteppingStones(num_stones, T, seed=1)
+spec = scenario.GetSpecification()
 spec.simplify()
-
-# System dynamics
-sys = DoubleIntegrator(2)
+sys = scenario.GetSystem()
 
 # Specify any additional running cost (this helps the numerics in
 # a gradient-based method)
@@ -54,6 +52,7 @@ x, u, _, _ = solver.Solve()
 
 if x is not None:
     # Plot the solution
-    plot_stepping_stones_scenario(stones)
+    ax = plt.gca()
+    scenario.add_to_plot(ax)
     plt.scatter(*x[:2,:])
     plt.show()

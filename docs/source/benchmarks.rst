@@ -5,11 +5,10 @@ Benchmarks
 Benchmark scenarios for evaluating 
 different control approaches. 
 
-Simple Scenarios
-====================
-
 Reach-Avoid
------------
+===========
+
+A robot must avoid an obstacle and reach a goal.
 
 .. autoclass::
     pySTL.benchmarks.ReachAvoid
@@ -17,38 +16,56 @@ Reach-Avoid
     :show-inheritance:
 
 Either-Or
----------
+=========
+
+In addition to avoiding an obstacle and reaching a goal, the robot
+must visit one of two intermediate target regions and stay there
+for several timesteps.
 
 .. autoclass::
     pySTL.benchmarks.EitherOr
     :members:
     :show-inheritance:
 
-In addition to avoiding an obstacle and reaching a goal, the robot
-must visit one of two intermediate target regions. 
-
 Narrow Passage
---------------
+==============
 
 A robot must avoid several obstacles and reach one of two
 goals, and the passageway between obstacles is narrow.
 
-Complex/Scalable Scenarios
-==========================
+.. autoclass::
+    pySTL.benchmarks.NarrowPassage
+    :members:
+    :show-inheritance:
 
 Multi-Target
-------------
+============
 
 A robot must avoid many obstacles and visit at least one target of various types.
 
+.. autoclass::
+    pySTL.benchmarks.RandomMultitarget
+    :members:
+    :show-inheritance:
+
 Key-Door
---------
+========
 
 The robot must visit several target regions (rooms), but before entering each room it must
 visit a different location to pick up a key. 
 
 .. autoclass::
     pySTL.benchmarks.DoorPuzzle
+    :members:
+    :show-inheritance:
+
+Stepping-Stones
+===============
+
+The robot can only step in certain areas before reaching a goal.
+
+.. autoclass::
+    pySTL.benchmarks.SteppingStones
     :members:
     :show-inheritance:
 
