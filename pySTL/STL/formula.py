@@ -1,6 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
-from treelib import Node, Tree
+from treelib import Tree
 
 class STLFormula(ABC):
     """
