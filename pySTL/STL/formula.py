@@ -72,7 +72,7 @@ class STLFormula(ABC):
 
         .. math::
 
-            Ay <= b
+            Ay \le b
 
         where each row of :math:`A` and :math:`b` correspond to a predicate in this formula.
 
