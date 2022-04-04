@@ -8,7 +8,11 @@ different control approaches.
 Reach-Avoid
 ===========
 
-A robot must avoid an obstacle and reach a goal.
+A robot (blue dots) must avoid an obstacle (grey) and reach a goal (green).
+
+.. image:: images/reach_avoid.png
+    :width: 400
+    :alt: A picture of the reach-avoid scenario.
 
 .. autoclass::
     pySTL.benchmarks.ReachAvoid
@@ -18,9 +22,13 @@ A robot must avoid an obstacle and reach a goal.
 Either-Or
 =========
 
-In addition to avoiding an obstacle and reaching a goal, the robot
-must visit one of two intermediate target regions and stay there
+In addition to avoiding an obstacle (grey) and reaching a goal (green), the robot
+must visit one of two intermediate target regions (blue) and stay at the target
 for several timesteps.
+
+.. image:: images/either_or.png
+    :width: 400
+    :alt: A picture of the either-or scenario.
 
 .. autoclass::
     pySTL.benchmarks.EitherOr
@@ -30,8 +38,12 @@ for several timesteps.
 Narrow Passage
 ==============
 
-A robot must avoid several obstacles and reach one of two
-goals, and the passageway between obstacles is narrow.
+A robot must avoid several obstacles (grey) and reach one of two
+goals (green), and the passageway between obstacles is narrow.
+
+.. image:: images/narrow_passage.png
+    :width: 400
+    :alt: A picture of the narrow passage scenario.
 
 .. autoclass::
     pySTL.benchmarks.NarrowPassage
@@ -41,18 +53,28 @@ goals, and the passageway between obstacles is narrow.
 Multi-Target
 ============
 
-A robot must avoid many obstacles and visit at least one target of various types.
+A robot must avoid obstacles (grey) and visit at least one target of each type/color.
+Targets and obstacles are placed randomly.
+
+.. image:: images/multitarget.png
+    :width: 400
+    :alt: A picture of the multi-target scenario.
 
 .. autoclass::
     pySTL.benchmarks.RandomMultitarget
     :members:
     :show-inheritance:
 
-Key-Door
-========
+Door Puzzle
+===========
 
-The robot must visit several target regions (rooms), but before entering each room it must
-visit a different location to pick up a key. 
+A robot must avoid obstacles (grey) and reach a goal (green), but before reaching the goal
+it must pass through several doors (red). It can only pass through a door once the corresponding 
+key has been picked up (e.g., visit the blue region). 
+
+.. image:: images/door_puzzle.png
+    :width: 400
+    :alt: A picture of the door puzzle scenario.
 
 .. autoclass::
     pySTL.benchmarks.DoorPuzzle
@@ -62,7 +84,12 @@ visit a different location to pick up a key.
 Stepping-Stones
 ===============
 
-The robot can only step in certain areas before reaching a goal.
+The robot must reach a goal (green), but can only step in certain areas (yellow). 
+The goal and stepping stone locations are randomly generated. 
+
+.. image:: images/stepping_stones.png
+    :width: 400
+    :alt: A picture of the stepping stones scenario.
 
 .. autoclass::
     pySTL.benchmarks.SteppingStones
@@ -73,7 +100,7 @@ Adding New Benchmarks
 =======================
 
 To add additional benchmark scenarios, simply create
-an object that inherits from the following ``BenchmarkScenario`` class:
+a class that inherits from the following ``BenchmarkScenario`` class:
 
 .. autoclass::
     pySTL.benchmarks.base.BenchmarkScenario

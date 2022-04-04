@@ -15,7 +15,7 @@ from pySTL.solvers import *
 
 # Specification Parameters
 num_stones = 15
-T = 20
+T = 15
 
 # Define the specification and system dynamics
 scenario = SteppingStones(num_stones, T, seed=1)
@@ -32,8 +32,8 @@ R = 1e-1*np.eye(2)
 x0 = np.array([2.0,1.3,0,0])
 
 # Specify a solution strategy
-solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+#solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 
 # Set bounds on state and control variables
@@ -45,7 +45,7 @@ solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
 
 # Add quadratic running cost (optional)
-#solver.AddQuadraticCost(Q,R)
+solver.AddQuadraticCost(Q,R)
 
 # Solve the optimization problem
 x, u, _, _ = solver.Solve()
