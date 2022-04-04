@@ -57,7 +57,7 @@ DrakeSmoothSolver
 -----------------
 
 .. autoclass:: pySTL.solvers.DrakeSmoothSolver
-    :members: Solve, AddControlBounds, AddQuadraticCost, AddStateBounds
+    :members: Solve, AddControlBounds, AddQuadraticCost, AddStateBounds, AddRobustnessConstraint
     :show-inheritance:
 
 Gurobi

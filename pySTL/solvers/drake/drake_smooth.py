@@ -115,7 +115,6 @@ class DrakeSmoothSolver(DrakeSTLSolver):
 
             # Report solve time and robustness
             y = self.sys.g(x, u)
-            print(y.shape)
             rho = self.spec.robustness(y,0)[0]
             if self.verbose:
                 print("Solve time: ", solve_time)

@@ -56,7 +56,76 @@ STL formulas can be defined and evaluated without these dependencies.
 A Simple Example
 =================================
 
-*coming soon*
+In this section, we'll consider a simple one-dimensional linear system
+
+.. math::
+
+    x_{t+1} = x_t + u_t 
+
+    y_t = x_t
+
+subject to a simple STL specification
+
+.. math::
+
+    \varphi = F_{[0,5]} (y > 2),
+
+which can be read as "eventually, between timesteps 0 and 5, y must be greater than 2."
+
+First we'll import everything we need to set up the optimization problem, solve it, and
+visualize the solution:
+
+::
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from pySTL.systems import LinearSystem
+    from pySTL.STL import STLPredicate
+    from pySTL.solvers import DrakeMICPSolver
+
+We'll then define the simple linear system shown above, along with an initial condition :math:`x_0 = 0`.
+
+::
+
+    A = np.array([[1.]])
+    B = np.array([[1.]])
+    C = np.array([[1.]])
+    D = np.array([[0.]])
+    sys = LinearSystem(A,B,C,D)
+    
+    x0 = np.array([[0]])
+
+Now we can the specification. We do this recursively, starting with the 
+predicate :math:`\pi = (y>0)` and building up to the whole STL formula :math:`\varphi`
+by applying boolean and temporal operators:
+
+::
+    
+    pi = STLPredicate(a=[1], b=[2])  # a*y - b > 0
+    spec = pi.eventually(0, 5)       # F_[0,5] pi
+
+Then we set up a solver object, and tell it to look for a trajectory with 5
+timesteps. Just for fun, we'll and a quadratic running cost 
+:math:`\|x_t\|^2 + \|u_t\|^2` as well. 
+
+::
+
+    solver = DrakeMICPSolver(spec, sys, x0, 5)
+    solver.AddQuadraticCost(Q=np.eye(1), R=np.eye(1))
+    x, u, _, _ = solver.Solve()
+
+Finally, we can make a nice plot of the solution:
+
+::
+
+    plt.plot([0,1,2,3,4,5], x.flatten(), 'bo')
+    plt.xlabel("timestep (t)")
+    plt.ylabel("output signal (y)")
+    plt.show()
+
+.. image:: images/simple_demo.png
+    :width: 400
+    :alt: plot of optimal solution for the simple example
 
 More Examples
 =================================
