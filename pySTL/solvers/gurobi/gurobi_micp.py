@@ -14,27 +14,26 @@ class GurobiMICPSolver(STLSolver):
 
     .. math::
 
-        \max & \\rho^{\\varphi}(y_0,y_1,\dots,y_T)
+        \min & -\\rho^{\\varphi}(y_0,y_1,\dots,y_T) + \sum_{t=0}^T x_t^TQx_t + u_t^TRu_t
 
         \\text{s.t. } & x_0 \\text{ fixed}
 
-        & x_{t+1} = f(x_t, u_t)
+        & x_{t+1} = A x_t + B u_t
 
-        & y_{t} = g(x_t, u_t)
+        & y_{t} = C x_t + D u_t
 
         & \\rho^{\\varphi}(y_0,y_1,\dots,y_T) \geq 0
 
     with Gurobi using mixed-integer convex programming. This gives a globally optimal
     solution, but may be computationally expensive for long and complex specifications.
-
+    
     .. note::
 
-        This class implements the method described in
+        This class implements the algorithm described in
 
-        Raman V, et al.
-        *Model predictive control with signal temporal logic specifications*.
-        IEEE Conference on Decision and Control, 2014
-
+        Belta C, et al.
+        *Formal methods for control synthesis: an optimization perspective*.
+        Anual Review of Control, Robotics, and Autonomous Systems, 2019.
 
     :param spec:            An :class:`.STLFormula` describing the specification.
     :param sys:             A :class:`.LinearSystem` describing the system dynamics.

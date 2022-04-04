@@ -10,7 +10,7 @@ class ScipyGradientSolver(STLSolver):
 
     .. math::
 
-        \min & \sum_{t=0}^T x_t^TQx_t + u_t^TRu_t - \\rho^{\\varphi}(y_0,y_1,\dots,y_T)
+        \min &  - \\rho^{\\varphi}(y_0,y_1,\dots,y_T) + \sum_{t=0}^T x_t^TQx_t + u_t^TRu_t
 
         \\text{s.t. } & x_0 \\text{ fixed}
 

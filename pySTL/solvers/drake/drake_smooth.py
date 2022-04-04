@@ -33,6 +33,12 @@ class DrakeSmoothSolver(DrakeSTLSolver):
         Gilpin, Y, et al. *A Smooth Robustness Measure of Signal Temporal Logic for Symbolic Control*.
         IEEE Control Systems Letters, 2021.
 
+    .. Note::
+
+        This method is most effective when used in conjunction with the SNOPT
+        sparse SQP solver. SNOPT is included with the binary version of Drake, but
+        requires a license when built from source. 
+
     :param spec:    An :class:`.STLFormula` describing the specification.
     :param sys:     A :class:`.LinearSystem` describing the system dynamics.
     :param x0:      A ``(n,1)`` numpy matrix describing the initial state.

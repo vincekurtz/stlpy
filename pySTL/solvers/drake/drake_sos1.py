@@ -14,31 +14,35 @@ class DrakeSos1Solver(DrakeMICPSolver):
 
     .. math::
 
-        \max ~& \\rho^{\\varphi}(y_0,y_1,\dots,y_T)
+        \min & -\\rho^{\\varphi}(y_0,y_1,\dots,y_T) + \sum_{t=0}^T x_t^TQx_t + u_t^TRu_t
 
         \\text{s.t. } & x_0 \\text{ fixed}
 
-        & x_{t+1} = f(x_t, u_t)
+        & x_{t+1} = A x_t + B u_t
 
-        & y_{t} = g(x_t, u_t)
+        & y_{t} = C x_t + D u_t
 
-        & y_0,y_1,\dots,y_T \\vDash \\varphi
+        & \\rho^{\\varphi}(y_0,y_1,\dots,y_T) \geq 0
 
-    using mixed-integer convex programming. This gives a globally optimal
-    solution, but may be computationally expensive for long and complex specifications.
+    using mixed-integer convex programming. This method uses fewer binary variables
+    by encoding disjunction with a Specially Ordered Set of Type 1 (SOS1) constraint.
 
-    This class uses the encoding described in
+    .. note::
 
-        Vielma J, et al.
-        *Modeling disjunctive constraints with a logarithmic number of binary variables and
-        constraints*. Mathematical Programming, 2011.
+        This class implements the encoding described in
 
-    to use fewer binary variables, improving scalability to long specifications.
+        Kurtz V, et al.
+        *Mixed-Integer Programming for Signal Temporal Logic with Fewer Binary
+        Variables*. IEEE Control Systems Letters, Under Review, 2022.
+
 
     .. warning::
 
         Drake must be compiled from source to support Gurobi and Mosek MICP solvers.
         See `<https://drake.mit.edu/from_source.html>`_ for more details.
+
+        Drake's naive branch-and-bound solver does not require Gurobi or Mosek, and
+        can be used with the ``bnb`` solver option, but this tends to be very slow. 
 
     :param spec:            An :class:`.STLFormula` describing the specification.
     :param sys:             A :class:`.LinearSystem` describing the system dynamics.

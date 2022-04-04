@@ -72,7 +72,7 @@ class STLFormula(ABC):
 
         .. math::
 
-            A*y <= b
+            Ay <= b
 
         where each row of :math:`A` and :math:`b` correspond to a predicate in this formula.
 
@@ -443,8 +443,6 @@ class STLTree(STLFormula):
         the tree structure of the formula, where each node represents either
         a conjuction or disjuction of subformulas, and leaves are state formulas.
         """
-        string = 'hello world'
-
         tree = Tree()
         root = tree.create_node(self.combination_type)
 
@@ -458,9 +456,8 @@ class STLTree(STLFormula):
         Helper function for recursively parsing subformulas to create
         a Tree object for visualizing this formula.
         """
-        #if formula.is_conjunctive_state_formula():
         if formula.is_predicate():
-            tree.create_node('state formula', parent=root)
+            tree.create_node(formula.__str__(), parent=root)
         else:
             new_node = tree.create_node(formula.combination_type, parent=root)
             for subformula in formula.subformula_list:

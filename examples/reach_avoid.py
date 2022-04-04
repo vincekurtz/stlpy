@@ -19,7 +19,7 @@ from pySTL.solvers import *
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 obstacle_bounds = (3,5,4,6)
-T = 15
+T = 10
 
 # Define the system and specification
 scenario = ReachAvoid(goal_bounds, obstacle_bounds, T)
@@ -37,8 +37,8 @@ x0 = np.array([1.0,2.0,0,0])
 # Choose a solver
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeSmoothSolver(spec, sys, x0, T, k=2.0)
+#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True, solver='bnb')
+solver = DrakeSmoothSolver(spec, sys, x0, T, k=2.0)
 #solver = ScipyGradientSolver(spec, sys, x0, T)
 
 # Set bounds on state and control variables
