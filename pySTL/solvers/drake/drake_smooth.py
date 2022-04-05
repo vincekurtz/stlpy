@@ -1,5 +1,5 @@
 from .drake_base import DrakeSTLSolver
-from ...STL import STLPredicate
+from ...STL import LinearPredicate
 import numpy as np
 
 from pydrake.all import MathematicalProgram, eq, le, ge
@@ -165,7 +165,7 @@ class DrakeSmoothSolver(DrakeSTLSolver):
         if the subformulas are combined with disjuction.
         """
         # We're at the bottom of the tree, so add the predicate constraints
-        if isinstance(formula, STLPredicate):
+        if isinstance(formula, LinearPredicate):
             # rho = a'y - b
             y = self.y[:,t]
             self.mp.AddConstraint(eq( formula.a.T@y - formula.b, rho ))

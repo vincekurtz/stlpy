@@ -1,5 +1,5 @@
 from .drake_base import DrakeSTLSolver
-from ...STL import STLPredicate
+from ...STL import LinearPredicate
 import numpy as np
 import time
 from pydrake.all import (MathematicalProgram,
@@ -200,7 +200,7 @@ class DrakeMICPSolver(DrakeSTLSolver):
         subformula must hold).
         """
         # We're at the bottom of the tree, so add the big-M constraints
-        if isinstance(formula, STLPredicate):
+        if isinstance(formula, LinearPredicate):
             # a.T*y - b + (1-z)*M >= rho
             y = self.y[:,t]
             self.mp.AddLinearConstraint(ge(

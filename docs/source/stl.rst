@@ -13,33 +13,33 @@ We represent STL formulas :math:`\varphi` using the abstract base class :class:`
 base class enables all of the basic STL operations like conjuction (:math:`\land`), disjuction
 (:math:`\lor`), always (:math:`G`), until (:math:`U`), and so on. 
 
-Internally, we represent predicates :math:`\pi` using the :class:`.STLPredicate` class and all
+Internally, we represent predicates :math:`\pi` using the :class:`.LinearPredicate` class and all
 other formulas using the class :class:`.STLTree`. 
 
 
 .. warning::
 
     For now, only formulas in positive normal form are supported. That means that negation 
-    (:math:`\lnot`) can only be applied to predicates (:class:`.STLPredicate`). Note that
+    (:math:`\lnot`) can only be applied to predicates (:class:`.LinearPredicate`). Note that
     any STL formula can be re-written in positive normal form.
 
 
 STLFormula
-==============
+==========
 
 .. autoclass:: pySTL.STL.STLFormula
     :members:
     :show-inheritance:
 
 STLTree
-==========
+=======
 
 .. autoclass:: pySTL.STL.STLTree
     :show-inheritance:
 
-STLPredicate
-============
+LinearPredicate
+===============
 
-.. autoclass:: pySTL.STL.STLPredicate
+.. autoclass:: pySTL.STL.LinearPredicate
     :show-inheritance:
 

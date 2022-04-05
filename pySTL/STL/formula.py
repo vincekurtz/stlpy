@@ -308,7 +308,7 @@ class STLTree(STLFormula):
             F -> n6;
         }
 
-    where each node is an :class:`.STLFormula` and the leaf nodes are :class:`.STLPredicate` objects.
+    where each node is an :class:`.STLFormula` and the leaf nodes are :class:`.LinearPredicate` objects.
 
 
     Each :class:`.STLTree` is defined by a list of :class:`.STLFormula` objects
@@ -328,11 +328,11 @@ class STLTree(STLFormula):
 
         # Run some type check on the inputs
         assert (combination_type == "and") or (combination_type == "or"), "Invalid combination type"
-        assert isinstance(subformula_list, list), "subformula_list must be a list of STLTree or STLPredicate objects"
+        assert isinstance(subformula_list, list), "subformula_list must be a list of STLTree or LinearPredicate objects"
         assert isinstance(timesteps, list), "timesteps must be a list of integers"
         assert len(timesteps) == len(subformula_list), "a timestep must be provided for each subformula"
         for formula in subformula_list:
-            assert isinstance(formula, STLFormula), "subformula_list must be a list of STLTree or STLPredicate objects"
+            assert isinstance(formula, STLFormula), "subformula_list must be a list of STLTree or LinearPredicate objects"
             assert formula.d == self.d, "all subformulas must be defined over same dimension of signal"
         for t in timesteps:
             assert isinstance(t, int), "each timestep must be an integer"

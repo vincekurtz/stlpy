@@ -1,5 +1,5 @@
 from ..base import STLSolver
-from ...STL import STLPredicate
+from ...STL import LinearPredicate
 import numpy as np
 
 import gurobipy as gp
@@ -189,7 +189,7 @@ class GurobiMICPSolver(STLSolver):
         subformula must hold).
         """
         # We're at the bottom of the tree, so add the big-M constraints
-        if isinstance(formula, STLPredicate):
+        if isinstance(formula, LinearPredicate):
             # a.T*y - b + (1-z)*M >= rho
             self.model.addConstr( formula.a.T@self.y[:,t] - formula.b + (1-z)*self.M  >= self.rho )
 

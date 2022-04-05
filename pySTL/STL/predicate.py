@@ -1,9 +1,9 @@
 import numpy as np
 from .formula import STLFormula
 
-class STLPredicate(STLFormula):
+class LinearPredicate(STLFormula):
     """
-    A (linear) STL predicate :math:`\pi` defined by
+    A linear STL predicate :math:`\pi` defined by
 
     .. math::
 
@@ -36,7 +36,7 @@ class STLPredicate(STLFormula):
             newname = None
         else:
             newname = "not " + self.name
-        return STLPredicate(-self.a, -self.b, name=newname)
+        return LinearPredicate(-self.a, -self.b, name=newname)
 
     def robustness(self, y, t):
         assert isinstance(y, np.ndarray), "y must be a numpy array"

@@ -13,7 +13,7 @@ import itertools
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-from pySTL.STL import STLFormula, STLPredicate
+from pySTL.STL import STLFormula, LinearPredicate
 from pySTL.systems import LinearSystem
 from pySTL.solvers import DrakeMICPSolver, DrakeSos1Solver
 
@@ -84,8 +84,8 @@ no_x_movement = []
 no_y_movement = []
 no_movement = []
 for i in range(N):
-    _no_x_movement = STLPredicate(vx_vec(i),0) & STLPredicate(-vx_vec(i),0) # vx <= 0 & vx >= 0
-    _no_y_movement = STLPredicate(vy_vec(i),0) & STLPredicate(-vy_vec(i),0)
+    _no_x_movement = LinearPredicate(vx_vec(i),0) & LinearPredicate(-vx_vec(i),0) # vx <= 0 & vx >= 0
+    _no_y_movement = LinearPredicate(vy_vec(i),0) & LinearPredicate(-vy_vec(i),0)
     _no_movement = _no_x_movement & _no_y_movement
 
     no_x_movement.append(_no_x_movement)
@@ -96,8 +96,8 @@ x_movement = []
 y_movement = []
 movement = []
 for i in range(N):
-    _x_movement = STLPredicate(vx_vec(i),eps) | STLPredicate(-vx_vec(i),eps) # vx >= eps or -vx >= eps
-    _y_movement = STLPredicate(vy_vec(i),eps) | STLPredicate(-vy_vec(i),eps) # vx >= eps or -vx >= eps
+    _x_movement = LinearPredicate(vx_vec(i),eps) | LinearPredicate(-vx_vec(i),eps) # vx >= eps or -vx >= eps
+    _y_movement = LinearPredicate(vy_vec(i),eps) | LinearPredicate(-vy_vec(i),eps) # vx >= eps or -vx >= eps
     _movement = _x_movement | _y_movement
 
     x_movement.append(_x_movement)
@@ -106,17 +106,17 @@ for i in range(N):
 
 on_ground = []
 for i in range(N):
-    #_on_ground = STLPredicate(-py_vec(i),-rh/2)
-    _on_ground = STLPredicate(-py_vec(i),-N*rh+rh/2)
+    #_on_ground = LinearPredicate(-py_vec(i),-rh/2)
+    _on_ground = LinearPredicate(-py_vec(i),-N*rh+rh/2)
     on_ground.append(_on_ground)
 
 on_first_pole = []
 on_second_pole = []
 on_third_pole = []
 for i in range(N):
-    _on_first_pole = STLPredicate(px_vec(i),0) & STLPredicate(-px_vec(i),0)
-    _on_second_pole = STLPredicate(px_vec(i),1) & STLPredicate(-px_vec(i),-1)
-    _on_third_pole = STLPredicate(px_vec(i),2) & STLPredicate(-px_vec(i),-2)
+    _on_first_pole = LinearPredicate(px_vec(i),0) & LinearPredicate(-px_vec(i),0)
+    _on_second_pole = LinearPredicate(px_vec(i),1) & LinearPredicate(-px_vec(i),-1)
+    _on_third_pole = LinearPredicate(px_vec(i),2) & LinearPredicate(-px_vec(i),-2)
 
     on_first_pole.append(_on_first_pole)
     on_second_pole.append(_on_second_pole)
@@ -125,7 +125,7 @@ for i in range(N):
 above_poles = []
 below_poles = []
 for i in range(N):
-    _above_poles = STLPredicate(py_vec(i), 1.2)
+    _above_poles = LinearPredicate(py_vec(i), 1.2)
     _below_poles = _above_poles.negation()
 
     above_poles.append(_above_poles)
@@ -137,7 +137,7 @@ below = []
 for i in range(N):
     _below = []
     for j in range(N):
-        i_below_j = STLPredicate(py_vec(j)-py_vec(i),rh)
+        i_below_j = LinearPredicate(py_vec(j)-py_vec(i),rh)
         _below.append(i_below_j)
     below.append(_below)
 
@@ -146,8 +146,8 @@ different_poles = []
 for i in range(N):
     _different = []
     for j in range(N):
-        i_gt_j = STLPredicate(px_vec(i)-px_vec(j), eps)
-        j_gt_i = STLPredicate(px_vec(j)-px_vec(i), eps)
+        i_gt_j = LinearPredicate(px_vec(i)-px_vec(j), eps)
+        j_gt_i = LinearPredicate(px_vec(j)-px_vec(i), eps)
         diff = i_gt_j | j_gt_i | above_poles[i] | above_poles[j]
         _different.append(diff)
     different_poles.append(_different)

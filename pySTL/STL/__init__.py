@@ -1,2 +1,2 @@
 from .formula import STLTree, STLFormula
-from .predicate import STLPredicate
+from .predicate import LinearPredicate

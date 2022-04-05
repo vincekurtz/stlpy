@@ -5,7 +5,7 @@
 ##
 
 import numpy as np
-from pySTL.STL import STLTree, STLPredicate
+from pySTL.STL import STLTree, LinearPredicate
 from matplotlib.patches import Rectangle
 
 def inside_rectangle_formula(bounds, y1_index, y2_index, d, name=None):
@@ -40,12 +40,12 @@ def inside_rectangle_formula(bounds, y1_index, y2_index, d, name=None):
 
     # Create predicates a*y >= b for each side of the rectangle
     a1 = np.zeros((1,d)); a1[:,y1_index] = 1
-    right = STLPredicate(a1, y1_min)
-    left = STLPredicate(-a1, -y1_max)
+    right = LinearPredicate(a1, y1_min)
+    left = LinearPredicate(-a1, -y1_max)
 
     a2 = np.zeros((1,d)); a2[:,y2_index] = 1
-    top = STLPredicate(a2, y2_min)
-    bottom = STLPredicate(-a2, -y2_max)
+    top = LinearPredicate(a2, y2_min)
+    bottom = LinearPredicate(-a2, -y2_max)
 
     # Take the conjuction across all the sides
     inside_rectangle = right & left & top & bottom
@@ -92,12 +92,12 @@ def outside_rectangle_formula(bounds, y1_index, y2_index, d, name=None):
 
     # Create predicates a*y >= b for each side of the rectangle
     a1 = np.zeros((1,d)); a1[:,y1_index] = 1
-    right = STLPredicate(a1, y1_max)
-    left = STLPredicate(-a1, -y1_min)
+    right = LinearPredicate(a1, y1_max)
+    left = LinearPredicate(-a1, -y1_min)
 
     a2 = np.zeros((1,d)); a2[:,y2_index] = 1
-    top = STLPredicate(a2, y2_max)
-    bottom = STLPredicate(-a2, -y2_min)
+    top = LinearPredicate(a2, y2_max)
+    bottom = LinearPredicate(-a2, -y2_min)
 
     # Take the disjuction across all the sides
     outside_rectangle = right | left | top | bottom

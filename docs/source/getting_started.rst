@@ -80,7 +80,7 @@ visualize the solution:
     import numpy as np
     import matplotlib.pyplot as plt
     from pySTL.systems import LinearSystem
-    from pySTL.STL import STLPredicate
+    from pySTL.STL import LinearPredicate
     from pySTL.solvers import DrakeMICPSolver
 
 We'll then define the simple linear system shown above, along with an initial condition :math:`x_0 = 0`.
@@ -101,7 +101,7 @@ by applying boolean and temporal operators:
 
 ::
     
-    pi = STLPredicate(a=[1], b=[2])  # a*y - b > 0
+    pi = LinearPredicate(a=[1], b=[2])  # a*y - b > 0
     spec = pi.eventually(0, 5)       # F_[0,5] pi
 
 Then we set up a solver object, and tell it to look for a trajectory with 5
