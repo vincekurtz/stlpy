@@ -1,5 +1,5 @@
 from ..base import STLSolver
-from ...STL import LinearPredicate
+from ...STL import LinearPredicate, NonlinearPredicate
 import numpy as np
 
 import gurobipy as gp
@@ -196,6 +196,9 @@ class GurobiMICPSolver(STLSolver):
             # Force z to be binary
             b = self.model.addMVar(1,vtype=GRB.BINARY)
             self.model.addConstr(z == b)
+        
+        elif isinstance(formula, NonlinearPredicate):
+            raise TypeError("Mixed integer programming does not support nonlinear predicates")
 
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively

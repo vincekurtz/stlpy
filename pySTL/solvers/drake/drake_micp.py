@@ -1,5 +1,5 @@
 from .drake_base import DrakeSTLSolver
-from ...STL import LinearPredicate
+from ...STL import LinearPredicate, NonlinearPredicate
 import numpy as np
 import time
 from pydrake.all import (MathematicalProgram,
@@ -212,6 +212,9 @@ class DrakeMICPSolver(DrakeSTLSolver):
             # variable will be removed in presolve.
             tmp = self.mp.NewBinaryVariables(1)
             self.mp.AddConstraint(eq(tmp, z))
+
+        elif isinstance(formula, NonlinearPredicate):
+            raise TypeError("Mixed integer programming does not support nonlinear predicates")
 
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively

@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class NonlinearSystem:
     """
     A class which represents some (possibly nonlinear)
@@ -65,3 +68,58 @@ class NonlinearSystem:
         :return:    The output :math:`y_t`
         """
         return self.output_fcn(x,u)
+
+class Unicycle(NonlinearSystem):
+    r"""
+    A simple nonlinear system representing a 2D mobile robot with
+    unicycle dynamics. The robot is controlled by specifing a forward
+    velociy :math:`v` and an angular velocity :math:`\omega`. 
+
+    This is example of a non-holonomic system: the robot cannot
+    directly control its motion in the horizontal direction.
+
+    The state is given by 
+
+    .. math::
+
+        x = \begin{bmatrix} p_x \\ p_y \\ \theta \end{bmatrix},
+
+    where :math:`p_x` and :math:`p_y` are positions in the plane and
+    :math:`\theta` is an orientation. The dynamics are given by
+
+    .. math::
+
+        \dot{x} = \begin{bmatrix} v \cos(\theta) \\ v \sin(\theta) \\ \omega \end{bmatrix}
+
+    and the control input is :math:`u = \begin{bmatrix} v \\ \omega \end{bmatrix}`.
+    We use forward Euler integration to transform this into a discrete-time system:
+
+    .. math::
+
+        x_{t+1} = x_t + \dot{x}~dt.
+
+    The system output is simply the state of the robot, :math:`y_t = x_t`.
+
+    :param dt:  Discretization step size (for forward Euler integration)
+    """
+    def __init__(self, dt):
+        self.dt = dt
+        
+        # State, control, and output sizes
+        self.n = 3
+        self.m = 2
+        self.p = 3
+
+    def f(self, x, u):
+        v = u[0]      # linear velocity
+        omega = u[1]  # angular velocity
+        theta = x[2]  # orientation
+
+        xdot = np.array([ v * np.cos(theta),
+                          v * np.sin(theta),
+                          omega])
+
+        return x + self.dt * xdot
+
+    def g(self, x, u):
+        return x

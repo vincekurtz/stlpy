@@ -1,5 +1,5 @@
 from .drake_base import DrakeSTLSolver
-from ...STL import LinearPredicate
+from ...STL import LinearPredicate, NonlinearPredicate
 import numpy as np
 
 from pydrake.all import MathematicalProgram, eq, le, ge
@@ -169,6 +169,11 @@ class DrakeSmoothSolver(DrakeSTLSolver):
             # rho = a'y - b
             y = self.y[:,t]
             self.mp.AddConstraint(eq( formula.a.T@y - formula.b, rho ))
+        
+        elif isinstance(formula, NonlinearPredicate):
+            # rho = g(y)
+            y = self.y[:,t]
+            self.mp.AddConstraint(eq( formula.g(y), rho ))
 
         # We haven't reached the bottom of the tree, so keep adding
         # boolean constraints recursively
@@ -202,7 +207,7 @@ class DrakeSmoothSolver(DrakeSTLSolver):
             self.mp.AddConstraint(eq( a, b_lst[0] ))
         else:
             x = np.array(b_lst)
-            exp = np.exp(self.k*x)
+            exp = np.exp(self.k*x) + 1e-12   # avoid divide by zero error
 
             self.mp.AddConstraint(eq(
                 a , np.sum(x*exp)/np.sum(exp)

@@ -13,7 +13,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from pySTL.benchmarks import ReachAvoid
-from pySTL.systems import DoubleIntegrator
 from pySTL.solvers import *
 
 # Specification Parameters

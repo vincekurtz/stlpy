@@ -5,8 +5,33 @@
 ##
 
 import numpy as np
-from pySTL.STL import STLTree, LinearPredicate
-from matplotlib.patches import Rectangle
+from pySTL.STL import STLTree, LinearPredicate, NonlinearPredicate
+from matplotlib.patches import Rectangle, Circle
+
+def inside_circle_formula(center, radius, y1_index, y2_index, d, name=None):
+    """
+    Create an STL formula representing being inside a
+    circle with the given center and radius.
+
+    :param center:      Tuple ``(y1, y2)`` specifying the center of the
+                        circle.
+    :param radius:      Radius of the circle
+    :param y1_index:    index of the first (``y1``) dimension
+    :param y2_index:    index of the second (``y2``) dimension
+    :param d:           dimension of the overall signal
+    :param name:        (optional) string describing this formula
+
+    :return inside_circle:   A ``NonlinearPredicate`` specifying being inside the
+                             circle at time zero.
+    """
+    # Define the predicate function g(y) >= 0
+    def g(y):
+        y1 = y[y1_index]
+        y2 = y[y2_index]
+        return radius**2 - (y1-center[0])**2 - (y2-center[1])**2
+
+    return NonlinearPredicate(g, d, name=name)
+
 
 def inside_rectangle_formula(bounds, y1_index, y2_index, d, name=None):
     """
@@ -131,9 +156,9 @@ def make_rectangle_patch(xmin, xmax, ymin, ymax, **kwargs):
     :param ymin:        vertical lower bound of the rectangle.
     :param ymax:        vertical upper bound of the rectangle.
     :param kwargs:    (optional) keyword arguments passed to
-                        the Rectangle constructor.
+                        the ``Rectangle`` constructor.
 
-    :return patch:  a ``matplotlib.pathces.Rectangle`` patch.
+    :return patch:  a ``matplotlib.patches.Rectangle`` patch.
 
     """
     x = xmin
@@ -142,3 +167,17 @@ def make_rectangle_patch(xmin, xmax, ymin, ymax, **kwargs):
     height = ymax-y
 
     return Rectangle((x,y), width, height, **kwargs)
+
+def make_circle_patch(center, radius, **kwargs):
+    """
+    Convienience function for making a ``matplotlib.patches.Circle`` 
+    patch for visualizing a circle with the given center and radius.
+
+    :param center:  Tuple containing the center coordinates of the circle
+    :param radius:  The circle's radius
+    :param kwargs:  (optional) keyword arguments passed to
+                        the ``Circle`` constructor.
+
+    :return patch:  a ``matplotlib.patches.Circle`` patch.
+    """
+    return Circle(center, radius, **kwargs)
