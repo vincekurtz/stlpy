@@ -1,10 +1,7 @@
 from .drake_micp import DrakeMICPSolver
 from ...STL import LinearPredicate
 import numpy as np
-from pydrake.all import (MathematicalProgram,
-                         GurobiSolver, MosekSolver,
-                         SolverOptions, CommonSolverOption,
-                         AddLogarithmicSos1Constraint,
+from pydrake.all import (AddLogarithmicSos1Constraint,
                          eq, le, ge)
 
 class DrakeSos1Solver(DrakeMICPSolver):

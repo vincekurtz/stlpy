@@ -1,11 +1,7 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
 
 from .base import BenchmarkScenario
-from .common import (inside_rectangle_formula,
-                     outside_rectangle_formula,
-                     make_rectangle_patch)
+from .common import inside_rectangle_formula, make_rectangle_patch
 from ..systems import DoubleIntegrator
 
 class SteppingStones(BenchmarkScenario):

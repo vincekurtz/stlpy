@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
 
 from .base import BenchmarkScenario
 from .common import (inside_rectangle_formula,

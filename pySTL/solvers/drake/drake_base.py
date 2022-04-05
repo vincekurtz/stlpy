@@ -1,5 +1,5 @@
 from ..base import STLSolver
-from pydrake.all import MathematicalProgram, eq, ge, le
+from pydrake.all import MathematicalProgram, ge, le
 
 class DrakeSTLSolver(STLSolver):
     """

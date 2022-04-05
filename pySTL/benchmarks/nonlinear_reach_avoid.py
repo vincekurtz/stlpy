@@ -1,11 +1,5 @@
-import matplotlib.pyplot as plt
-
 from .base import BenchmarkScenario
-from .common import (inside_rectangle_formula,
-                     outside_rectangle_formula,
-                     inside_circle_formula,
-                     make_circle_patch,
-                     make_rectangle_patch)
+from .common import inside_circle_formula, make_circle_patch
 from ..systems import Unicycle
 
 class NonlinearReachAvoid(BenchmarkScenario):

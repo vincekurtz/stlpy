@@ -2,8 +2,7 @@ from .drake_base import DrakeSTLSolver
 from ...STL import LinearPredicate, NonlinearPredicate
 import numpy as np
 import time
-from pydrake.all import (MathematicalProgram,
-                         GurobiSolver, MosekSolver, ClpSolver,
+from pydrake.all import (GurobiSolver, MosekSolver, ClpSolver,
                          SolverOptions, CommonSolverOption,
                          eq, le, ge)
 from pydrake.solvers.branch_and_bound import MixedIntegerBranchAndBound

@@ -5,7 +5,7 @@
 ##
 
 import numpy as np
-from pySTL.STL import STLTree, LinearPredicate, NonlinearPredicate
+from pySTL.STL import LinearPredicate, NonlinearPredicate
 from matplotlib.patches import Rectangle, Circle
 
 def inside_circle_formula(center, radius, y1_index, y2_index, d, name=None):

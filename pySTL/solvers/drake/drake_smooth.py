@@ -2,7 +2,7 @@ from .drake_base import DrakeSTLSolver
 from ...STL import LinearPredicate, NonlinearPredicate
 import numpy as np
 
-from pydrake.all import MathematicalProgram, eq, le, ge
+from pydrake.all import eq
 from pydrake.solvers.all import IpoptSolver, SnoptSolver, SolverOptions, CommonSolverOption
 
 import time
