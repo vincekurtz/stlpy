@@ -102,7 +102,7 @@ by applying boolean and temporal operators:
 ::
     
     pi = LinearPredicate(a=[1], b=[2])  # a*y - b > 0
-    spec = pi.eventually(0, 5)       # F_[0,5] pi
+    spec = pi.eventually(0, 5)          # F_[0,5] pi
 
 Then we set up a solver object, and tell it to look for a trajectory with 5
 timesteps. Just for fun, we'll and a quadratic running cost 
