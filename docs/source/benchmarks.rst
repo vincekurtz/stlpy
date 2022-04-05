@@ -19,6 +19,26 @@ A robot (blue dots) must avoid an obstacle (grey) and reach a goal (green).
     :members:
     :show-inheritance:
 
+Nonlinear Reach-Avoid
+=====================
+
+A robot (blue dots) must avoid an obstacle (grey) and reach a goal (green). 
+The goal and obstacle are both circles, requiring nonlinear predicates. 
+The robot has (nonlinear) :ref:`unicycle<Unicycle>` dynamics.
+
+Due to the nonlinear dynamics and nonlinear predicates, this benchmark
+cannot be currently be solved with MICP-based methods. It can be solved
+using gradient-based optimization.
+
+.. image:: images/nonlinear_reach_avoid.png
+    :width: 400
+    :alt: A picture of the nonlinear reach-avoid scenario.
+
+.. autoclass::
+    pySTL.benchmarks.NonlinearReachAvoid
+    :members:
+    :show-inheritance:
+
 Either-Or
 =========
 
@@ -120,7 +140,17 @@ outside_rectangle_formula
 .. autofunction::
     pySTL.benchmarks.common.outside_rectangle_formula
 
+inside_circle_formula
+---------------------
+.. autofunction::
+    pySTL.benchmarks.common.inside_circle_formula
+
 make_rectangle_patch
 --------------------
 .. autofunction::
     pySTL.benchmarks.common.make_rectangle_patch
+
+make_circle_patch
+--------------------
+.. autofunction::
+    pySTL.benchmarks.common.make_circle_patch

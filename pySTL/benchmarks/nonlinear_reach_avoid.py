@@ -18,10 +18,6 @@ class NonlinearReachAvoid(BenchmarkScenario):
 
         \varphi = G_{[0,T]} \lnot \mathcal{O} \land F_{[0,T]} \mathcal{G}
 
-    .. math::
-
-        x = \begin{bmatrix} p_x \\ p_y \\ \theta \end{bmatrix}
-
     :param goal_center:      a tuple ``(px, py)`` defining the center of the
                              goal region
     :param goal_radius:      a scalar defining the goal radius

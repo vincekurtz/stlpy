@@ -20,7 +20,7 @@ goal = (7.5, 8.5)  # goal center and radius
 goal_rad = 0.75
 obs = (3.5, 5)     # obstacle center and radius
 obs_rad = 1.5
-T = 20
+T = 15
 
 # Define the system and specification
 scenario = NonlinearReachAvoid(goal, goal_rad, obs, obs_rad, T)
@@ -42,7 +42,7 @@ solver = DrakeSmoothSolver(spec, sys, x0, T, k=2.0)
 # Set bounds on state and control variables
 u_min = np.array([0,-5.0])
 u_max = np.array([10, 5.0])
-x_min = np.array([0.0, 0.0, -2*np.pi])
+x_min = np.array([-10.0, -10.0, -2*np.pi])
 x_max = np.array([10.0, 10.0, 2*np.pi])
 solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
