@@ -19,6 +19,7 @@ T = 25
 # Create the specification and define the dynamics
 scenario = NarrowPassage(T)
 spec = scenario.GetSpecification()
+spec.simplify()
 sys = scenario.GetSystem()
 
 # Specify any additional running cost (this helps the numerics in

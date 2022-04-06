@@ -17,7 +17,7 @@ from pySTL.solvers import *
 num_obstacles = 1
 num_groups = 5
 targets_per_group = 2
-T = 15
+T = 25
 
 # Define the specification and system dynamics
 scenario = RandomMultitarget(

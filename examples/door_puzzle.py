@@ -14,12 +14,13 @@ from pySTL.benchmarks import DoorPuzzle
 from pySTL.solvers import *
 
 # Specification Parameters
-T = 30
+T = 25
 N_pairs = 2
 
 # Create the specification and system
 scenario = DoorPuzzle(T, N_pairs)
 spec = scenario.GetSpecification()
+spec.simplify()
 sys = scenario.GetSystem()
 
 # Specify any additional running cost (this helps the numerics in
@@ -32,19 +33,19 @@ x0 = np.array([6.0,1.0,0,0])
 
 # Define the solver
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=False)
-solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
+#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 
 # Set bounds on state and control variables
 u_min = np.array([-0.5,-0.5])
 u_max = np.array([0.5, 0.5])
-x_min = np.array([0.0, 0.0, -1.0, -1.0])
-x_max = np.array([15.0, 10.0, 1.0, 1.0])
+x_min = np.array([0.0, 0.0, -2.0, -2.0])
+x_max = np.array([15.0, 10.0, 2.0, 2.0])
 solver.AddControlBounds(u_min, u_max)
 solver.AddStateBounds(x_min, x_max)
 
 # Add quadratic running cost (optional)
-#solver.AddQuadraticCost(0.01*Q,0.01*R)
+solver.AddQuadraticCost(0.01*Q,0.01*R)
 
 # Solve the optimization problem
 x, u, _, _ = solver.Solve()

@@ -18,7 +18,7 @@ goal = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
 target_one = (1,2,6,7)
 target_two = (7,8,4.5,5.5)
 obstacle = (3,5,4,6)
-T = 20
+T = 25
 dwell_time = 5
 
 # Create the specification
