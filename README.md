@@ -1,6 +1,8 @@
 # stlpy
 
-A python library for control from Signal Temporal Logic (STL) specifications.
+A python library for control from Signal Temporal Logic (STL) specifications. 
+
+Documentation available at [stlpy.readthedocs.io](https://stlpy.readthedocs.io/en/latest/index.html).
 
 ## Installation
 
@@ -38,5 +40,5 @@ These are optional, and enable specific solvers.
 
 ## Usage
 
-See the `examples` folder and the documentation.
+See the [examples](examples) and the [documentation](https://stlpy.readthedocs.io/en/latest/getting_started.html#a-simple-example).
 
