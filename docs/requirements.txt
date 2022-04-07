@@ -1,0 +1,6 @@
+matplotlib
+numpy
+treelib
+gurobipy
+pydrake
+scipy
