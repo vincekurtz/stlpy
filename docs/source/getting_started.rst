@@ -5,7 +5,9 @@ Getting Started
 Installation
 =================================
 
-Via pip: *coming soon*
+Via pip: 
+::
+    pip install stlpy
 
 From source:
 ::

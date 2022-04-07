@@ -4,9 +4,12 @@ A python library for control from Signal Temporal Logic (STL) specifications.
 
 ## Installation
 
-Via pip: *coming soon*
+Option 1 - install via pip: 
+```
+pip install stlpy
+```
 
-From source:
+Option 2 - install from source:
 ```
 git clone https://github.com/vincekurtz/stlpy
 cd stlpy
