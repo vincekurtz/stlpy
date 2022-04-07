@@ -14,6 +14,8 @@ build:
     # nodejs: "16"
     # rust: "1.55"
     # golang: "1.17"
+  apt_packages:
+    - graphviz
 
 # If using Sphinx, optionally build your docs in additional formats such as PDF
 # formats:
