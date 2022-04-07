@@ -2,5 +2,5 @@ matplotlib
 numpy
 treelib
 gurobipy
-pydrake
+drake
 scipy
