@@ -8,4 +8,5 @@ setup(name='stlpy',
       author_email='vjkurtz@gmail.com',
       license='MIT',
       packages=find_packages(),
+      install_requires=['numpy', 'matplotlib', 'treelib'],
       zip_safe=False)
