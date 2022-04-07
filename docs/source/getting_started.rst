@@ -7,6 +7,7 @@ Installation
 
 Via pip: 
 ::
+
     pip install stlpy
 
 From source:
@@ -132,4 +133,5 @@ Finally, we can make a nice plot of the solution:
 More Examples
 =================================
 
-Can be found in the `examples` folder.
+More complex examples, including of :ref:`benchmark scenarios<Benchmarks>`
+can be found `on github here <https://github.com/vincekurtz/stlpy/tree/main/examples>`_.
