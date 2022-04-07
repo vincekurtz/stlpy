@@ -1,4 +1,4 @@
-# STLpy
+# stlpy
 
 A python library for control from Signal Temporal Logic (STL) specifications.
 
