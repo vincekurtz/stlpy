@@ -6,24 +6,24 @@ These tools are use to model simple linear and nonlinear discrete-time control s
 
 LinearSystem
 ------------
-.. autoclass:: pySTL.systems.LinearSystem
+.. autoclass:: stlpy.systems.LinearSystem
     :members:
     :show-inheritance:
 
 DoubleIntegrator
 ----------------
-.. autoclass:: pySTL.systems.DoubleIntegrator
+.. autoclass:: stlpy.systems.DoubleIntegrator
     :members:
     :show-inheritance:
 
 NonlinearSystem
 ---------------
-.. autoclass:: pySTL.systems.NonlinearSystem
+.. autoclass:: stlpy.systems.NonlinearSystem
     :members:
     :show-inheritance:
 
 Unicycle
 --------
-.. autoclass:: pySTL.systems.Unicycle
+.. autoclass:: stlpy.systems.Unicycle
     :members:
     :show-inheritance:

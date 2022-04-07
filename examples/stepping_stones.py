@@ -10,8 +10,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pySTL.benchmarks import SteppingStones
-from pySTL.solvers import *
+from stlpy.benchmarks import SteppingStones
+from stlpy.solvers import *
 
 # Specification Parameters
 num_stones = 15

@@ -10,8 +10,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pySTL.benchmarks import RandomMultitarget
-from pySTL.solvers import *
+from stlpy.benchmarks import RandomMultitarget
+from stlpy.solvers import *
 
 # Specification Parameters
 num_obstacles = 1

@@ -10,8 +10,8 @@ Via pip: *coming soon*
 From source:
 ::
 
-    git clone https://github.com/vincekurtz/pySTL
-    cd pySTL
+    git clone https://github.com/vincekurtz/stlpy
+    cd stlpy
     python setup.py install
 
 
@@ -79,9 +79,9 @@ visualize the solution:
 
     import numpy as np
     import matplotlib.pyplot as plt
-    from pySTL.systems import LinearSystem
-    from pySTL.STL import LinearPredicate
-    from pySTL.solvers import DrakeMICPSolver
+    from stlpy.systems import LinearSystem
+    from stlpy.STL import LinearPredicate
+    from stlpy.solvers import DrakeMICPSolver
 
 We'll then define the simple linear system shown above, along with an initial condition :math:`x_0 = 0`.
 

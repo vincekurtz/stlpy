@@ -10,8 +10,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pySTL.benchmarks import NarrowPassage
-from pySTL.solvers import *
+from stlpy.benchmarks import NarrowPassage
+from stlpy.solvers import *
 
 # Specification Parameters
 T = 25
@@ -32,8 +32,8 @@ x0 = np.array([3.0,3.6,0,0])
 
 # Specify a solution method
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
+solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True, presolve=False)
+#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 
 # Set bounds on state and control variables
 u_min = np.array([-0.5,-0.5])

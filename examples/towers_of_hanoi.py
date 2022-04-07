@@ -13,9 +13,9 @@ import itertools
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-from pySTL.STL import STLFormula, LinearPredicate
-from pySTL.systems import LinearSystem
-from pySTL.solvers import DrakeMICPSolver, DrakeSos1Solver
+from stlpy.STL import STLFormula, LinearPredicate
+from stlpy.systems import LinearSystem
+from stlpy.solvers import DrakeMICPSolver, DrakeSos1Solver
 
 ######################################
 # System definition

@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 
-setup(name='pySTL',
-      version='0.2',
+setup(name='stlpy',
+      version='0.1.0',
       description='A Python library for Signal Temporal Logic',
-      url='http://github.com/vincekurtz/pySTL',
+      url='http://github.com/vincekurtz/stlpy',
       author='Vince Kurtz',
       author_email='vjkurtz@gmail.com',
       license='MIT',

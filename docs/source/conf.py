@@ -2,12 +2,12 @@
 
 # -- Project information
 
-project = 'PySTL'
+project = 'stlpy'
 copyright = '2022, Vince Kurtz'
 author = 'Vince Kurtz'
 
-release = '0.2'
-version = '0.2.0'
+release = '0.1.0'
+version = '0.1.0'
 
 # -- General configuration
 

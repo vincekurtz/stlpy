@@ -12,8 +12,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from pySTL.benchmarks import NonlinearReachAvoid
-from pySTL.solvers import *
+from stlpy.benchmarks import NonlinearReachAvoid
+from stlpy.solvers import *
 
 # Specification Parameters
 goal = (7.5, 8.5)  # goal center and radius

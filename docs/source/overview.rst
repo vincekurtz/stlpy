@@ -5,7 +5,7 @@ About
 This Software
 =============
 
-**pySTL** is a python library for control from Signal Temporal Logic (STL) specifications. 
+**stlpy** is a python library for control from Signal Temporal Logic (STL) specifications. 
 
 This software is designed with the following goals in mind:
 

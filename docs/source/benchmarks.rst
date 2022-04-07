@@ -15,7 +15,7 @@ A robot (blue dots) must avoid an obstacle (grey) and reach a goal (green).
     :alt: A picture of the reach-avoid scenario.
 
 .. autoclass::
-    pySTL.benchmarks.ReachAvoid
+    stlpy.benchmarks.ReachAvoid
     :members:
     :show-inheritance:
 
@@ -35,7 +35,7 @@ using gradient-based optimization.
     :alt: A picture of the nonlinear reach-avoid scenario.
 
 .. autoclass::
-    pySTL.benchmarks.NonlinearReachAvoid
+    stlpy.benchmarks.NonlinearReachAvoid
     :members:
     :show-inheritance:
 
@@ -51,7 +51,7 @@ for several timesteps.
     :alt: A picture of the either-or scenario.
 
 .. autoclass::
-    pySTL.benchmarks.EitherOr
+    stlpy.benchmarks.EitherOr
     :members:
     :show-inheritance:
 
@@ -66,7 +66,7 @@ goals (green), and the passageway between obstacles is narrow.
     :alt: A picture of the narrow passage scenario.
 
 .. autoclass::
-    pySTL.benchmarks.NarrowPassage
+    stlpy.benchmarks.NarrowPassage
     :members:
     :show-inheritance:
 
@@ -81,7 +81,7 @@ Targets and obstacles are placed randomly.
     :alt: A picture of the multi-target scenario.
 
 .. autoclass::
-    pySTL.benchmarks.RandomMultitarget
+    stlpy.benchmarks.RandomMultitarget
     :members:
     :show-inheritance:
 
@@ -97,7 +97,7 @@ key has been picked up (e.g., visit the blue region).
     :alt: A picture of the door puzzle scenario.
 
 .. autoclass::
-    pySTL.benchmarks.DoorPuzzle
+    stlpy.benchmarks.DoorPuzzle
     :members:
     :show-inheritance:
 
@@ -112,7 +112,7 @@ The goal and stepping stone locations are randomly generated.
     :alt: A picture of the stepping stones scenario.
 
 .. autoclass::
-    pySTL.benchmarks.SteppingStones
+    stlpy.benchmarks.SteppingStones
     :members:
     :show-inheritance:
 
@@ -123,7 +123,7 @@ To add additional benchmark scenarios, simply create
 a class that inherits from the following ``BenchmarkScenario`` class:
 
 .. autoclass::
-    pySTL.benchmarks.base.BenchmarkScenario
+    stlpy.benchmarks.base.BenchmarkScenario
     :members:
     :show-inheritance:
 
@@ -133,24 +133,24 @@ Helper functions
 inside_rectangle_formula
 ------------------------
 .. autofunction::
-    pySTL.benchmarks.common.inside_rectangle_formula
+    stlpy.benchmarks.common.inside_rectangle_formula
 
 outside_rectangle_formula
 -------------------------
 .. autofunction::
-    pySTL.benchmarks.common.outside_rectangle_formula
+    stlpy.benchmarks.common.outside_rectangle_formula
 
 inside_circle_formula
 ---------------------
 .. autofunction::
-    pySTL.benchmarks.common.inside_circle_formula
+    stlpy.benchmarks.common.inside_circle_formula
 
 make_rectangle_patch
 --------------------
 .. autofunction::
-    pySTL.benchmarks.common.make_rectangle_patch
+    stlpy.benchmarks.common.make_rectangle_patch
 
 make_circle_patch
 --------------------
 .. autofunction::
-    pySTL.benchmarks.common.make_circle_patch
+    stlpy.benchmarks.common.make_circle_patch

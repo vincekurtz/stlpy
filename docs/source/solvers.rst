@@ -42,21 +42,21 @@ Installation instructions for Drake can be found `here <https://drake.mit.edu/in
 DrakeMICPSolver
 ----------------
 
-.. autoclass:: pySTL.solvers.DrakeMICPSolver
+.. autoclass:: stlpy.solvers.DrakeMICPSolver
     :members: Solve, AddControlBounds, AddQuadraticCost, AddStateBounds
     :show-inheritance:
 
 DrakeSos1Solver
 ---------------
 
-.. autoclass:: pySTL.solvers.DrakeSos1Solver
+.. autoclass:: stlpy.solvers.DrakeSos1Solver
     :members: Solve, AddControlBounds, AddQuadraticCost, AddStateBounds
     :show-inheritance:
 
 DrakeSmoothSolver
 -----------------
 
-.. autoclass:: pySTL.solvers.DrakeSmoothSolver
+.. autoclass:: stlpy.solvers.DrakeSmoothSolver
     :members: Solve, AddControlBounds, AddQuadraticCost, AddStateBounds, AddRobustnessConstraint
     :show-inheritance:
 
@@ -70,7 +70,7 @@ and non-convex quadratic programs with quadratic constraints. Free academic lice
 GurobiMICPSolver
 ----------------
 
-.. autoclass:: pySTL.solvers.GurobiMICPSolver
+.. autoclass:: stlpy.solvers.GurobiMICPSolver
     :members: Solve, AddControlBounds, AddStateBounds
     :show-inheritance:
 
@@ -91,7 +91,7 @@ Alternative installation instructions can be found `here <https://scipy.org/inst
 ScipyGradientSolver
 -------------------
 
-.. autoclass:: pySTL.solvers.ScipyGradientSolver
+.. autoclass:: stlpy.solvers.ScipyGradientSolver
     :members: Solve, AddQuadraticCost
     :show-inheritance:
 
@@ -102,6 +102,6 @@ All the solvers described above inherit from the :class:`.STLSolver` class.
 To implement your own optimization-based solver, all you need to do is create 
 a new class that inherits from :class:`.STLSolver`.
 
-.. autoclass:: pySTL.solvers.base.STLSolver
+.. autoclass:: stlpy.solvers.base.STLSolver
     :members:
     :show-inheritance:

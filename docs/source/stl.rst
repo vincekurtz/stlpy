@@ -27,19 +27,19 @@ other formulas using the class :class:`.STLTree`.
 STLFormula
 ==========
 
-.. autoclass:: pySTL.STL.STLFormula
+.. autoclass:: stlpy.STL.STLFormula
     :members:
     :show-inheritance:
 
 STLTree
 =======
 
-.. autoclass:: pySTL.STL.STLTree
+.. autoclass:: stlpy.STL.STLTree
     :show-inheritance:
 
 LinearPredicate
 ===============
 
-.. autoclass:: pySTL.STL.LinearPredicate
+.. autoclass:: stlpy.STL.LinearPredicate
     :show-inheritance:
 

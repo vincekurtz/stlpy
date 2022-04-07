@@ -12,8 +12,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from pySTL.benchmarks import ReachAvoid
-from pySTL.solvers import *
+from stlpy.benchmarks import ReachAvoid
+from stlpy.solvers import *
 
 # Specification Parameters
 goal_bounds = (7,8,8,9)     # (xmin, xmax, ymin, ymax)
