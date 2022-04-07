@@ -2,3 +2,5 @@
 __pycache__
 paper_figures
 docs/build
+*.egg-info
+dist
