@@ -1,7 +1,6 @@
 from setuptools import setup, find_packages
 
-long_description = 
-"""
+long_description = """
 A python library for control from Signal Temporal Logic (STL) specifications.
 
 This software is designed with the following goals in mind:
@@ -22,7 +21,7 @@ setup(name='stlpy',
       url='https://stlpy.readthedocs.io/en/latest/index.html',
       project_urls ={
           "Source Code": "https://github.com/vincekurtz/stlpy",
-          "Documentation": "https://stlpy.readthedocs.io/en/latest/index.html"}
+          "Documentation": "https://stlpy.readthedocs.io/en/latest/index.html"},
       author='Vince Kurtz',
       author_email='vjkurtz@gmail.com',
       license='MIT',
