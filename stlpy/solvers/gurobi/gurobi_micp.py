@@ -102,7 +102,9 @@ class GurobiMICPSolver(STLSolver):
     def AddQuadraticCost(self, Q, R):
         self.cost += self.x[:,0]@Q@self.x[:,0] + self.u[:,0]@R@self.u[:,0]
         for t in range(1,self.T):
-            self.cost += self.x[:,t]@Q@self.x[:,t] + self.u[:,0]@R@self.u[:,0]
+            self.cost += self.x[:,t]@Q@self.x[:,t] + self.u[:,t]@R@self.u[:,t]
+
+        print(type(self.cost))
     
     def AddRobustnessCost(self):
         self.cost -= 1*self.rho
