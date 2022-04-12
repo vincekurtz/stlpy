@@ -43,14 +43,14 @@ DrakeMICPSolver
 ----------------
 
 .. autoclass:: stlpy.solvers.DrakeMICPSolver
-    :members: Solve, AddControlBounds, AddQuadraticCost, AddStateBounds
+    :members: Solve, AddControlBounds, AddQuadraticCost, AddStateBounds, AddRobustnessConstraint
     :show-inheritance:
 
 DrakeSos1Solver
 ---------------
 
 .. autoclass:: stlpy.solvers.DrakeSos1Solver
-    :members: Solve, AddControlBounds, AddQuadraticCost, AddStateBounds
+    :members: Solve, AddControlBounds, AddQuadraticCost, AddStateBounds, AddRobustnessConstraint
     :show-inheritance:
 
 DrakeSmoothSolver
@@ -71,7 +71,7 @@ GurobiMICPSolver
 ----------------
 
 .. autoclass:: stlpy.solvers.GurobiMICPSolver
-    :members: Solve, AddControlBounds, AddStateBounds
+    :members: Solve, AddControlBounds, AddStateBounds, AddQuadraticCost, AddRobustnessConstraint
     :show-inheritance:
 
 

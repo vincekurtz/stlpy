@@ -14,7 +14,7 @@ This software is designed with the following goals in mind:
 """
 
 setup(name='stlpy',
-      version='0.2.1',
+      version='0.3.0',
       description='A Python library for control from Signal Temporal Logic (STL) specifications',
       long_description=long_description,
       long_description_content_type='text/markdown',

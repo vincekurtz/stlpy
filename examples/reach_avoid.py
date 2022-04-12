@@ -36,7 +36,7 @@ x0 = np.array([1.0,2.0,0,0])
 # Choose a solver
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
-#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True, solver='bnb')
+#solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 solver = DrakeSmoothSolver(spec, sys, x0, T, k=2.0)
 #solver = ScipyGradientSolver(spec, sys, x0, T)
 

@@ -32,7 +32,7 @@ x0 = np.array([3.0,3.6,0,0])
 
 # Specify a solution method
 #solver = GurobiMICPSolver(spec, sys, x0, T, robustness_cost=True)
-solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True, presolve=False)
+solver = DrakeMICPSolver(spec, sys, x0, T, robustness_cost=True)
 #solver = DrakeSos1Solver(spec, sys, x0, T, robustness_cost=True)
 
 # Set bounds on state and control variables
