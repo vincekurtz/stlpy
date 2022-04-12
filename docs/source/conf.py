@@ -10,8 +10,8 @@ project = 'stlpy'
 copyright = '2022, Vince Kurtz'
 author = 'Vince Kurtz'
 
-release = '0.2.1'
-version = '0.2.1'
+release = '0.3.0'
+version = '0.3.0'
 
 # -- General configuration
 
