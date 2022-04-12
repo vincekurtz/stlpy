@@ -59,6 +59,9 @@ class GurobiMICPSolver(STLSolver):
 
         # Set up the optimization problem
         self.model = gp.Model("STL_MICP")
+        
+        # Store the cost function, which will added to self.model right before solving
+        self.cost = 0.0
 
         # Set some model parameters
         if not self.presolve:
@@ -97,12 +100,22 @@ class GurobiMICPSolver(STLSolver):
             self.model.addConstr( self.x[:,t] <= x_max )
 
     def AddQuadraticCost(self, Q, R):
-        raise NotImplementedError("Quadratic costs are not currently supported. Please use the DrakeMICPSolver for specifications with quadratic costs.")
+        self.cost += self.x[:,0]@Q@self.x[:,0] + self.u[:,0]@R@self.u[:,0]
+        for t in range(1,self.T):
+            self.cost += self.x[:,t]@Q@self.x[:,t] + self.u[:,0]@R@self.u[:,0]
+    
+    def AddRobustnessCost(self):
+        self.cost -= 1*self.rho
 
     def AddRobustnessConstraint(self, rho_min=0.0):
         self.model.addConstr( self.rho >= rho_min )
 
     def Solve(self):
+        # Set the cost function now, right before we solve.
+        # This is needed since model.setObjective resets the cost.
+        self.model.setObjective(self.cost, GRB.MINIMIZE)
+
+        # Do the actual solving
         self.model.optimize()
 
         if self.model.status == GRB.OPTIMAL:
@@ -141,9 +154,6 @@ class GurobiMICPSolver(STLSolver):
         self.model.addConstr(
                 self.y[:,self.T-1] == self.sys.C@self.x[:,self.T-1] + self.sys.D@self.u[:,self.T-1] )
 
-    def AddRobustnessCost(self):
-        self.model.setObjective(1*self.rho, GRB.MAXIMIZE)
-
     def AddSTLConstraints(self):
         """
         Add the STL constraints
@@ -156,7 +166,7 @@ class GurobiMICPSolver(STLSolver):
         # Recursively traverse the tree defined by the specification
         # to add binary variables and constraints that ensure that
         # rho is the robustness value
-        z_spec = self.model.addMVar(1,vtype=GRB.BINARY)
+        z_spec = self.model.addMVar(1,vtype=GRB.CONTINUOUS)
         self.AddSubformulaConstraints(self.spec, z_spec, 0)
         self.model.addConstr( z_spec == 1 )
 
