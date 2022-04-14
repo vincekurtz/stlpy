@@ -22,7 +22,7 @@ class DrakeSos1Solver(DrakeMICPSolver):
         & \\rho^{\\varphi}(y_0,y_1,\dots,y_T) \geq 0
 
     using mixed-integer convex programming. This method uses fewer binary variables
-    by encoding disjunction with a Specially Ordered Set of Type 1 (SOS1) constraint.
+    by encoding disjunction with a Special Ordered Set of Type 1 (SOS1) constraint.
 
     .. note::
 
@@ -30,7 +30,7 @@ class DrakeSos1Solver(DrakeMICPSolver):
 
         Kurtz V, et al.
         *Mixed-Integer Programming for Signal Temporal Logic with Fewer Binary
-        Variables*. IEEE Control Systems Letters, Under Review, 2022.
+        Variables*. arXiv preprint, 2022. https://arxiv.org/abs/2204.06367.
 
 
     .. warning::

@@ -106,7 +106,7 @@ STL is also equipped with a "robustness measure" :math:`\rho^{\varphi}(y)`. This
 that maps a signal to a scalar value. :math:`\rho` is positive only if the signal satisfies the 
 specification, and negative only if the signal does not satisfy the specification. The robustness
 measure allows us to consider "more satisfying" signals and "closer-to-satisfying" signals, 
-which is very useful for optimization-based control.
+which is very useful for optimization.
 
 This software provides tools for :ref:`working with STL formulas<Defining STL Formulas>`,
 including computation of the robustness measure. See :ref:`this example<A Simple Example>`
@@ -139,3 +139,20 @@ of active research. This software provides high-quality
 state-of-the-art algorithms as well as an :ref:`interface<Write Your Own Solver>`
 for designing new algorithms.
 
+Citing stlpy
+============
+
+To reference **stlpy** in academic research, 
+please cite `our paper <https://arxiv.org/abs/2204.06367>`_:
+
+.. code-block:: text
+
+    @article{kurtz2022mixed,
+      title={Mixed-Integer Programming for Signal Temporal Logic with Fewer Binary Variables},
+      author={Kurtz, Vince and Lin, Hai},
+      journal={arXiv preprint arXiv:2204.06367},
+      year={2022}
+    }
+
+References for specific synthesis methods can be found in the 
+:ref:`solver documentation <Solving Control Problems>`.

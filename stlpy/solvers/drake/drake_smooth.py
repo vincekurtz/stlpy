@@ -31,7 +31,7 @@ class DrakeSmoothSolver(DrakeSTLSolver):
         This class implements the algorithm described in
 
         Gilpin, Y, et al. *A Smooth Robustness Measure of Signal Temporal Logic for Symbolic Control*.
-        IEEE Control Systems Letters, 2021.
+        IEEE Control Systems Letters, 2021. https://arxiv.org/abs/2006.05239.
 
     .. Note::
 

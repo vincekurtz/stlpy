@@ -98,8 +98,8 @@ We'll then define the simple linear system shown above, along with an initial co
     
     x0 = np.array([[0]])
 
-Now we can the specification. We do this recursively, starting with the 
-predicate :math:`\pi = (y>0)` and building up to the whole STL formula :math:`\varphi`
+Now we can construct the specification. We start with the 
+predicate :math:`\pi = (y>2)` and build up to the whole STL formula :math:`\varphi`
 by applying boolean and temporal operators:
 
 ::
@@ -108,7 +108,7 @@ by applying boolean and temporal operators:
     spec = pi.eventually(0, 5)          # F_[0,5] pi
 
 Then we set up a solver object, and tell it to look for a trajectory with 5
-timesteps. Just for fun, we'll and a quadratic running cost 
+timesteps. Just for fun, we'll add a quadratic running cost 
 :math:`\|x_t\|^2 + \|u_t\|^2` as well. 
 
 ::

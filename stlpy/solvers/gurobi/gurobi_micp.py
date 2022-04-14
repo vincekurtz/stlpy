@@ -33,7 +33,8 @@ class GurobiMICPSolver(STLSolver):
 
         Belta C, et al.
         *Formal methods for control synthesis: an optimization perspective*.
-        Anual Review of Control, Robotics, and Autonomous Systems, 2019.
+        Annual Review of Control, Robotics, and Autonomous Systems, 2019.
+        https://dx.doi.org/10.1146/annurev-control-053018-023717.
 
     :param spec:            An :class:`.STLFormula` describing the specification.
     :param sys:             A :class:`.LinearSystem` describing the system dynamics.
