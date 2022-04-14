@@ -39,3 +39,17 @@ See the [examples](examples) and the [documentation](https://stlpy.readthedocs.i
 
 If you have a new STL trajectory synthesis algorithm or benchmark scenario you would like to see included in this package, please open a [pull request](https://github.com/vincekurtz/stlpy/pulls). 
 
+### Citing stlpy
+
+To reference **stlpy** in academic research, please cite [our paper](https://arxiv.org/abs/2204.06367):
+
+```
+@article{kurtz2022mixed,
+  title={Mixed-Integer Programming for Signal Temporal Logic with Fewer Binary Variables},
+  author={Kurtz, Vince and Lin, Hai},
+  journal={arXiv preprint arXiv:2204.06367},
+  year={2022}
+}
+```
+
+References for specific synthesis methods can be found in the [solver documentation](https://stlpy.readthedocs.io/en/latest/solvers.html).
