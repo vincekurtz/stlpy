@@ -48,13 +48,14 @@ STL formulas can be defined and evaluated without these dependencies.
 
 .. note::
     
-    Drake with Gurobi/Mosek enabled requires compilation from source. See
+    Drake with Gurobi enabled requires compilation from source. See
     `here <https://drake.mit.edu/from_source.html#building-the-python-bindings>`_
     for more details.
 
 .. note::
 
-    Drake's binary releases include SNOPT (no license required). 
+    Drake's binary releases include SNOPT (no license required) and MOSEK
+    (free academic licenses available).
 
 A Simple Example
 =================================

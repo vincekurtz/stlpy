@@ -35,7 +35,7 @@ class DrakeSos1Solver(DrakeMICPSolver):
 
     .. warning::
 
-        Drake must be compiled from source to support Gurobi and Mosek MICP solvers.
+        Drake must be compiled from source to support the Gurobi MICP solver.
         See `<https://drake.mit.edu/from_source.html>`_ for more details.
 
         Drake's naive branch-and-bound solver does not require Gurobi or Mosek, and
