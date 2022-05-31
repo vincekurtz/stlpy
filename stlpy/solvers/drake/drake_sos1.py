@@ -30,7 +30,7 @@ class DrakeSos1Solver(DrakeMICPSolver):
 
         Kurtz V, et al.
         *Mixed-Integer Programming for Signal Temporal Logic with Fewer Binary
-        Variables*. arXiv preprint, 2022. https://arxiv.org/abs/2204.06367.
+        Variables*. IEEE Control Systems Letters, 2022. https://arxiv.org/abs/2204.06367.
 
 
     .. warning::

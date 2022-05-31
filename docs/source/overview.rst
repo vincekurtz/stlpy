@@ -150,8 +150,9 @@ please cite `our paper <https://arxiv.org/abs/2204.06367>`_:
     @article{kurtz2022mixed,
       title={Mixed-Integer Programming for Signal Temporal Logic with Fewer Binary Variables},
       author={Kurtz, Vince and Lin, Hai},
-      journal={arXiv preprint arXiv:2204.06367},
-      year={2022}
+      journal={IEEE Control Systems Letters},
+      year={2022},
+      publisher={IEEE}
     }
 
 References for specific synthesis methods can be found in the 
