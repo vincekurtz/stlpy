@@ -241,8 +241,8 @@ class STLFormula(ABC):
         self_until_tprime = []
 
         for t_prime in range(t1, t2+1):
-            time_interval = [t for t in range(t1, t_prime+1)]
-            subformula_list = [self for t in range(t1, t_prime)]
+            time_interval = [t for t in range(0, t_prime+1)]
+            subformula_list = [self for t in range(0, t_prime)]
             subformula_list.append(other)
             self_until_tprime.append(STLTree(subformula_list, "and", time_interval))
 
